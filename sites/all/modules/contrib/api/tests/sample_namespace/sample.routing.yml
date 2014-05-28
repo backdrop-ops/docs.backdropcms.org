@@ -1,0 +1,24 @@
+user_register:
+  pattern: '/user/register'
+  defaults:
+    _content: '\api\test1\ClassA::cMethod'
+  requirements:
+    _access_user_register: 'TRUE'
+
+user_autocomplete:
+  pattern: '/user/autocomplete'
+  defaults:
+    _content: \api\test1\ClassA::dMethod
+  requirements:
+    _permission: 'access user profiles'
+
+user_autocomplete_anonymous:
+  pattern: '/user/autocomplete/anonymous'
+  defaults:
+    _content: "another_function"
+  requirements:
+    _permission: 'access user profiles'
+
+user_autocomplete_something_else:
+  class: api\test1\ClassA
+  another_class: ClassQ_with_suffix

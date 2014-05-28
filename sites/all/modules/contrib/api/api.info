@@ -1,0 +1,49 @@
+name = API
+description = Generates and displays API documentation pages.
+package = Development
+core = 7.x
+configure = admin/config/development/api
+php = 5.3
+dependencies[] = node
+dependencies[] = ctools
+dependencies[] = gplib (>=2.1,<3.0)
+dependencies[] = views
+stylesheets[all][] = api.css
+files[] = tests/api_comments.test
+files[] = tests/api_cruft.test
+files[] = tests/api_dotdot.test
+files[] = tests/api_duplicates.test
+files[] = tests/api_enable.test
+files[] = tests/api_inheritance.test
+files[] = tests/api_legacy.test
+files[] = tests/api_link_code.test
+files[] = tests/api_link_documentation.test
+files[] = tests/api_multidir.test
+files[] = tests/api_multibranch.test
+files[] = tests/api_namespaces.test
+files[] = tests/api_node_access.test
+files[] = tests/api_objects.test
+files[] = tests/api_queue.test
+files[] = tests/api_special_files.test
+files[] = tests/api_test_case.php
+files[] = tests/api_url_patterns.test
+files[] = tests/api_web_links.test
+files[] = tests/api_web_test.test
+files[] = views/api.views.inc
+files[] = views/handlers/api_views_handler_argument_partial_match.inc
+files[] = views/handlers/api_views_handler_field_api_linkable.inc
+files[] = views/handlers/api_views_handler_field_api_namespace.inc
+files[] = views/handlers/api_views_handler_field_api_project.inc
+files[] = views/handlers/api_views_handler_field_api_project_ops.inc
+files[] = views/handlers/api_views_handler_field_api_branch_ops.inc
+files[] = views/handlers/api_views_handler_field_api_docs.inc
+files[] = views/handlers/api_views_handler_filter_project_name.inc
+files[] = views/handlers/api_views_handler_sort_title_length.inc
+files[] = views/plugins/api_views_plugin_style_dl_list.inc
+
+; Information added by Drupal.org packaging script on 2013-12-20
+version = "7.x-1.6"
+core = "7.x"
+project = "api"
+datestamp = "1387574909"
+

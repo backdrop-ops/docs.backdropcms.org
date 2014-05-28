@@ -1,0 +1,115 @@
+<?php
+
+/**
+ * @file
+ * Tests node access functionality for the API module.
+ */
+
+module_load_include('php', 'api', 'tests/api_test_case');
+
+/**
+ * Tests node access functionality.
+ *
+ * The API module responds to queries tagged with "node_access" by removing
+ * the API nodes from the queries. (The API nodes are set up for each API
+ * documentation item, to allow comments to added to the documentation pages.)
+ * This test verifies that queries tagged "node_access" work: that the API nodes
+ * are not included, and that other nodes are included.
+ */
+class ApiNodeAccessTestCase extends ApiWebPagesBaseTest {
+  public static function getInfo() {
+    return array(
+      'name' => 'Node access',
+      'description' => 'Tests node access functionality.',
+      'group' => 'API module',
+    );
+  }
+
+  /**
+   * Tests node access functionality.
+   */
+  function testNodeAccess() {
+    // Create a couple of nodes. There should already be plenty of API nodes.
+    $page = $this->drupalCreateNode();
+    $article = $this->drupalCreateNode(array('type' => 'article'));
+    $branch = $this->getBranch();
+    $object = api_object_load('sample_function', $branch, 'function', 'sample.php');
+
+    // Verify that a node query without the node_access tag returns both API
+    // and non-API nodes.
+    $results = db_query('SELECT * FROM {node}');
+    $this->verifyQueryResults($results, 'All nodes, no tag', array($page->nid, $article->nid, $object->did), array('page', 'article', 'api'));
+
+    // Verify that a node query with the node_access tag returns only non-API
+    // nodes.
+    $results = db_select('node', 'n')
+      ->fields('n', array('nid', 'type'))
+      ->addTag('node_access')
+      ->execute();
+    $this->verifyQueryResults($results, 'Simple nodes, with access tag', array($page->nid, $article->nid), array('page', 'article'), array('api'));
+
+    // Verify that a node query with both the node_access tag and the
+    // api_ignore_node_access tag returns both API and non-API nodes.
+    $results = db_select('node', 'n')
+      ->fields('n', array('nid', 'type'))
+      ->addTag('node_access')
+      ->addTag('api_ignore_node_access')
+      ->execute();
+    $this->verifyQueryResults($results, 'All nodes, both tags', array($page->nid, $article->nid, $object->did), array('page', 'article', 'api'));
+
+    // Try a more complicated query with the node_access tag.
+    $query = db_select('node_revision', 'r');
+    $query->leftJoin('node', 'different_alias', 'r.nid = different_alias.nid');
+    $results = $query
+      ->fields('different_alias', array('nid', 'type'))
+      ->addTag('node_access')
+      ->execute();
+    $this->verifyQueryResults($results, 'Simple nodes, with access tag', array($page->nid, $article->nid), array('page', 'article'), array('api'));
+
+    // Verify that the recent content block works as expected (only the two
+    // added nodes shown). Rather than actually display the block, we'll just
+    // call the function it uses, and tell it to get a large number of nodes
+    // so we get all of them (the API module has about 65 nodes in the sample
+    // code base).
+    $nodes = node_get_recent(500);
+    $this->verifyQueryResults($nodes, 'Recent node block content', array($page->nid, $article->nid), array('page', 'article'), array('api'));
+  }
+
+  /**
+   * Asserts that the correct node IDs and node types are in query results.
+   *
+   * @param $results
+   *   Result set from a node query, or array of node objects. Must contain the
+   *   type and nid fields.
+   * @param $query_message
+   *   String explaining what the query is for assert messages.
+   * @param $nids_yes
+   *   Specific node IDs to verify are part of the query.
+   * @param $types_yes
+   *   Node types to verify are part of the query.
+   * @param $types_no
+   *   Node types to verify are not part of the query.
+   */
+  function verifyQueryResults($results, $query_message, $nids_yes = array(), $types_yes = array(), $types_no = array()) {
+
+    $nids_found = array();
+    $types_found = array();
+    foreach ($results as $node) {
+      if (isset($node->nid)) {
+        $nids_found[$node->nid] = $node->nid;
+      }
+      if (isset($node->type)) {
+        $types_found[$node->type] = $node->type;
+      }
+    }
+
+    $nids_not_found = array_diff($nids_yes, $nids_found);
+    $this->assertEqual(count($nids_not_found), 0, 'All required node IDs (' . implode(', ', $nids_yes) . ') were found in query: ' . $query_message . ' (' . implode(', ', $nids_not_found) . ')');
+
+    $types_not_found = array_diff($types_yes, $types_found);
+    $this->assertEqual(count($types_not_found), 0, 'All required node types (' . implode(', ', $types_yes) . ') were found in query: ' . $query_message . ' (' . implode(', ', $types_not_found) . ')');
+
+    $bad_types_found = array_intersect($types_no, $types_found);
+    $this->assertEqual(count($bad_types_found), 0, 'No forbidden node types (' . implode(', ', $types_no) . ') were found in query: ' . $query_message . ' (' . implode(', ', $bad_types_found) . ')');
+  }
+}

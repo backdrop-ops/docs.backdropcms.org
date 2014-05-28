@@ -1,0 +1,150 @@
+<?php
+
+/**
+ * @file
+ * Tests for the queue functionality of the API module.
+ */
+
+module_load_include('php', 'api', 'tests/api_test_case');
+
+/**
+ * Tests the queue functionality of the API module.
+ */
+class ApiQueuesTestCase extends ApiTestCase {
+
+  public $branch_info;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Parsing queue',
+      'description' => 'Tests that the API parsing queue is functioning properly',
+      'group' => 'API module',
+    );
+  }
+
+  function setUp() {
+    // This test takes longer than most to run, and times out on some machines.
+    $this->timeLimit *= 2;
+
+    $this->baseSetUp();
+    $this->branch_info = $this->setUpBranchAPICall();
+    $this->removePHPBranch();
+    $this->resetBranchesAndCache();
+  }
+
+  /**
+   * Tests queue functionality.
+   */
+  function testQueues() {
+    // Verify there is nothing in the queue to start with.
+    $this->assertEqual($this->countParseQueue(), 0, 'Parse queue is empty');
+
+    // Update the branches and verify the queue has 11 items (one per file).
+    $this->updateBranches();
+    $this->assertEqual($this->countParseQueue(), 11, 'Parse queue has 11 files in it');
+
+    // Update them again and verify there are still 11 items.
+    // Each time we update the queue after this point, wait for a few seconds
+    // to make sure that the branch will think it is time to check for updated
+    // files, and double-check that the log shows the branch was updated.
+    $branch_message = 'Updated ' . $this->branch_info['project'] .
+      ' branch ' . $this->branch_info['branch_name'];
+    sleep(5);
+    $this->updateBranches();
+    $this->checkAndClearLog(array($branch_message));
+    $this->assertEqual($this->countParseQueue(), 11, 'Parse queue still has 11 files in it after second update');
+
+    // Parse all the files and verify the queue is empty.
+    $count = $this->processApiParseQueue(TRUE);
+    $this->assertEqual($count, 11, '11 items were processed in the queue');
+    $this->assertEqual($this->countParseQueue(), 0, 'Parse queue has been emptied');
+
+    // Update branches again and verify nothing is added to the queue.
+    sleep(5);
+    $this->updateBranches();
+    $this->checkAndClearLog(array($branch_message));
+    $this->assertEqual($this->countParseQueue(), 0, 'Parse queue is still empty after branch update');
+
+    // Mark this branch for reparsing, update, and verify the queue is full.
+    $branch = $this->getBranch();
+    $this->verbose(print_r($branch, TRUE));
+    api_mark_for_reparse($branch->branch_id);
+    $this->assertEqual($this->howManyToParse(), 11, '11 files marked for reparsing with branch ID');
+    $this->assertEqual($this->countParseQueue(), 0, 'Parse queue is still empty after marking for parsing');
+
+    sleep(5);
+    $this->updateBranches();
+    $this->checkAndClearLog(array($branch_message));
+    $this->assertEqual($this->countParseQueue(), 11, 'Parse queue is full again (' . $this->countParseQueue() . ') after updating branches.');
+
+    // Reset and verify that it is empty.
+    $this->drupalGet('admin/config/development/api');
+    $this->clickLink(t('reset'));
+    $this->drupalPost(NULL, array(), t('Confirm'));
+    $this->assertEqual($this->countParseQueue(), 0, 'Parse queue is empty (' . $this->countParseQueue() . ') after reset.');
+
+    // Update again and verify it gets full again.
+    sleep(5);
+    $this->updateBranches();
+    $this->checkAndClearLog(array($branch_message));
+    $this->assertEqual($this->countParseQueue(), 11, 'Parse queue is full again (' . $this->countParseQueue() . ') after reset and then updating branches.');
+
+    // Parse and verify empty again.
+    $count = $this->processApiParseQueue(TRUE);
+    $this->assertEqual($count, 11, '11 items were processed in the queue');
+    $this->assertEqual($this->countParseQueue(), 0, 'Parse queue has been emptied');
+
+    // Now try marking to reparse with the branch name.
+    api_mark_for_reparse($branch->branch_name, TRUE);
+    $this->assertEqual($this->howManyToParse(), 11, '11 files marked for reparsing with branch name');
+    $this->assertEqual($this->countParseQueue(), 0, 'Parse queue is still empty after marking for parsing');
+
+    sleep(5);
+    $this->updateBranches();
+    $this->checkAndClearLog(array($branch_message));
+    $this->assertEqual($this->countParseQueue(), 11, 'Parse queue is full again (' . $this->countParseQueue() . ') after marking for reparse.');
+
+    // Parse and verify empty again.
+    $count = $this->processApiParseQueue(TRUE);
+    $this->assertEqual($count, 11, '11 items were processed in the queue');
+    $this->assertEqual($this->countParseQueue(), 0, 'Parse queue has been emptied');
+
+    // Now try marking just one file to reparse.
+    api_mark_for_reparse('sample.php');
+    $this->assertEqual($this->howManyToParse(), 1, $this->howManyToParse() . ' file marked for reparsing with file name');
+    $this->assertEqual($this->countParseQueue(), 0, 'Parse queue is still empty after marking for parsing');
+
+    sleep(5);
+    $this->updateBranches();
+    $this->checkAndClearLog(array($branch_message));
+    $this->assertEqual($this->countParseQueue(), 1, 'Parse queue is full again (' . $this->countParseQueue() . ') after marking for reparse.');
+
+    // Parse and verify empty again.
+    $count = $this->processApiParseQueue(TRUE);
+    $this->assertEqual($count, 1, $count . ' item(s) was processed in the queue');
+    $this->assertEqual($this->countParseQueue(), 0, 'Parse queue has been emptied');
+
+    // Test the update functionality.
+    // First mark the branch so that it doesn't update each cron run.
+    $this->drupalPost('admin/config/development/api/branches/' . $branch->branch_id,
+      array('update_frequency' => 604800),
+      t('Save branch'));
+    // Run the update once, because after saving a branch it might update once.
+    $this->updateBranches();
+    $this->checkAndClearLog();
+
+    // Verify the branch does not get updated this time.
+    sleep(5);
+    $this->updateBranches();
+    $this->checkAndClearLog(array(), array($branch_message));
+
+    // Click the update link on the branches page, update, and verify it does
+    // get updated this time.
+    sleep(5);
+    $this->drupalGet('admin/config/development/api/branches');
+    $this->clickLink('update');
+    $this->assertText('Branch ' . $branch->title . ' set to update at next cron run', 'Update message appears');
+    $this->updateBranches();
+    $this->checkAndClearLog(array($branch_message));
+  }
+}

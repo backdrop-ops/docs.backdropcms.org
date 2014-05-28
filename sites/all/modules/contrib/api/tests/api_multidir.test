@@ -1,0 +1,146 @@
+<?php
+
+/**
+ * @file
+ * Tests for multi-directory setup for the API module.
+ */
+
+module_load_include('php', 'api', 'tests/api_test_case');
+
+/**
+ * Tests that a multi-directory setup works.
+ */
+class ApiMultiDirectoryTestCase extends ApiTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Multiple directories',
+      'description' => 'Tests that the API module can parse files located in multiple directories in one branch',
+      'group' => 'API module',
+    );
+  }
+
+  function setUp() {
+    $this->baseSetUp();
+
+    // Make a branch for both sets of sample code, using a .. in the path.
+    $base = getcwd();
+    $parts = explode('/', $base);
+    $last = array_pop($parts);
+    $prefix = '../' . $last . '/';
+
+    $this->setUpBranchAPICall('', TRUE, array(
+      'directory' => $prefix . drupal_get_path('module', 'api') . '/tests/sample' . "\n" . $prefix . drupal_get_path('module', 'api') . '/tests/sample2',
+      'excluded' => $prefix . drupal_get_path('module', 'api') . '/tests/sample/to_exclude' . "\n" . $prefix . drupal_get_path('module', 'api') . '/tests/sample2/maybe_exclude',
+    ));
+    $this->removePHPBranch();
+
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+
+    $count = $this->processApiParseQueue();
+    $this->assertEqual($count, 13, "13 files were parsed ($count)");
+  }
+
+  /**
+   * Tests that all the files were parsed.
+   */
+  function testParsing() {
+    // Make sure we have the right number of doc objects.
+    $branch = $this->getBranch();
+    $this->assertObjectCount($branch, 90);
+
+    // Verify that the top-level directory was parsed.
+    $object = api_filename_load('sample/sample.php', $branch->project, $branch->branch_name);
+    $this->assertTrue(isset($object) && $object, 'sample.php was found');
+    $this->assertEqual($object->summary, 'A sample file.', 'sample.php has summary ' . $object->summary);
+
+    $object = api_filename_load('sample2/sample2.php', $branch->project, $branch->branch_name);
+    $this->assertTrue(isset($object) && $object, 'sample2.php was found');
+    $this->assertEqual($object->summary, 'A sample file to make as a new project.', 'sample2.php has summary ' . $object->summary);
+
+    $object = api_object_load('second_sample_function', $branch, 'function');
+    $this->assertTrue(isset($object) && $object, 'second_sample_function was found');
+    $this->assertEqual($object->file_name, 'sample2/sample2.php', 'second_sample_function was in file ' . $object->file_name);
+
+    $object = api_object_load('sample_class_function', $branch, 'function');
+    $this->assertTrue(isset($object) && $object, 'sample_class_function was found');
+    $this->assertEqual($object->file_name, 'sample/sample.php', 'sample_class_function was in file ' . $object->file_name);
+
+    $object = api_object_load('YetAnotherExcitingClass', $branch, 'class');
+    $this->assertTrue(isset($object) && $object, 'Class in excluded file was loaded');
+
+    $object = api_object_load('Sample2InSubDir', $branch, 'class');
+    $this->assertTrue(isset($object) && $object, 'Class in excluded subdirectory was loaded');
+
+  }
+}
+
+/**
+ * Tests that a multi-directory setup with excluded regular expression works.
+ */
+class ApiRegularExpressionExclusionTestCase extends ApiTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Regular expression exclusion',
+      'description' => 'Tests that the API module excludes directories and files by regular expression',
+      'group' => 'API module',
+    );
+  }
+
+  function setUp() {
+    $this->baseSetUp();
+
+    // Make a branch for both sets of sample code, using a .. in the path.
+    $base = getcwd();
+    $parts = explode('/', $base);
+    $last = array_pop($parts);
+    $prefix = '../' . $last . '/';
+
+    $this->setUpBranchAPICall('', TRUE, array(
+      'directory' => $prefix . drupal_get_path('module', 'api') . '/tests/sample' . "\n" . $prefix . drupal_get_path('module', 'api') . '/tests/sample2',
+      'excluded' => $prefix . drupal_get_path('module', 'api') . '/tests/sample/to_exclude' . "\n" . $prefix . drupal_get_path('module', 'api') . '/tests/sample2/maybe_exclude',
+      'regexps' => "|subdirectory|\n|inheritance|",
+    ));
+    $this->removePHPBranch();
+
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+
+    $count = $this->processApiParseQueue();
+    $this->assertEqual($count, 8, "8 files were parsed ($count)");
+  }
+
+  /**
+   * Tests that all the files were parsed.
+   */
+  function testParsing() {
+    // Make sure we have the right number of doc objects.
+    $branch = $this->getBranch();
+    $this->assertObjectCount($branch, 44);
+
+    // Verify that the top-level directory was parsed.
+    $object = api_filename_load('sample/sample.php', $branch->project, $branch->branch_name);
+    $this->assertTrue(isset($object) && $object, 'sample.php was found');
+    $this->assertEqual($object->summary, 'A sample file.', 'sample.php has summary ' . $object->summary);
+
+    $object = api_filename_load('sample2/sample2.php', $branch->project, $branch->branch_name);
+    $this->assertTrue(isset($object) && $object, 'sample2.php was found');
+    $this->assertEqual($object->summary, 'A sample file to make as a new project.', 'sample2.php has summary ' . $object->summary);
+
+    $object = api_object_load('second_sample_function', $branch, 'function');
+    $this->assertTrue(isset($object) && $object, 'second_sample_function was found');
+    $this->assertEqual($object->file_name, 'sample2/sample2.php', 'second_sample_function was in file ' . $object->file_name);
+
+    $object = api_object_load('sample_class_function', $branch, 'function');
+    $this->assertTrue(isset($object) && $object, 'sample_class_function was found');
+    $this->assertEqual($object->file_name, 'sample/sample.php', 'sample_class_function was in file ' . $object->file_name);
+
+    $object = api_object_load('YetAnotherExcitingClass', $branch, 'class');
+    $this->assertFalse(isset($object) && $object, 'Class in excluded file was not loaded');
+
+    $object = api_object_load('Sample2InSubDir', $branch, 'class');
+    $this->assertFalse(isset($object) && $object, 'Class in excluded subdirectory was not loaded');
+
+  }
+}
+
