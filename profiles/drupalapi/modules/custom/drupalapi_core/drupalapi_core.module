@@ -1,0 +1,123 @@
+<?php
+/**
+ * @file
+ * Core functions for the DrupalAPI module.
+ */
+
+/**
+ * Features include.
+ */
+include_once('drupalapi_core.features.inc');
+
+/**
+ * Implements hook_init().
+ */
+function drupalapi_core_init() {
+  // Invoke API parse queue batch if site was installed from CLI via Aegir,
+  // Drush or any other method.
+  if (variable_get('install_task', NULL) == 'done' && !variable_get('drupalapi_indexed', FALSE) && arg(0) !== 'batch' && php_sapi_name() !== 'cli') {
+    batch_set(drupalapi_api_setup());
+    batch_process();
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function drupalapi_core_block_info() {
+  $blocks = array();
+  $blocks['realityloop'] = array(
+    'info' => t('Powered by Realityloop'),
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function drupalapi_core_block_view($delta = '') {
+  if ('realityloop' == $delta) {
+    return array(
+      'content' => array(
+        '#type' => 'link',
+        '#href' => 'http://www.realityloop.com',
+        '#title' => 'Powered by Realityloop',
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_update_projects_alter().
+ */
+function drupalapi_core_update_projects_alter(&$projects) {
+  // Remove DrupalAPI Core module form updates.
+  unset($projects['drupalapi_core']);
+
+  // Enable update status for the Commerce Kickstart profile.
+  $modules = system_rebuild_module_data();
+  // The module object is shared in the request, so we need to clone it here.
+  $drupalapi = clone $modules['drupalapi'];
+  $drupalapi->info['hidden'] = FALSE;
+  _update_process_info_list($projects, array('drupalapi' => $drupalapi), 'module', TRUE);
+}
+
+/**
+ * Parse makefiles so we can build projects & branches for API.module
+ */
+function drupalapi_core_get_projects() {
+  $profile_path = realpath('profiles/drupalapi');
+  $makefile_path = $profile_path . '/.sources/sources.make';
+  if (file_exists($makefile_path)) {
+    $sources_makefile = drupal_parse_info_file($makefile_path);
+    $projects = array();
+    foreach ($sources_makefile['includes'] as $source) {
+      if (file_exists($profile_path . '/.sources/' . $source)) {
+        $sources = drupal_parse_info_file($profile_path . '/.sources/' . $source);
+      }
+      elseif (valid_url($source)) {
+        $sources = drupal_parse_info_format(drupal_http_request($source)->data);
+      }
+
+      // Build an array of API projects.
+      foreach ($sources['libraries'] as $key => $repo) {
+        // Set the project name and title. The name will be used to group
+        // extensions under the same project.
+        $project_name = isset($repo['api_project_name']) ? $repo['api_project_name'] : $key;
+        $projects[$project_name]['name'] = $project_name;
+        $projects[$project_name]['title'] = isset($repo['api_project_title']) ? $repo['api_project_title'] : $project_name;
+
+        // 'core' is the only project type with special handling, so it's safe
+        // to default to 'module'.
+        $projects[$project_name]['type'] = isset($repo['api_project_type']) ? $repo['api_project_type'] : 'module';
+
+        // Default to git branches.
+        $project_branch = isset($repo['api_branch']) ? $repo['api_branch'] : $repo['download']['branch'];
+
+        $projects[$project_name]['branches'][$project_branch]['directories'][] = $profile_path . '/' . $repo['destination'] . '/' . $key;
+
+        if (isset($repo['api_core_compatibility'])) {
+          $projects[$project_name]['branches'][$project_branch]['core_compatibility'] = $repo['api_core_compatibility'];
+        }
+        else {
+          // Guess from Drupal contrib branch naming convention.
+          $core_compatibility = explode('.', $project_branch);
+          $projects[$project_name]['branches'][$project_branch]['core_compatibility'] = $core_compatibility[0];
+        }
+
+        $projects[$project_name]['branches'][$project_branch]['preferred'] = isset($repo['api_preferred']) ? $repo['api_preferred'] : FALSE;
+      }
+    }
+    return $projects;
+  }
+}
+
+// To ease debugging the projects array built by drupalapi_core_get_projects(),
+// enable devel, remove the line below, and visit: admin/config/development/api
+/*
+function drupalapi_core_form_alter($form, $form_state, $form_id) {
+  if ($form_id == 'api_page_admin_form' && module_exists('devel')) {
+    dsm(drupalapi_core_get_projects());
+  }
+}
+//*/

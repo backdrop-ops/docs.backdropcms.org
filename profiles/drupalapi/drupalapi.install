@@ -1,0 +1,33 @@
+<?php
+/**
+ * @file
+ * Install hooks for DrupalAPI distribution.
+ */
+
+/**
+ * Implements hook_update_dependencies().
+ */
+function drupalapi_update_dependencies() {
+  $dependencies = array();
+
+  $dependencies['drupalapi'][7100] = array(
+    'api' => 7114,
+  );
+
+  return $dependencies;
+}
+
+/**
+ * Re-index API reference sources.
+ */
+function drupalapi_update_7100(&$sandbox) {
+  if (php_sapi_name() !== 'cli') {
+    $context = array('sandbox' => $sandbox);
+    drupalapi_api_batch($context);
+    $sandbox = $context['sandbox'];
+    $sandbox['#finished'] = isset($context['finished']) ? $context['finished'] : 1;
+  }
+  else {
+    variable_set('drupalapi_indexed', FALSE);
+  }
+}
