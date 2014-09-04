@@ -1,3 +1,0 @@
-This is a sample text file for testing.
-
-It's actually mostly for making links.
