@@ -1,0 +1,46 @@
+name = ABO Change Notice
+description = Change notice content type - like Drupal.org's node/add/changenotice
+core = 7.x
+package = Api.backdropcms.org
+
+
+
+; Dependencies
+
+dependencies[] = abo_field_bases
+dependencies[] = ctools
+dependencies[] = features
+dependencies[] = file
+dependencies[] = list
+dependencies[] = options
+dependencies[] = strongarm
+dependencies[] = taxonomy
+dependencies[] = text
+
+
+
+; Features
+
+features[ctools][] = strongarm:strongarm:1
+
+features[features_api][] = api:2
+
+features[field_instance][] = node-changenotice-body
+features[field_instance][] = node-changenotice-field_details
+features[field_instance][] = node-changenotice-field_file_attachments
+features[field_instance][] = node-changenotice-field_impacts
+features[field_instance][] = node-changenotice-field_introduced_in_branch
+features[field_instance][] = node-changenotice-field_introduced_in_version
+features[field_instance][] = node-changenotice-field_progress
+features[field_instance][] = node-changenotice-field_project
+features[field_instance][] = node-changenotice-field_term_issues
+features[field_instance][] = node-changenotice-field_updates_done
+
+features[node][] = changenotice
+
+features[variable][] = field_bundle_settings_node__changenotice
+features[variable][] = menu_options_changenotice
+features[variable][] = menu_parent_changenotice
+features[variable][] = node_options_changenotice
+features[variable][] = node_preview_changenotice
+features[variable][] = node_submitted_changenotice
