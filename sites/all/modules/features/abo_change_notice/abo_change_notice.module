@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the ABO Change Notice feature.
+ */
+
+include_once 'abo_change_notice.features.inc';
