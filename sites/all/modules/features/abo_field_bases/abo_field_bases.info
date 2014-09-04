@@ -1,0 +1,33 @@
+name = ABO Field Bases
+description = Aimee Degnan Memorial Feature Structure
+core = 7.x
+package = Api.backdropcms.org
+
+
+
+; Dependencies
+
+dependencies[] = features
+dependencies[] = file
+dependencies[] = list
+dependencies[] = taxonomy
+dependencies[] = text
+
+
+
+; Features
+
+features[features_api][] = api:2
+
+features[field_base][] = body
+features[field_base][] = field_details
+features[field_base][] = field_file_attachments
+features[field_base][] = field_impacts
+features[field_base][] = field_introduced_in_branch
+features[field_base][] = field_introduced_in_version
+features[field_base][] = field_progress
+features[field_base][] = field_project
+features[field_base][] = field_term_issues
+features[field_base][] = field_updates_done
+
+features[taxonomy][] = issues
