@@ -16,7 +16,6 @@ dependencies[] = gplib
 dependencies[] = libraries
 dependencies[] = menu
 dependencies[] = strongarm
-dependencies[] = toolbar
 dependencies[] = views
 
 
