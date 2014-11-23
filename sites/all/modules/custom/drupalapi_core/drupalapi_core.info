@@ -1,7 +1,7 @@
 name = DrupalAPI core
 description = Core feature for DrupalAPI
 core = 7.x
-package = " DrupalAPI"
+package = Api.backdropcms.org
 project = drupalapi_core
 
 
@@ -9,7 +9,6 @@ project = drupalapi_core
 ; Dependencies
 
 dependencies[] = api
-dependencies[] = context
 dependencies[] = ctools
 dependencies[] = features
 dependencies[] = gplib
@@ -21,10 +20,6 @@ dependencies[] = views
 
 
 ; Features
-
-features[context][] = layout-global-all
-
-features[ctools][] = context:context:3
 features[ctools][] = strongarm:strongarm:1
 
 features[features_api][] = api:2
@@ -35,10 +30,4 @@ features[variable][] = api_default_branch
 features[variable][] = api_default_project
 features[variable][] = site_frontpage
 features[variable][] = site_name
-
-; Information added by Drupal.org packaging script on 2013-12-16
-version = "7.x-1.5"
-core = "7.x"
-project = "drupalapi"
-datestamp = "1387236996"
 
