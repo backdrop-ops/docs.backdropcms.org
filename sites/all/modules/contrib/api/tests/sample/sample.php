@@ -116,8 +116,6 @@ function sample_function($parameter, $complex_parameter) {
   // Have this function call itself, to verify that it doesn't come up counted
   // as a function call.
   $foo = sample_function();
-
-  $bar = array('#theme' => 'sample_two');
 }
 
 /**

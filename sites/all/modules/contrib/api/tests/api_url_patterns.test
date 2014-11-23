@@ -55,12 +55,12 @@ class ApiURLPatternsTest extends ApiTestCase {
       ),
       array(
         'url' => 'api/' . $project_name . '/classes',
-        'text' => array(t('Classes, traits, and interfaces'), 'Sample class', 'Sample interface'),
+        'text' => array(t('Classes and interfaces'), 'Sample class', 'Sample interface'),
         'links' => array('Sample', 'SampleInterface'),
       ),
       array(
         'url' => 'api/' . $project_name . '/classes/' . $branch_name,
-        'text' => array(t('Classes, traits, and interfaces'), 'Sample class', 'Sample interface', 'subdirectory'),
+        'text' => array(t('Classes and interfaces'), 'Sample class', 'Sample interface', 'subdirectory'),
         'links' => array('Sample', 'SampleInterface', 'classes.php'),
       ),
       array(
@@ -224,39 +224,20 @@ class ApiURLPatternsTest extends ApiTestCase {
 
       // Check menu callbacks.
       array(
-        'url' => 'api/opensearch/',
-        'text' => array('Drupal API documentation'),
+        'url' => 'api/opensearch/' . $project_name . '/' . $branch_name,
+        'text' => array('Drupal API documentation', $branch_title, $branch_name, 'API documentation'),
       ),
       array(
-        'url' => 'api/suggest/duplicate',
+        'url' => 'api/suggest/' . $project_name . '/' . $branch_name . '/duplicate',
         'text' => array('duplicate', 'duplicates.php', 'duplicate_function', 'DUPLICATE_CONSTANT'),
       ),
       array(
         'url' => 'api/function_dump/' . $branch_name,
         'text' => array('sample_function($parameter, $complex_parameter) ### A sample function.'),
       ),
-      // Check the full list dump, with and without paging and limits.
       array(
         'url' => 'api/' . $project_name . '/full_list/' . $branch_name,
-        'text' => array('"object_name":"sample_function"', '"summary":"A sample function."', '"object_name":"another_sample","namespaced_name"', '"summary":"Returns HTML for another sample."'),
-      ),
-      array(
-        'url' => 'api/' . $project_name . '/full_list/' . $branch_name,
-        'url_options' => array('query' => array('limit' => 1)),
-        'text' => array('"object_name":"another_sample"'),
-        'notext' => array('"object_name":"classes.php"'),
-      ),
-      array(
-        'url' => 'api/' . $project_name . '/full_list/' . $branch_name,
-        'url_options' => array('query' => array('limit' => 1, 'page' => 1)),
-        'text' => array('"object_name":"classes.php"'),
-        'notext' => array('"object_name":"another_sample"', '"object_name":"class_samples"'),
-      ),
-      array(
-        'url' => 'api/' . $project_name . '/full_list/' . $branch_name,
-        'url_options' => array('query' => array('limit' => 2)),
-        'text' => array('"object_name":"another_sample"', '"object_name":"classes.php"'),
-        'notext' => array('"object_name":"class_samples"'),
+        'text' => array('"object_name":"sample_function"', '"summary":"A sample function."'),
       ),
 
       // Check pages that should not exist.
@@ -305,8 +286,7 @@ class ApiURLPatternsTest extends ApiTestCase {
 
     foreach ($tests as $test) {
       // Verify the HTTP response is expected.
-      $options = isset($test['url_options']) ? $test['url_options'] : array();
-      $this->drupalGet($test['url'], $options);
+      $this->drupalGet($test['url']);
       $response = isset($test['response']) ? $test['response'] : 200;
       $this->assertResponse($response, $test['url'] . ' got expected HTTP response');
 
@@ -314,13 +294,6 @@ class ApiURLPatternsTest extends ApiTestCase {
       if (isset($test['text'])) {
         foreach ($test['text'] as $text) {
           $this->assertText($text);
-        }
-      }
-
-      // Verify the non-expected text is not on the page.
-      if (isset($test['notext'])) {
-        foreach ($test['notext'] as $text) {
-          $this->assertNoText($text);
         }
       }
 

@@ -5,11 +5,6 @@
  * Base classes for tests for the API module.
  */
 
-// Some functions in these files are called directly in methods below.
-module_load_include('inc', 'api', 'api.admin');
-module_load_include('inc', 'api', 'parser');
-
-
 /**
  * Provides a base class for testing the API module.
  */
@@ -58,9 +53,13 @@ class ApiTestCase extends DrupalWebTestCase {
         'api_reference_storage' => 0,
         'api_overrides' => 0,
         'api_members' => 0,
+        'api_extends' => 0,
         'api_php_branch' => 1,
         'api_php_documentation' => 0,
       ), 0, 'Immediately after install');
+
+    module_load_include('inc', 'api', 'api.admin');
+    module_load_include('inc', 'api', 'parser');
 
     // Set up a super-user.
     $this->super_user = $this->drupalCreateUser(array(
@@ -184,7 +183,6 @@ class ApiTestCase extends DrupalWebTestCase {
    */
   function resetBranchesAndCache() {
     cache_clear_all('variables', 'cache_bootstrap', 'cache');
-    drupal_static_reset();
     variable_initialize();
     api_reset_branches();
   }
@@ -387,7 +385,6 @@ class ApiWebPagesBaseTest extends ApiTestCase {
       'update_frequency' => 1,
       'directory' => drupal_get_path('module', 'api') . '/tests/sample',
       'excluded' => drupal_get_path('module', 'api') . '/tests/sample/to_exclude',
-      'exclude_drupalism_regexp' => '',
       'regexps' => '',
     );
     $info['preferred'] = $default ? 1 : 0;
@@ -402,6 +399,13 @@ class ApiWebPagesBaseTest extends ApiTestCase {
       $project_info,
       t('Save project')
     );
+    if ($default) {
+      // Make this the default project/core compat.
+      $this->drupalPost('admin/config/development/api', array(
+          'api_default_core_compatibility' => $info['core_compatibility'],
+          'api_default_project' => $info['project'],
+        ), t('Save configuration'));
+    }
 
     // Create the branch.
     $branch_info = array(
@@ -413,7 +417,6 @@ class ApiWebPagesBaseTest extends ApiTestCase {
       'update_frequency' => $info['update_frequency'],
       'data[directories]' => $prefix . $info['directory'],
       'data[exclude_files_regexp]' => $info['regexps'],
-      'data[exclude_drupalism_regexp]' => $info['exclude_drupalism_regexp'],
     );
     if ($info['excluded'] != 'none') {
       $branch_info['data[excluded_directories]'] = $prefix . $info['excluded'];
@@ -424,15 +427,6 @@ class ApiWebPagesBaseTest extends ApiTestCase {
     );
 
     if ($default) {
-      // Make this the default project/core compat. This has to be done after
-      // the setup for the branch, because the API module will override the
-      // setting if the branch doesn't exist yet, in an attempt to make sure
-      // a branch exists.
-      $this->drupalPost('admin/config/development/api', array(
-          'api_default_core_compatibility' => $info['core_compatibility'],
-          'api_default_project' => $info['project'],
-        ), t('Save configuration'));
-
       $branches = api_get_branches(TRUE);
       $this_id = 0;
       foreach ($branches as $branch) {
@@ -455,7 +449,7 @@ class ApiWebPagesBaseTest extends ApiTestCase {
   function createPHPBranchUI() {
     $info = array(
       'title' => 'php2',
-      'data[summary]' => url('<front>', array('absolute' => TRUE )) . '/' . drupal_get_path('module', 'api') . '/tests/php_sample/funcsummary.json',
+      'data[summary]' => url('<front>', array('absolute' => TRUE )) . '/' . drupal_get_path('module', 'api') . '/tests/php_sample/funcsummary.txt',
       'data[path]' => 'http://example.com/function/!function',
       'update_frequency' => 1,
     );
@@ -471,22 +465,16 @@ class ApiWebPagesBaseTest extends ApiTestCase {
   /**
    * Sets up an API reference branch using the sample code, in the admin UI.
    *
-   * @param $info
-   *   Array of information to override the defaults (see function code to see
-   *   what they are).
-   *
    * @return
    *   Information array used to create the branch.
    */
-  function createAPIBranchUI($info = array()) {
-    $info += array(
+  function createAPIBranchUI() {
+    $info = array(
       'title' => 'sample_api_branch',
       'data[url]' => url('<front>', array('absolute' => TRUE )) . '/' . drupal_get_path('module', 'api') . '/tests/php_sample/sample_drupal_listing.json',
       'data[search_url]' => url('<front>', array('absolute' => TRUE )) . '/api/test_api_project/test_api_branch/search/',
       'data[core_compatibility]' => '7.x',
       'data[project_type]' => 'core',
-      'data[page_limit]' => 2000,
-      'data[timeout]' => 30,
       'update_frequency' => 1,
     );
 

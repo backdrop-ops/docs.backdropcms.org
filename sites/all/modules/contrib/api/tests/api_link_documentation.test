@@ -6,7 +6,6 @@
  */
 
 module_load_include('php', 'api', 'tests/api_test_case');
-module_load_include('inc', 'api', 'api.formatting');
 
 /**
  * Tests the api_link_documentation() function.

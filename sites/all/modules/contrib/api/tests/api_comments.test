@@ -268,8 +268,6 @@ class ApiTextFormatNoBranchTestCase extends ApiWebPagesBaseTest {
       'post comments',
       'skip comment approval',
       'administer filters',
-      'administer users',
-      'administer permissions',
     ));
 
     $this->drupalLogin($this->super_user);
@@ -281,51 +279,21 @@ class ApiTextFormatNoBranchTestCase extends ApiWebPagesBaseTest {
     // interface.
     $this->php_branch_info = $this->createPHPBranchUI();
 
-    // Temporarily set up a regular files branch and parse it.
-    $temp_branch_info = $this->setUpBranchUI();
-    $this->resetBranchesAndCache();
-    $this->updateBranches();
-    $this->processApiParseQueue();
+    // Create an "api" branch with the sample API functions.
+    $this->api_branch_info = $this->createAPIBranchUI();
 
-    // Create an "api" branch that points to the temporary branch, and parse
-    // it. For this, anonymous users must have permission to view API pages.
-    $url = url('api/' . $temp_branch_info['project'] . '/full_list', array('absolute' => TRUE));
-    $this->api_branch_info = $this->createAPIBranchUI(array('data[url]' => $url, 'data[page_limit]' => 10));
-
-    $this->drupalPost('admin/people/permissions', array(
-        '1[access API reference]' => TRUE,
-      ), t('Save permissions'));
-
-    $this->resetBranchesAndCache();
-    $this->updateBranches();
-    $this->processApiParseQueue();
-
-    $this->drupalGet('admin/reports/dblog');
-
-    // Remove the files branch.
-    $this->drupalPost('admin/config/development/api/branches/1/delete', array(), t('Delete'));
-    $this->resetBranchesAndCache();
-
-    // Verify things are set up right.
-    $this->verifyCounts(array(
-        'api_branch' => 0,
-        'api_documentation' => 0,
-        'api_php_branch' => 2,
-        'api_external_documentation' => 67,
-        'api_php_documentation' => 2,
-      ), 0, 'Branches set up');
-
-
-    // Set the core compatibility to 7.x.
-    $this->drupalPost('admin/config/development/api', array(
-        'api_default_core_compatibility' => '7.x',
-      ), t('Save configuration'));
+    // Specifically do not set up any regular files branches.
 
     // Set up the Filtered HTML text format to have the API format as part of
     // it.
     $this->drupalPost('admin/config/content/formats/filtered_html', array(
         'filters[api_filter][status]' => 1,
       ), t('Save configuration'));
+
+    // Parse the code.
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+    $this->processApiParseQueue();
 
     // Make a node.
     $this->node = $this->drupalCreateNode(array('comment' => COMMENT_NODE_OPEN));
@@ -340,12 +308,10 @@ class ApiTextFormatNoBranchTestCase extends ApiWebPagesBaseTest {
     $this->drupalGet('node/' . $this->node->nid);
     $this->drupalPost(NULL, array(
       'subject' => 'test',
-      'comment_body[und][0][value]' => 'This is a test of links to things like foo_function() and sample_function() and SubSample and SubSample::bar().',
+      'comment_body[und][0][value]' => 'This is a test of links to things like foo_function() and drupal_alter().',
       ), t('Save'));
 
     $this->assertLinkURLSubstring('foo_function', 'example.com/function/foo_function', 'Link to fake PHP function is created', 'Link to fake PHP function goes to right place');
-    $this->assertLinkURLSubstring('sample_function', 'sample.php/function/sample_function', 'Link to fake API reference function is created', 'Link to API reference function goes to right place');
-    $this->assertLinkURLSubstring('SubSample', 'classes.php/class/SubSample', 'Link to fake API reference class is created', 'Link to API reference class goes to right place');
-    $this->assertLinkURLSubstring('SubSample::bar', 'classes.php/function/SubSample', 'Link to fake API reference method is created', 'Link to API reference method goes to right place');
+    $this->assertLinkURLSubstring('drupal_alter', 'example.com/api/test/drupal.php/function/drupal_alter/7.x-1.x', 'Link to fake API reference function is created', 'Link to API reference function goes to right place');
   }
 }

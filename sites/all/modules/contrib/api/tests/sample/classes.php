@@ -16,14 +16,13 @@
  * Sample class.
  *
  * This example now includes some annotation for testing, including a function
- * name and a class name that should turn into links in the code section.
+ * name that should turn into a link in the code section.
  *
- * @SampleInSubDir(
+ * @Plugin(
  *   id = "samplefoo",
  *   title = @Translation("A great plugin title"),
  *   description = @Translation("A very descriptive plugin description."),
- *   something = "foo_sample_name",
- *   else = "SubSample"
+ *   something = 'foo_sample_name'
  * )
  */
 class Sample extends ClassNotDefinedHere implements SampleInterface {
@@ -76,10 +75,6 @@ class Sample extends ClassNotDefinedHere implements SampleInterface {
 
     // This should link to a search.
     $x->bar();
-
-    // This should link to the property. Not really valid PHP as this is
-    // not a static property, but just to test that the link works.
-    $foo = static::$property;
   }
 }
 

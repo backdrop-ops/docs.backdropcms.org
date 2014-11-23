@@ -47,7 +47,7 @@ class ApiMultiDirectoryTestCase extends ApiTestCase {
   function testParsing() {
     // Make sure we have the right number of doc objects.
     $branch = $this->getBranch();
-    $this->assertObjectCount($branch, 90);
+    $this->assertObjectCount($branch, 88);
 
     // Verify that the top-level directory was parsed.
     $object = api_filename_load('sample/sample.php', $branch->project, $branch->branch_name);

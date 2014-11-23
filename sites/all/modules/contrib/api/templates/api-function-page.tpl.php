@@ -49,16 +49,16 @@
 ?>
 <table id="api-function-signature">
   <tbody>
-    <?php foreach ($signatures as $signature) { ?>
+    <?php foreach ($signatures as $branch => $signature) { ?>
       <?php if ($signature['active']) { ?>
         <tr class="active">
-          <td class="branch"><?php print $signature['label']; ?></td>
+          <td class="branch"><?php print $branch; ?></td>
           <td class="signature"><code><?php print $signature['signature']; ?></code></td>
         </tr>
       <?php }
             else { ?>
         <tr>
-          <td class="branch"><?php print l($signature['label'], $signature['url'], array('html' => TRUE)); ?></td>
+          <td class="branch"><?php print l($branch, $signature['url'], array('html' => TRUE)); ?></td>
           <td class="signature"><code><?php print $signature['signature']; ?></code></td>
         </tr>
       <?php } ?>

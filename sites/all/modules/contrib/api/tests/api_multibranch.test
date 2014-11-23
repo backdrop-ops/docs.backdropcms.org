@@ -59,7 +59,6 @@ class ApiMultipleBranchesTest extends ApiWebPagesBaseTest {
   function testAll() {
     $this->_testBranchesCallingFunctions();
     $this->_testBranchLinks();
-    $this->_testApiS();
   }
 
   /**
@@ -140,7 +139,7 @@ class ApiMultipleBranchesTest extends ApiWebPagesBaseTest {
     $this->assertNoRaw('Sample::foo', 'Sample method name is not shown');
 
     // Test on a search page.
-    $this->drupalGet('api/' . $this->branch_info['project'] . '/' . $this->branch_info['branch_name'] . '/search/samp');
+    $this->drupalget('api/' . $this->branch_info['project'] . '/' . $this->branch_info['branch_name'] . '/search/samp');
     $this->assertLink('Sample', 0, 'Sample class is found');
     $this->assertLink('sample.php', 0, 'Sample file is found');
     $this->assertLink('sample_function', 0, 'Sample function is found');
@@ -153,29 +152,6 @@ class ApiMultipleBranchesTest extends ApiWebPagesBaseTest {
     $this->assertLink('second_sample_function', 0, 'Second sample function is found');
     $this->assertLink('Search ' . $this->branch_info['title'] . ' for samp', 0, 'Link to other search is found');
     $this->assertNoLink(t('Other projects'), 'Link to other projects is not present since there are no others');
-  }
-
-  /**
-   * Tests that the apis path works.
-   */
-  function _testApiS() {
-    // This should go to the sample_function in the first project.
-    $this->drupalGet('apis/sample_function');
-    $this->assertURLContains('api/' . $this->branch_info['project'] . '/sample.php/function/sample_function', 'First sample_function is found by apis');
-
-    // This should go to a search for sample in the first project.
-    $this->drupalGet('apis/sample');
-    $this->assertURLContains('api/' . $this->branch_info['project'] . '/' . $this->branch_info['branch_name'] . '/search/sample', 'Partial-match search works in apis');
-
-    // This should go to the second_sample_function in the second project.
-    $this->drupalGet('apis/second_sample_function');
-    $this->assertURLContains('api/' . $this->branch_info_2['project'] . '/sample2.php/function/second_sample_function', 'second_sample_function is found by apis');
-
-    // This should not find anything.
-    $this->drupalGet('apis/pizza');
-    $this->assertText('Sorry', 'Start of message is there');
-    $this->assertText('cannot be found', 'End of message is there');
-    $this->assertText('pizza', 'Search term is displayed');
   }
 }
 
@@ -260,7 +236,6 @@ class ApiMultipleProjectsTest extends ApiWebPagesBaseTest {
     $this->_testPages();
     $this->_testBranchesCallingFunctions();
     $this->_testBranchLinks();
-    $this->_testApiS();
   }
 
   /**
@@ -348,40 +323,5 @@ class ApiMultipleProjectsTest extends ApiWebPagesBaseTest {
     $this->assertLinkURLSubstring('theme', $this->branch_info_core['project'] . '/drupal.php/function/theme', 'theme link exists', 'theme link went to the right place');
     $this->assertText('sample_function', 'sample_function is there');
     $this->assertNoLink('sample_function', 'sample_function is not a link');
-
-    // Check on the class inheritance across branches.
-    $this->drupalGet('api/' . $this->branch_info_2['project'] . '/inheritance.php/class/OtherBranchExtension/' . $this->branch_info_2['branch_name']);
-    $this->assertLink('Sample2::baz', 0, 'Link to inherited function is present');
-    $this->assertText('Implement this API', 'Description of inherited function is present');
-    $this->assertLink('SampleInterface::foo', 0, 'Link to overridden function exists');
-    $this->assertLink('Sample2', 0, 'Link to base class exists');
-    $this->assertLink('SampleInterface', 0, 'Link to interface exists');
-  }
-
-  /**
-   * Tests that the apis path works.
-   */
-  function _testApiS() {
-    // This should go to the sample_function in the first project.
-    $this->drupalGet('apis/sample_function');
-    $this->assertURLContains('api/' . $this->branch_info['project'] . '/sample.php/function/sample_function', 'First sample_function is found by apis');
-
-    // This should go to a search for sample in the first project.
-    $this->drupalGet('apis/sample');
-    $this->assertURLContains('api/' . $this->branch_info['project'] . '/' . $this->branch_info['branch_name'] . '/search/sample', 'Partial-match search works in apis');
-
-    // This should go to the second_sample_function in the second project.
-    $this->drupalGet('apis/second_sample_function');
-    $this->assertURLContains('api/' . $this->branch_info_2['project'] . '/sample2.php/function/second_sample_function', 'second_sample_function is found by apis');
-
-    // This should go to the drupal_alter in the core project.
-    $this->drupalGet('apis/module_invoke_all');
-    $this->assertURLContains('api/' . $this->branch_info_core['project'] . '/drupal.php/function/module_invoke_all', 'module_invoke_all is found by apis');
-
-    // This should not find anything.
-    $this->drupalGet('apis/pizza');
-    $this->assertText('Sorry', 'Start of message is there');
-    $this->assertText('cannot be found', 'End of message is there');
-    $this->assertText('pizza', 'Search term is displayed');
   }
 }

@@ -25,46 +25,6 @@ function api_page_admin_overview() {
     '#markup' => '<h3>' . t('Status') . '</h3>',
   );
 
-  // Check whether there is a default branch, project, and core compatibility.
-  $ok = TRUE;
-  $branch_id = variable_get('api_default_branch', NULL);
-  $branches = api_get_branches();
-  if (!$branch_id || !isset($branches[$branch_id])) {
-    $ok = FALSE;
-    $output['branch_status'] = array(
-      '#type' => 'markup',
-      '#markup' => '<p>' . t('You do not have a default branch set up.') . '</p>',
-    );
-  }
-  $project = variable_get('api_default_project', NULL);
-  $version = variable_get('api_default_core_compatibility', NULL);
-  if (!$project) {
-    $ok = FALSE;
-    $output['project_status'] = array(
-      '#type' => 'markup',
-      '#markup' => '<p>' . t('You do not have a default project set up.') . '</p>',
-    );
-  }
-  if (!$version) {
-    $ok = FALSE;
-    $output['version_status'] = array(
-      '#type' => 'markup',
-      '#markup' => '<p>' . t('You do not have a default core compatibility set up.') . '</p>',
-    );
-  }
-  if ($ok) {
-    $output['setup_status'] = array(
-      '#type' => 'markup',
-      '#markup' => '<p>' . t('You have a default branch, project, and core compatibility set up, so after parsing, you should be able to view API pages.') . '</p>',
-    );
-  }
-  else {
-    $output['setup_status'] = array(
-      '#type' => 'markup',
-      '#markup' => '<p>' . t('Without a default branch, project, and core compatibility, you cannot view API pages. You will also need a default core compatibility, but not a default project or branch, if you are using an API reference branch to use the API text filter.') . '</p>',
-    );
-  }
-
   // Display library status.
   if (api_libraries_loaded(FALSE)) {
     $output['library_status'] = array(
@@ -128,30 +88,19 @@ function api_page_admin_overview() {
 function api_page_admin_form($form, &$form_state) {
   $form['api_default_core_compatibility'] = array(
     '#type' => 'textfield',
-    '#default_value' => variable_get('api_default_core_compatibility', ''),
+    '#default_value' => variable_get('api_default_core_compatibility', '7.x'),
     '#title' => t('Default core compatibility'),
     '#required' => TRUE,
-    '#description' => t('The core compatibility of the default branch/version to display if none is given in a URL. This may be overridden by the API module if a corresponding branch does not exist.'),
+    '#description' => t('The core compatibility of the default branch/version to display if none is given in a URL'),
   );
 
   $form['api_default_project'] = array(
     '#type' => 'textfield',
-    '#default_value' => variable_get('api_default_project', ''),
+    '#default_value' => variable_get('api_default_project', 'drupal'),
     '#title' => t('Default project'),
+    '#required' => TRUE,
     '#autocomplete_path' => 'api/project/autocomplete',
-    '#description' => t('Name of the default project to display if none is given in a URL. This may be overridden by the API module if a corresponding branch does not exist.'),
-  );
-
-  $form['api_opensearch_name'] = array(
-    '#type' => 'textfield',
-    '#default_value' => variable_get('api_opensearch_name', t('Drupal API')),
-    '#title' => t('Name of site for OpenSearch'),
-  );
-
-  $form['api_opensearch_description'] = array(
-    '#type' => 'textfield',
-    '#default_value' => variable_get('api_opensearch_description', t('Drupal API documentation')),
-    '#title' => t('Description of site for OpenSearch'),
+    '#description' => t('Name of the default project to display if none is given in a URL'),
   );
 
   $form = system_settings_form($form);
@@ -304,9 +253,6 @@ function api_reset_queue_form_submit($form, &$form_state) {
 function api_branch_edit_form($form, $form_state, $branch_id = NULL) {
   if (is_numeric($branch_id)) {
     $branch = api_get_branch_by_id($branch_id);
-    if (!isset($branch->exclude_drupalism_regexp)) {
-      $branch->exclude_drupalism_regexp = '';
-    }
   }
   else {
     $branch = new stdClass();
@@ -320,7 +266,6 @@ function api_branch_edit_form($form, $form_state, $branch_id = NULL) {
     $branch->excluded_directories = '';
     $branch->exclude_files_regexp = '';
     $branch->update_frequency = 1;
-    $branch->exclude_drupalism_regexp = '';
   }
 
   $form = array(
@@ -399,15 +344,6 @@ function api_branch_edit_form($form, $form_state, $branch_id = NULL) {
     '#element_validate' => array('api_check_regexps'),
   );
 
-  $form['data']['exclude_drupalism_regexp'] = array(
-    '#title' => t('Exclude files from Drupal-specific parsing by regular expressions'),
-    '#type' => 'textarea',
-    '#default_value' => $branch->exclude_drupalism_regexp,
-    '#rows' => 3,
-    '#description' => t('Regular expressions: all matching files will be excluded from Drupal-specific parsing, one per line. Include delimeters. Note that if you change this setting, you will need to re-parse affected files.'),
-    '#element_validate' => array('api_check_regexps'),
-  );
-
   $form['update_frequency'] = array(
     '#type' => 'select',
     '#title' => t('Branch update frequency'),
@@ -481,7 +417,7 @@ function api_check_directories($element, &$form_state) {
 /**
  * Verifies that all regular expressions are legal.
  *
- * Element validation callback for the exclude regexp elements of
+ * Element validation callback for the exclude regexp element of
  * api_branch_edit_form().
  */
 function api_check_regexps($element, &$form_state) {
@@ -591,7 +527,7 @@ function api_php_branch_edit_form($form, $form_state, $branch_id = NULL) {
     '#title' => t('Function list'),
     '#default_value' => $branch->summary,
     '#required' => TRUE,
-    '#description' => t('The URL of the JSON-formatted PHP function summary list.'),
+    '#description' => t('The URL of the PHP function summary list.'),
   );
 
   $form['data']['path'] = array(
@@ -668,8 +604,6 @@ function api_api_branch_edit_form($form, $form_state, $branch_id = NULL) {
     $branch->project_type = 'core';
     $branch->update_frequency = 1;
     $branch->search_url = '';
-    $branch->timeout = 30;
-    $branch->page_limit = 2000;
   }
 
   $form = array(
@@ -703,7 +637,7 @@ function api_api_branch_edit_form($form, $form_state, $branch_id = NULL) {
   $form['data']['search_url'] = array(
     '#type' => 'textfield',
     '#title' => t('Branch search URL'),
-    '#default_value' => $branch->search_url,
+    '#default_value' => $branch->url,
     '#required' => TRUE,
     '#description' => t('The URL to use for searching by appending the search term, such as http://api.drupal.org/api/drupal/7/search/'),
   );
@@ -729,20 +663,6 @@ function api_api_branch_edit_form($form, $form_state, $branch_id = NULL) {
     '#description' => t('During cron runs, this branch will be checked for updates in the information. This sets a minimum time to wait before checking.'),
     '#default_value' => isset($branch->update_frequency) ? $branch->update_frequency : 1,
     '#options' => drupal_map_assoc(array(1, 3600, 10800, 21600, 43200, 86400, 604800), 'format_interval'),
-  );
-
-  $form['data']['page_limit'] = array(
-    '#type' => 'textfield',
-    '#default_value' => (isset($branch->page_limit) ? $branch->page_limit : ''),
-    '#title' => t('Items per page'),
-    '#description' => t('Updates are paged using this many items per page. 2000 is suggested, and is the default if not set'),
-  );
-
-  $form['data']['timeout'] = array(
-    '#type' => 'textfield',
-    '#default_value' => (isset($branch->timeout) ? $branch->timeout : ''),
-    '#title' => t('Timeout'),
-    '#description' => t('Downloads for each page of updates time out after this many seconds. If you are having trouble with timeouts, decrease the items per page setting, or increase this timeout value. Defaults to 30 seconds if not set.'),
   );
 
   $form['submit'] = array(

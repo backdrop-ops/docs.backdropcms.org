@@ -251,8 +251,8 @@ function api_schema() {
       ),
       'code' => array(
         'description' => 'Formatted source code',
-        'type' => 'blob',
-        'size' => 'big',
+        'type' => 'text',
+        'size' => 'medium',
         'not null' => TRUE,
       ),
       'start_line' => array(
@@ -313,14 +313,6 @@ function api_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'is_drupal' => array(
-        'description' => 'Whether this is or is not a Drupal object',
-        'type' => 'int',
-        'size' => 'tiny',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 1,
-      ),
     ),
     'primary key' => array('did'),
     'indexes' => array(
@@ -333,8 +325,6 @@ function api_schema() {
       'member_name' => array('member_name'),
       'namespace' => array('namespace'),
       'namespaced_name' => array('namespaced_name'),
-      'branch_object_class' => array('branch_id', 'object_type', 'class_did'),
-      'is_drupal' => array('is_drupal'),
     ),
   );
 
@@ -400,7 +390,7 @@ function api_schema() {
       ),
       'object_name' => array(
         'type' => 'varchar',
-        'length' => '255',
+        'length' => '127',
         'not null' => TRUE,
         'default' => '',
       ),
@@ -437,9 +427,10 @@ function api_schema() {
         'not null' => TRUE,
       ),
       'url' => array(
-        'type' => 'text',
-        'size' => 'medium',
+        'type' => 'varchar',
+        'length' => '255',
         'not null' => TRUE,
+        'default' => '',
       ),
     ),
     'primary key' => array('did'),
@@ -536,19 +527,12 @@ function api_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'extends_did' => array(
-        'description' => 'If this is a class or interface inheritance, the computed did value',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => FALSE,
-      ),
     ),
     'indexes' => array(
       'from_did' => array('from_did'),
       'object_name' => array('object_name'),
       'object_type' => array('object_type'),
       'branch_id' => array('branch_id'),
-      'extends_did' => array('extends_did'),
     ),
   );
 
@@ -593,17 +577,30 @@ function api_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'member_alias' => array(
-        'description' => 'Alias of the member, for trait inheritance',
-        'type' => 'varchar',
-        'length' => 127,
-        'not null' => FALSE,
-        'default' => NULL,
-      ),
     ),
     'indexes' => array(
       'did' => array('did'),
       'class_did' => array('class_did'),
+    ),
+  );
+
+  $schema['api_extends'] = array(
+    'description' => 'Keep track of class parents.',
+    'fields' => array(
+      'did' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'parent_did' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('did'),
+    'indexes' => array(
+      'parent_did' => array('parent_did'),
     ),
   );
 
@@ -654,9 +651,9 @@ function api_schema() {
  */
 function api_enable() {
   // Make sure a few things are reset. This is only necessary for running tests.
-  drupal_static_reset('api_get_branches');
-  drupal_static_reset('api_get_branch_names');
-  drupal_static_reset('api_get_php_branches');
+  api_get_branches(TRUE);
+  api_get_branch_names(TRUE);
+  api_get_php_branches(TRUE);
 
   // Create the PHP branch if it doesn't already exist.
   $exists = FALSE;
@@ -674,7 +671,7 @@ function api_enable() {
     $branch->title = 'PHP functions';
     $branch->update_time = 604800;
     $branch->data = array(
-      'summary' => 'http://doc.php.net/downloads/json/php_manual_en.json',
+      'summary' => 'http://svn.php.net/repository/phpdoc/doc-base/trunk/funcsummary.txt',
       'path' => 'http://php.net/!function',
     );
     api_save_php_branch($branch);
@@ -949,12 +946,42 @@ function api_update_7107( &$sandbox) {
 }
 
 /**
- * (Removed.)
+ * Add new table {api_extends}.
  */
 function api_update_7108() {
-  // This used to create the api_extends table, but since the table is
-  // removed in a later update, don't bother now (if we are running this
-  // version of the file, we don't need it).
+  db_create_table('api_extends', array(
+    'description' => 'Keep track of class parents.',
+    'fields' => array(
+      'did' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'parent_did' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('did'),
+    'indexes' => array(
+      'parent_did' => array('parent_did'),
+    ),
+  ));
+
+  // Only save class parents to the table if they are unique names.
+  $select = db_select('api_reference_storage', 'r')
+    ->condition('r.object_type', 'class');
+  $select->innerJoin('api_documentation', 'd', 'd.branch_id = r.branch_id AND d.object_name = r.object_name');
+  $select->condition('d.object_type', 'class');
+  $select->leftJoin('api_documentation', 'd2', 'd2.branch_id = r.branch_id AND d2.object_name = r.object_name AND d2.did <> d.did');
+  $select->isNull('d2.did');
+  $select->addField('r', 'from_did', 'did');
+  $select->addField('d', 'did', 'parent_did');
+
+  db_insert('api_extends')
+    ->from($select)
+    ->execute();
 }
 
 /**
@@ -1540,148 +1567,6 @@ function api_update_7127() {
 }
 
 /**
- * Make the api_documentation.code field binary instead of text.
- */
-function api_update_7128() {
-  db_change_field('api_documentation', 'code', 'code', array(
-    'description' => 'Formatted source code',
-    'type' => 'blob',
-    'size' => 'big',
-    'not null' => TRUE,
-  ));
-}
-
-/**
- * Add an index to the api_documentation table.
- */
-function api_update_7129() {
-  db_add_index('api_documentation', 'branch_object_class', array('branch_id', 'object_type', 'class_did'));
-}
-
-/**
- * Make the api_external_documentation.url field text instead of varchar.
- */
-function api_update_7130() {
-  db_change_field('api_external_documentation', 'url', 'url', array(
-    'type' => 'text',
-    'size' => 'medium',
-    'not null' => TRUE,
-  ));
-
-  // Due to a previous code update, it would be a good idea to reset the
-  // branch list too.
-  api_reset_branches();
-}
-
-/**
- * Make the api_external_documentation.object_name longer.
- */
-function api_update_7131() {
-  db_change_field('api_external_documentation', 'object_name', 'object_name', array(
-    'type' => 'varchar',
-    'length' => '255',
-    'not null' => TRUE,
-    'default' => '',
-  ));
-}
-
-/**
- * Add field is_drupal to the api_documentation table.
- */
-function api_update_7132() {
-  db_add_field('api_documentation', 'is_drupal', array(
-        'description' => 'Whether this is or is not a Drupal object',
-        'type' => 'int',
-        'size' => 'tiny',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 1,
-    ), array('indexes' => array('is_drupal' => array('is_drupal'))));
-}
-
-/**
- * Add field extends_did to the api_reference_storage table, in place of the
- * api_extends table.
- */
-function api_update_7133() {
-  // Add the new field to api_reference_storage.
-  db_add_field('api_reference_storage', 'extends_did', array(
-        'description' => 'If this is a class or interface inheritance, the computed did value',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => FALSE,
-    ), array('indexes' => array('extends_did' => array('extends_did'))));
-
-  // Delete the {api_extends} table, if it even exists.
-  if (db_table_exists('api_extends')) {
-    db_drop_table('api_extends');
-  }
-}
-
-/**
- * Mark all files for reparse, due to some updates to the parsing code.
- */
-function api_update_7134() {
-  $count = api_update_mark_for_reparse();
-  return format_string('@count files marked for reparse, starting at next cron run', array('@count' => $count));
-}
-
-/**
- * Warn users about funcsummary.txt.
- */
-function api_update_7135() {
-  return 'php.net reference branches have changed. If you are using a funcsummary.txt URL in a PHP reference branch, you need to point it to http://doc.php.net/downloads/json/php_manual_en.json instead. You should also update infrequently (weekly).';
-}
-
-/**
- * Repair database for missing file records.
- */
-function api_update_7136() {
-  // Find file records in api_documentation without records in api_file.
-  // These cause the API module to repeatedly parse the same file. There should
-  // not be any, but there may be a few.
-  $query = db_select('api_documentation', 'd');
-  $query->leftJoin('api_file', 'f', 'd.did = f.did');
-  $query
-    ->fields('d', array('did', 'file_name'))
-    ->isNull('f.basename')
-    ->condition('d.object_type', 'file');
-  $results = $query->execute();
-  foreach ($results as $file) {
-    $info = pathinfo($file->file_name);
-    db_insert('api_file')
-      ->fields(array(
-          'did' => $file->did,
-          'basename' => $info['basename'],
-          'modified' => 0,
-          'queued' => 0,
-        ))
-      ->execute();
-  }
-}
-
-/**
- * Add alias field to api_members table.
- */
-function api_update_7137() {
-  db_add_field('api_members', 'member_alias', array(
-      'description' => 'Alias of the member, for trait inheritance',
-      'type' => 'varchar',
-      'length' => 127,
-      'not null' => FALSE,
-      'default' => NULL,
-    ));
-}
-
-/**
- * Mark all files for reparse, due to various updates to the parsing code.
- */
-function api_update_7138() {
-  $count = api_update_mark_for_reparse();
-  return format_string('@count files marked for reparse, starting at next cron run', array('@count' => $count));
-}
-
-/**
  * Remove variables and other data on uninstall.
  */
 function api_uninstall() {
@@ -1699,8 +1584,6 @@ function api_uninstall() {
   $names[] = 'comment_api';
   $names[] = 'api_default_core_compatibility';
   $names[] = 'api_default_project';
-  $names[] = 'api_opensearch_name';
-  $names[] = 'api_opensearch_description';
   foreach ($names as $name) {
     variable_del($name);
   }

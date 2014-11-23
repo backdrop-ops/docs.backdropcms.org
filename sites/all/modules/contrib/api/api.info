@@ -24,7 +24,6 @@ files[] = tests/api_namespaces.test
 files[] = tests/api_node_access.test
 files[] = tests/api_objects.test
 files[] = tests/api_queue.test
-files[] = tests/api_search_integration.test
 files[] = tests/api_special_files.test
 files[] = tests/api_test_case.php
 files[] = tests/api_url_patterns.test
@@ -38,15 +37,12 @@ files[] = views/handlers/api_views_handler_field_api_project.inc
 files[] = views/handlers/api_views_handler_field_api_project_ops.inc
 files[] = views/handlers/api_views_handler_field_api_branch_ops.inc
 files[] = views/handlers/api_views_handler_field_api_docs.inc
-files[] = views/handlers/api_views_handler_field_api_service_tags.inc
 files[] = views/handlers/api_views_handler_filter_project_name.inc
-files[] = views/handlers/api_views_handler_filter_service_tag.inc
-files[] = views/handlers/api_views_handler_sort_title_length.inc
 files[] = views/plugins/api_views_plugin_style_dl_list.inc
 
-; Information added by Drupal.org packaging script on 2014-06-24
-version = "7.x-1.7"
+; Information added by drupal.org packaging script on 2013-06-27
+version = "7.x-1.5"
 core = "7.x"
 project = "api"
-datestamp = "1403630328"
+datestamp = "1372362952"
 

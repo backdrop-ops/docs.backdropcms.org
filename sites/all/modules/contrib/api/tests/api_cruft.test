@@ -64,6 +64,7 @@ class ApiCruftTestCase extends ApiWebPagesBaseTest {
       'api_function' => 0,
       'api_members' => 0,
       'api_overrides' => 0,
+      'api_extends' => 0,
       'api_file' => 0,
       'api_namespace' => 0,
       'node' => 1,
@@ -105,18 +106,9 @@ class ApiCruftTestCase extends ApiWebPagesBaseTest {
     $counts['api_function'] = 30;
     $counts['api_members'] = 30;
     $counts['api_overrides'] = 22;
+    $counts['api_extends'] = 2;
     $this->verifyCounts($counts, 0, 'Parse the branch');
     $this->checkAndClearLog(array('Skipped API parse'));
-
-    // Mark branch for update and reparsing.
-    $this->drupalGet('admin/config/development/api/branches/' . $default_branch->branch_id . '/update');
-    $this->drupalGet('admin/config/development/api/branches/' . $default_branch->branch_id . '/reparse');
-    // Check counts and log; counts should stay the same.
-    $this->resetBranchesAndCache();
-    $this->updateBranches();
-    $this->processApiParseQueue();
-    $this->verifyCounts($counts, 0, 'Reparse the branch');
-    $this->checkAndClearLog(array('Updated ' . $default_branch->project . ' branch', 'API parse ' . $default_branch->project . ' branch'));
 
     // Add one comment in the main directory and one in the subdirectory, and
     // verify counts.
@@ -151,8 +143,6 @@ class ApiCruftTestCase extends ApiWebPagesBaseTest {
     // still visible.
     $this->updateBranches();
     $this->processApiParseQueue();
-    $this->checkAndClearLog(array('Removing subdirectory/classes-subdir.php'));
-
     $counts['comment'] = 1;
     $counts['api_file'] = 7;
     $counts['api_documentation'] = 41;
@@ -160,6 +150,7 @@ class ApiCruftTestCase extends ApiWebPagesBaseTest {
     $counts['node'] = 42;
     $counts['api_members'] = 13;
     $counts['api_overrides'] = 8;
+    $counts['api_extends'] = 1;
     $this->verifyCounts($counts, 0, 'Exclude subdirectory');
 
     $this->drupalGet('api/' . $default_branch->project . '/classes.php/class/Sample');
@@ -177,16 +168,11 @@ class ApiCruftTestCase extends ApiWebPagesBaseTest {
     $counts['node'] = 1;
     $counts['api_members'] = 0;
     $counts['api_overrides'] = 0;
-    // At this point, make sure the reference storage table is cleared out
-    // too. We haven't been tracking it.
-    $counts['api_reference_storage'] = 0;
+    $counts['api_extends'] = 0;
     $this->verifyCounts($counts, 0, 'Branch deleted');
-    // Go back to not tracking reference storage.
-    unset($counts['api_reference_storage']);
 
     // Add a job using the deleted branch to the queue, and attempt to parse it.
     // Verify that the log message is generated.
-    $this->resetBranchesAndCache();
     $queue = DrupalQueue::get('api_parse');
     $queue->createItem(array(
       'parser' => 'api_parse_php_file',
@@ -232,7 +218,7 @@ class ApiCruftTestCase extends ApiWebPagesBaseTest {
 
     // Parse and verify counts.
     $this->updateBranches();
-    $counts['api_external_documentation'] = 8;
+    $counts['api_external_documentation'] = 6;
     $this->verifyCounts($counts, 0, 'Parse API branch');
 
     // Delete the branch and verify counts.
@@ -259,6 +245,7 @@ class ApiCruftTestCase extends ApiWebPagesBaseTest {
     $counts['api_function'] = 30;
     $counts['api_members'] = 30;
     $counts['api_overrides'] = 22;
+    $counts['api_extends'] = 2;
     $counts['node'] = 68;
     $this->verifyCounts($counts, 0, 'Branch added again');
 
@@ -272,9 +259,7 @@ class ApiCruftTestCase extends ApiWebPagesBaseTest {
     $counts['node'] = 1;
     $counts['api_members'] = 0;
     $counts['api_overrides'] = 0;
-    // At this point, make sure the reference storage table is cleared out
-    // too. We haven't been tracking it.
-    $counts['api_reference_storage'] = 0;
+    $counts['api_extends'] = 0;
     $this->verifyCounts($counts, 0, 'Project deleted');
 
     // Add both sample and fake PHP/API branches again.

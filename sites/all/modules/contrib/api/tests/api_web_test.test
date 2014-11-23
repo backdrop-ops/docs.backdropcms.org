@@ -35,7 +35,6 @@ class ApiListingPagesTestCase extends ApiWebPagesBaseTest {
     $this->assertNoRaw('hidden_function', 'Hidden function is not on functions list page');
     $this->assertNoRaw('hidden_function_two', 'Second hidden function is not on functions list page');
     $this->assertNoLink(t('Other projects'), 'Link to other projects is not present since there are no others');
-    $this->assertText('Deprecated', 'Deprecated is shown');
 
     // Verify file/function links.
     $this->assertLinkURLSubstring('sample_function', $this->branch_info['project'] . '/sample.php/function/sample_function', 'sample_function link exists', 'sample_function link went to the right place');
@@ -56,7 +55,6 @@ class ApiListingPagesTestCase extends ApiWebPagesBaseTest {
     $this->assertLink('SAMPLE_CONSTANT_IN_SUB_DIR', 0,   'subdir constant is on constants list page');
     $this->assertLink('sample-subdir.php', 0,   'sample-subdir.php file name is on constants list page');
     $this->assertNoLink(t('Other projects'), 'Link to other projects is not present since there are no others');
-    $this->assertText('Deprecated', 'Deprecated is shown');
 
     // Verify constant/function links.
     $this->assertLinkURLSubstring('SAMPLE_CONSTANT', $this->branch_info['project'] . '/sample.php/constant/SAMPLE_CONSTANT', 'SAMPLE_CONSTANT link exists', 'SAMPLE_CONSTANT link went to the right place');
@@ -79,7 +77,6 @@ class ApiListingPagesTestCase extends ApiWebPagesBaseTest {
     $this->assertLink('classes-subdir.php', 0, 'classes-subdir.php file name is on classes list page');
     $this->assertNoText('baz', 'Member name is not on classes page');
     $this->assertNoLink(t('Other projects'), 'Link to other projects is not present since there are no others');
-    $this->assertText('Deprecated', 'Deprecated is shown');
 
     // Verify file/class links.
     $this->assertLinkURLSubstring('Sample', $this->branch_info['project'] . '/classes.php/class/Sample', 'Sample link exists', 'Sample link went to the right place');
@@ -108,7 +105,6 @@ class ApiListingPagesTestCase extends ApiWebPagesBaseTest {
     $this->assertLink('htmlfile.html', 0, 'HTML file link is present');
     $this->assertText('This is a sample text file for testing.', 'Text file description is present');
     $this->assertLink('subdirectory/textfile.txt', 0, 'Text file link is present');
-    $this->assertText('Deprecated', 'Deprecated is shown');
 
     // Verify file links.
     $this->assertLinkURLSubstring('classes.php', $this->branch_info['project'] . '/classes.php', 'classes.php link exists', 'classes.php link went to the right place');
@@ -123,7 +119,6 @@ class ApiListingPagesTestCase extends ApiWebPagesBaseTest {
     $this->assertText('A sample global.', '$sample_global description is on the globals list page');
     $this->assertLink('sample-subdir.php', 0, 'sample-subdir.php file name is on globals list page');
     $this->assertNoLink(t('Other projects'), 'Link to other projects is not present since there are no others');
-    $this->assertText('Deprecated', 'Deprecated is shown');
 
     // Verify global/file links.
     $this->assertLinkURLSubstring('$sample_global', $this->branch_info['project'] . '/sample.php/global/sample_global', 'sample_global link exists', 'sample_global link went to the right place');
@@ -333,16 +328,7 @@ class ApiSimpleItemPagesTestCase extends ApiWebPagesBaseTest {
     $this->drupalGet('api/' . $this->branch_info['project'] . '/sample.php/function/sample_in_code_links');
     $this->clickLink('sample_two');
     $this->assertRaw('1 theme call to sample-two.tpl.php', 'Theme calls text is present');
-    $this->assertRaw('2 string references to the theme hook from sample-two.tpl.php', 'Theme references text is present');
     $this->assertLink('sample_in_code_links', 0, 'Link to theme calling function is present');
-    $this->assertLink('sample_function', 0, 'Link to theme string reference function is present');
-
-    // Also test the theme invokes page from the same-hook function.
-    $this->drupalGet('api/' . $this->branch_info['project'] . '/sample.php/function/theme_sample_two');
-    $this->assertRaw('1 theme call to theme_sample_two()', 'Theme calls text is present');
-    $this->assertRaw('2 string references to the theme hook from theme_sample_two()', 'Theme references text is present');
-    $this->assertLink('sample_in_code_links', 0, 'Link to theme calling function is present');
-    $this->assertLink('sample_function', 0, 'Link to theme string reference function is present');
 
     // Try the other duplicate_function() page, and verify the calling
     // functions are there too.
@@ -513,14 +499,11 @@ class ApiComplexItemPagesTestCase extends ApiWebPagesBaseTest {
     $this->assertText('A class constant.', 'Constant description appears on class page');
     $this->assertText('* Only implemented in children.', 'Source code appears on class page');
     $this->assertText('class Sample', 'H1 title text is there');
-    $this->assertText('Deprecated', 'Deprecated is shown');
 
     // Plugin annotation section.
     $this->assertText(t('Plugin annotation'), 'Plugin annotation header is there');
     $this->assertText('A great plugin title', 'Plugin title is there');
     $this->assertLink('foo_sample_name', 0, 'Link to function name in plugin annotation is there');
-    $this->assertLink('SubSample', 0, 'Link to class in plugin annotation is there');
-    $this->assertLink('SampleInSubDir', 0, 'Link to annotation class is there');
 
     // Click the links on the page and verify.
     $this->assertLinkURLSubstring('classes.php', $this->branch_info['project'] . '/classes.php', 'classes.php link exists', 'classes.php link went to the right place');
@@ -574,7 +557,6 @@ class ApiComplexItemPagesTestCase extends ApiWebPagesBaseTest {
     $this->assertLink('Sample', 0, 'Link to class is there');
     $this->assertText('Sample class.', 'Class description is there');
     $this->assertText('public function Sample::baz', 'H1 title text is there');
-    $this->assertLink('property', 0, 'Link to static property is there');
 
     // And check the calling functions links.
     $this->assertLink('Sample::foo', 0, 'Calling function 1 is there');
@@ -607,10 +589,6 @@ class ApiComplexItemPagesTestCase extends ApiWebPagesBaseTest {
     $this->assertLink('classes-subdir.php', 0, 'classes-subdir.php file name is on subdirectory class page');
     $this->assertLinkURLSubstring('SampleInSubDir::$foo', 'classes-subdir.php/property/SampleInSubDir', 'foo property link is present', 'foo property link goes to right place');
     $this->assertLinkURLSubstring('SampleInSubDir::foo', 'classes-subdir.php/function/SampleInSubDir', 'foo function link is present', 'foo function link goes to right place');
-    // Check on annotation.
-    $this->assertText('1 class is annotated with SampleInSubDir', 'Annotation section is present');
-    $this->assertLink('Sample', 0, 'Link to annotated class is present');
-
     $this->clickLink('classes-subdir.php');
     $this->assertText('Classes in a subdirectory test', 'Classes file link went to right place');
     $this->assertText('Another Sample interface in a subdirectory.', 'Classes file link went to right place');
@@ -674,9 +652,6 @@ class ApiComplexItemPagesTestCase extends ApiWebPagesBaseTest {
     $this->assertLink('$sample_global', 0, 'sample_global link is on sample topic page');
     $this->assertText('A sample global.', 'sample_global description is on sample topic page');
     $this->assertLink('sample_insubdir_function', 0, 'sample_insubdir_function link is on sample topic page');
-    $this->assertLink('sample--doubledash.tpl.php', 0, 'sample--doubledash.tpl.php link is shown');
-    $this->assertText('Displays a sample with a doubledash', 'sample--doubledash.tpl.php description is on sample topic page');
-    $this->assertText('Deprecated', 'Deprecated is shown');
 
     // Verify section, sub-section, and ref links.
     $this->assertRaw('<h3 id="sec_one">Section 1</h3>', 'Section 1 header is there');
@@ -726,7 +701,6 @@ class ApiComplexItemPagesTestCase extends ApiWebPagesBaseTest {
     $this->assertLink('$sample_global', 0, 'sample_global link is on sample file page');
     $this->assertText('A sample global.', 'sample_global description is on sample file page');
     $this->assertText('* Use for sample-related purposes.', 'source code is on sample file page');
-    $this->assertText('Deprecated', 'Deprecated is shown');
 
     // Verify links.
     $this->assertLinkURLSubstring('sample_function', $this->branch_info['project'] . '/sample.php/function/sample_function', 'sample_function link exists', 'sample_function link went to the right place');
@@ -1072,61 +1046,5 @@ class ApiSearchTestCase extends ApiWebPagesBaseTest {
     $this->assertLink('Sample::foo', 0, 'Sample::foo is listed');
     $this->assertLink('SampleInSubDir::foo', 0, 'SampleInSubDir::foo is listed');
     $this->assertLink('SampleInSubDir::$foo', 0, 'SampleInSubDir::$foo is listed');
-  }
-}
-
-/**
- * Tests the exclude from Drupalism functionality.
- */
-class ApiExcludeDrupalismTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Drupalism exclusion',
-      'description' => 'Tests that excluding files from Drupalisms works',
-      'group' => 'API module',
-    );
-  }
-
-  /**
-   * Overrides ApiWebPagesBaseTest::setUp() so we have the excluded directory.
-   */
-  function setUp() {
-    $this->baseSetUp();
-
-    // Create a "file" branch with the excluded directory but exclude it from
-    // drupalisms.
-    $this->branch_info = $this->setUpBranchUI('', TRUE, array(
-      'excluded' => '',
-      'exclude_drupalism_regexp' => '|to_exclude|',
-    ));
-
-    $this->removePHPBranch();
-
-    // Parse the code.
-    $this->resetBranchesAndCache();
-    $this->updateBranches();
-    $this->processApiParseQueue();
-  }
-
-  /**
-   * Tests that the hook does not turn into a link in the excluded file.
-   */
-  function testDrupalExclusion() {
-    $this->drupalGet('api/' . $this->branch_info['project'] . '/functions');
-    $this->clickLink('excluded_function');
-    $this->assertText('sample_two', 'sample_two text is there in excluded.php');
-    $this->assertNoLink('sample_two', 'sample_two text is not a link in excluded.php');
-    $this->assertText('sample_function', 'sample_function text is there in excluded.php');
-    $this->assertLink('sample_function', 0, 'sample_function text is a link in excluded.php');
-    $this->clickLink('sample_function');
-    $this->assertLink('excluded_function', 0, 'sample_function page has reference link to excluded_function()');
-
-    $this->drupalGet('api/' . $this->branch_info['project'] . '/sample.php/function/sample_in_code_links');
-    $this->assertText('sample_two', 'sample_two text is there in sample.php');
-    $this->assertLink('sample_two', 0, 'sample_two text is a link in sample.php');
-    $this->clickLink('sample_two');
-    $this->assertLink('sample_in_code_links', 0, 'Theme page has reference link to sample_in_code_links()');
-    $this->assertNoLink('excluded_function', 'Theme page has no reference link to excluded_function()');
-
   }
 }

@@ -6,7 +6,6 @@
  */
 
 module_load_include('php', 'api', 'tests/api_test_case');
-module_load_include('inc', 'api', 'legacy');
 
 /**
  * Tests that legacy redirects are correct.
@@ -70,6 +69,7 @@ class ApiLegacyTest extends ApiTestCase {
         'redirect' => 'api/test/sample.php/group/samp_GRP-6.x/6',
       ),
     );
+    include_once DRUPAL_ROOT . '/' . drupal_get_path('module', 'api') . '/legacy.inc';
 
     foreach ($tests as $test) {
       $result = call_user_func_array($test['function'], $test['arguments']);

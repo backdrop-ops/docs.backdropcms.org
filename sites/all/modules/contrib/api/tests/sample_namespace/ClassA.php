@@ -8,7 +8,6 @@ namespace api\test1;
 
 use api\test2\ClassB as MyClassB;
 use api\test2\InterfaceC;
-use api\test1\TraitF as MyTrait;
 
 /**
  * Sample class in a namespace.
@@ -17,10 +16,6 @@ use api\test1\TraitF as MyTrait;
  * as MyClassB::bMethod() and InterfaceD::dMethod().
  */
 class ClassA extends MyClassB implements InterfaceC, InterfaceD {
-
-  use MyTrait {
-    xyz as pdq;
-  }
 
   /**
    * Overrides InterfaceC::cMethod();
@@ -32,7 +27,6 @@ class ClassA extends MyClassB implements InterfaceC, InterfaceD {
     $fb = self::sMethod();
     $blech = static::sMethod();
     $fuz = $this->dMethod();
-    $who = $this->pdq();
   }
 
   /**

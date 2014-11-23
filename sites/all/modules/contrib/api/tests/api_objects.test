@@ -100,7 +100,7 @@ class ApiBranchCreation extends ApiTestCase {
     $samples_group = api_object_load('samp_GRP-6.x', $branch, 'group', 'sample.php');
     $this->assertEqual($samples_group->summary, 'A sample group.', 'Group samples has summary ' . $samples_group->summary);
     $count = db_query("SELECT count(*) FROM {api_reference_storage} WHERE branch_id = :branch_id AND object_name = :object_name AND object_type = :object_type", array(':branch_id' => $branch->branch_id, ':object_name' => $samples_group->object_name, ':object_type' => 'group'))->fetchField();
-    $this->assertEqual($count, 8, 'Group samples has ' . $count . ' members');
+    $this->assertEqual($count, 7, 'Group samples has ' . $count . ' members');
 
     // Check group class_samples.
     $class_samples_group = api_object_load('class_samples', $branch, 'group', 'classes.php');

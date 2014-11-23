@@ -103,12 +103,3 @@ class YetAnotherExcitingClass extends AnotherExcitingClass {
     return "two";
   }
 }
-
-/**
- * A class entending classes in another branch.
- */
-class OtherBranchExtension extends Sample2 {
-  public function foo() {
-    $y = something();
-  }
-}

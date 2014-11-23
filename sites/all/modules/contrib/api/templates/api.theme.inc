@@ -18,7 +18,7 @@ function api_preprocess_api_defined(&$variables) {
 
   $variables['file_summary'] = '';
   if (isset($file_info)) {
-    $variables['file_summary'] = api_link_documentation($file_info->summary, $branch, $object->file_did, NULL, FALSE, FALSE, FALSE);
+    $variables['file_summary'] = $file_info->summary;
   }
 }
 
@@ -31,7 +31,7 @@ function api_preprocess_api_class_section(&$variables) {
   $class = $variables['class'];
   $branch = $variables['branch'];
   $variables['class_link'] = l($class->title, api_url($class));
-  $variables['class_info'] = api_link_documentation($class->summary, $branch, $class->file_did, $class->class_did, FALSE, FALSE, $class->is_drupal);
+  $variables['class_info'] = $class->summary;
 }
 
 /**
@@ -157,9 +157,6 @@ function theme_api_function_reference_link($variables) {
   }
   elseif ($function->object_type == 'interface') {
     $link_path = 'api/' . $branch->project . '/' . $processed_file_name . '/interface/' . $type . '/' . $function->object_name . '/' . $branch->branch_name;
-  }
-  elseif ($function->object_type == 'service') {
-    $link_path = 'api/' . $branch->project . '/' . $processed_file_name . '/service/' . $type . '/' . $function->object_name . '/' . $branch->branch_name;
   }
   else {
     $link_path = 'api/' . $branch->project . '/' . $processed_file_name . '/function/' . $type . '/' . $function->object_name . '/' . $branch->branch_name;

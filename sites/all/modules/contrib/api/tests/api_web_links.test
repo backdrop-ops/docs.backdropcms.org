@@ -187,11 +187,11 @@ class ApiWebLinksTestCase extends ApiWebPagesBaseTest {
     $this->assertURLContains('sample.php/function/sample_function', 'sample_function 404 went to right page');
     $this->assertText('This is a sample list', 'Text of page is correct');
 
-    // Try to go to the path 'foobarbaz' and verify it redirects to a search
+    // Try to go to the path 'foobarbaz' and verify it redirets to a search
     // page.
     $this->drupalGet('foobarbaz');
-    $this->assertText('cannot be found', 'Text of page is correct');
-    $this->assertText('Sorry', 'Text of page is correct');
-    $this->assertText('foobarbaz', 'Text of page is correct');
+    $this->assertURLContains($this->branch_info['project'] . '/' . $this->branch_info['branch_name'] . '/search/foobarbaz', 'foobarbaz 404 went to right page');
+    $this->assertText('Search for foobarbaz', 'Text of page is correct');
+    $this->assertText(t('No search results found'), 'Text of page is correct');
   }
 }
