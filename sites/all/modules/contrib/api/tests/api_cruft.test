@@ -1,0 +1,314 @@
+<?php
+
+/**
+ * @file
+ * Tests that "cruft" in the API module is removed appropriately.
+ */
+
+module_load_include('php', 'api', 'tests/api_test_case');
+
+/**
+ * Tests that "cruft" in the API module is removed appropriately.
+ */
+class ApiCruftTestCase extends ApiWebPagesBaseTest {
+  public static function getInfo() {
+    return array(
+      'name' => 'Cruft removal',
+      'description' => 'Tests that data stored by the API module is removed when appropriate.',
+      'group' => 'API module',
+    );
+  }
+
+  function setUp() {
+    $this->baseSetUp();
+
+    // Set up a new super-user.
+    $this->super_user = $this->drupalCreateUser(array(
+      'access API reference',
+      'administer API reference',
+      'access content',
+      'access administration pages',
+      'administer blocks',
+      'administer nodes',
+      'access site reports',
+      'access comments',
+      'post comments',
+      'skip comment approval',
+    ));
+
+    $this->drupalLogin($this->super_user);
+
+    // Set up comment settings.
+    $this->drupalPost('admin/config/development/api/comments', array(
+        'comment' => 2,
+      ), t('Save comment settings'));
+
+    // We don't need the PHP branch for this test, so for speed, remove it.
+    $this->removePHPBranch();
+
+    // Add one node to the database.
+    $this->drupalCreateNode();
+  }
+
+  /**
+   * Tests that cruft is removed appropriately.
+   */
+  function testCruftRemoval() {
+    $counts = array(
+      'api_project' => 0,
+      'api_branch' => 0,
+      'api_php_branch' => 0,
+      'api_documentation' => 0,
+      'api_php_documentation' => 0,
+      'api_external_documentation' => 0,
+      'api_function' => 0,
+      'api_members' => 0,
+      'api_overrides' => 0,
+      'api_file' => 0,
+      'api_namespace' => 0,
+      'node' => 1,
+      'comment' => 0,
+    );
+    $this->verifyCounts($counts, 0, 'No branches');
+
+    // Add a branch without the usual exclude directory excluded.
+    $this->setUpBranchUI('', TRUE, array('excluded' => ''));
+    $counts['api_project'] = 1;
+    $counts['api_branch'] = 1;
+    $this->resetBranchesAndCache();
+    $this->verifyCounts($counts, 0, 'Branch added');
+
+    // Run the branch update function and verify counts. There should be
+    // records for each file.
+    $this->updateBranches();
+    $counts['node'] = 13;
+    $counts['api_documentation'] = 12;
+    $counts['api_file'] = 12;
+    $this->verifyCounts($counts, 12, 'Add and update branch with no exclusion');
+
+    // Update the branch to exclude the exclude directory.
+    $default_branch = api_get_branch_by_id();
+    $this->drupalPost('admin/config/development/api/branches/' . $default_branch->branch_id, array(
+        'data[excluded_directories]' => drupal_get_path('module', 'api') . '/tests/sample/to_exclude',
+      ), t('Save branch'));
+    $this->resetBranchesAndCache();
+
+    // Parse everything and verify counts. Also verify that there are 'skip'
+    // messages in the log, because the save branch action above should have
+    // invalidated several items in the queue.
+    $this->checkAndClearLog();
+    $this->updateBranches();
+    $this->processApiParseQueue();
+    $counts['node'] = 68;
+    $counts['api_documentation'] = 67;
+    $counts['api_file'] = 11;
+    $counts['api_function'] = 30;
+    $counts['api_members'] = 30;
+    $counts['api_overrides'] = 22;
+    $this->verifyCounts($counts, 0, 'Parse the branch');
+    $this->checkAndClearLog(array('Skipped API parse'));
+
+    // Mark branch for update and reparsing.
+    $this->drupalGet('admin/config/development/api/branches/' . $default_branch->branch_id . '/update');
+    $this->drupalGet('admin/config/development/api/branches/' . $default_branch->branch_id . '/reparse');
+    // Check counts and log; counts should stay the same.
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+    $this->processApiParseQueue();
+    $this->verifyCounts($counts, 0, 'Reparse the branch');
+    $this->checkAndClearLog(array('Updated ' . $default_branch->project . ' branch', 'API parse ' . $default_branch->project . ' branch'));
+
+    // Add one comment in the main directory and one in the subdirectory, and
+    // verify counts.
+    $this->drupalGet('api/' . $default_branch->project . '/classes.php/class/Sample');
+    $this->drupalPost(NULL, array(
+        'subject' => 'Subject 1',
+        'comment_body[und][0][value]' => 'Comment 1 body',
+      ), t('Save'));
+    $this->assertText(t('Your comment has been posted'), 'Confirm message appears');
+    $this->assertLink('Subject 1', 0, 'Comment subject appears');
+    $this->assertText('Comment 1 body', 'Comment body appears');
+
+    $this->drupalGet('api/' . $default_branch->project . '/subdirectory!classes-subdir.php/class/SampleInSubDir');
+    $this->drupalPost(NULL, array(
+        'subject' => 'Subject 2',
+        'comment_body[und][0][value]' => 'Comment 2 body',
+      ), t('Save'));
+    $this->assertText(t('Your comment has been posted'), 'Confirm message appears');
+    $this->assertLink('Subject 2', 0, 'Comment subject appears');
+    $this->assertText('Comment 2 body', 'Comment body appears');
+
+    $counts['comment'] = 2;
+    $this->verifyCounts($counts, 0, 'Add two comments');
+
+    // Update the branch to exclude the subdirectory.
+    $this->drupalPost('admin/config/development/api/branches/' . $default_branch->branch_id, array(
+        'data[excluded_directories]' => drupal_get_path('module', 'api') . "/tests/sample/to_exclude\n" . drupal_get_path('module', 'api') . "/tests/sample/subdirectory\n",
+      ), t('Save branch'));
+    $this->resetBranchesAndCache();
+
+    // Run the branch update and verify counts, and that the one comment is
+    // still visible.
+    $this->updateBranches();
+    $this->processApiParseQueue();
+    $this->checkAndClearLog(array('Removing subdirectory/classes-subdir.php'));
+
+    $counts['comment'] = 1;
+    $counts['api_file'] = 7;
+    $counts['api_documentation'] = 41;
+    $counts['api_function'] = 21;
+    $counts['node'] = 42;
+    $counts['api_members'] = 13;
+    $counts['api_overrides'] = 8;
+    $this->verifyCounts($counts, 0, 'Exclude subdirectory');
+
+    $this->drupalGet('api/' . $default_branch->project . '/classes.php/class/Sample');
+    $this->assertLink('Subject 1', 0, 'Comment subject appears');
+    $this->assertText('Comment 1 body', 'Comment body appears');
+
+    // Delete the branch, and verify counts.
+    $this->drupalPost('admin/config/development/api/branches/' . $default_branch->branch_id . '/delete', array(), t('Delete'));
+    $this->resetBranchesAndCache();
+    $counts['api_branch'] = 0;
+    $counts['comment'] = 0;
+    $counts['api_file'] = 0;
+    $counts['api_documentation'] = 0;
+    $counts['api_function'] = 0;
+    $counts['node'] = 1;
+    $counts['api_members'] = 0;
+    $counts['api_overrides'] = 0;
+    // At this point, make sure the reference storage table is cleared out
+    // too. We haven't been tracking it.
+    $counts['api_reference_storage'] = 0;
+    $this->verifyCounts($counts, 0, 'Branch deleted');
+    // Go back to not tracking reference storage.
+    unset($counts['api_reference_storage']);
+
+    // Add a job using the deleted branch to the queue, and attempt to parse it.
+    // Verify that the log message is generated.
+    $this->resetBranchesAndCache();
+    $queue = DrupalQueue::get('api_parse');
+    $queue->createItem(array(
+      'parser' => 'api_parse_php_file',
+      'path' => drupal_get_path('module', 'api') . '/tests/sample/sample.php',
+      'branch' => $default_branch,
+      'file' => 'sample.php',
+      'branch_name' => $default_branch->branch_name,
+      'timestamp' => time(),
+      ));
+    $this->verifyCounts($counts, 1, 'Bad parse queue job added');
+    $this->checkAndClearLog();
+    $this->processApiParseQueue();
+    $this->verifyCounts($counts, 0, 'Bad parse queue job processed');
+    $this->checkAndClearLog(array('Invalid or deleted branch requested in API parse'));
+
+    // Add the fake PHP branch.
+    $this->createPHPBranchUI();
+    $this->resetBranchesAndCache();
+    $counts['api_php_branch'] = 1;
+    $this->verifyCounts($counts, 0, 'Create PHP branch');
+
+    // Parse and verify counts.
+    $this->updateBranches();
+    $counts['api_php_documentation'] = 2;
+    $this->verifyCounts($counts, 0, 'Parse PHP branch');
+
+    // Delete the branch and verify counts.
+    $branches = api_get_php_branches();
+    foreach ($branches as $branch) {
+      $this->drupalPost('admin/config/development/api/php_branches/' . $branch->branch_id . '/delete', array(), t('Delete'));
+      break;
+    }
+    $this->resetBranchesAndCache();
+    $counts['api_php_branch'] = 0;
+    $counts['api_php_documentation'] = 0;
+    $this->verifyCounts($counts, 0, 'Delete PHP branch');
+
+    // Add the fake API branch.
+    $this->createAPIBranchUI();
+    $this->resetBranchesAndCache();
+    $counts['api_php_branch'] = 1;
+    $this->verifyCounts($counts, 0, 'Create API branch');
+
+    // Parse and verify counts.
+    $this->updateBranches();
+    $counts['api_external_documentation'] = 8;
+    $this->verifyCounts($counts, 0, 'Parse API branch');
+
+    // Delete the branch and verify counts.
+    $branches = api_get_php_branches();
+    foreach ($branches as $branch) {
+      $this->drupalPost('admin/config/development/api/php_branches/' . $branch->branch_id . '/delete', array(), t('Delete'));
+      break;
+    }
+    $this->resetBranchesAndCache();
+    $counts['api_php_branch'] = 0;
+    $counts['api_external_documentation'] = 0;
+    $this->verifyCounts($counts, 0, 'Delete API branch');
+
+    // Add and parse the sample branch again, then delete the project, and
+    // verify counts.
+    $this->setUpBranchUI();
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+    $this->processApiParseQueue();
+    $counts['api_project'] = 1;
+    $counts['api_branch'] = 1;
+    $counts['api_documentation'] = 67;
+    $counts['api_file'] = 11;
+    $counts['api_function'] = 30;
+    $counts['api_members'] = 30;
+    $counts['api_overrides'] = 22;
+    $counts['node'] = 68;
+    $this->verifyCounts($counts, 0, 'Branch added again');
+
+    $default_branch = api_get_branch_by_id();
+    $this->drupalPost('admin/config/development/api/projects/' . $default_branch->project . '/delete', array(), t('Delete'));
+    $counts['api_branch'] = 0;
+    $counts['api_project'] = 0;
+    $counts['api_file'] = 0;
+    $counts['api_documentation'] = 0;
+    $counts['api_function'] = 0;
+    $counts['node'] = 1;
+    $counts['api_members'] = 0;
+    $counts['api_overrides'] = 0;
+    // At this point, make sure the reference storage table is cleared out
+    // too. We haven't been tracking it.
+    $counts['api_reference_storage'] = 0;
+    $this->verifyCounts($counts, 0, 'Project deleted');
+
+    // Add both sample and fake PHP/API branches again.
+    // Update the branches, but don't parse.
+    $this->createPHPBranchUI();
+    $this->createAPIBranchUI();
+    $this->setUpBranchUI();
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+
+    // Disable and uninstall the API module. Verify counts.
+    module_disable(array('api'), FALSE);
+    drupal_uninstall_modules(array('api'), FALSE);
+    // At this point, the API tables should be gone, so only test node
+    // and comment tables.
+    $counts = array(
+      'node' => 1,
+      'comment' => 0,
+    );
+    $this->verifyCounts($counts, 0, 'Uninstalled');
+
+    // Verify that there are no variables with 'api' in the name.
+    $vars = db_select('variable', 'v')
+      ->fields('v', array('name'))
+      ->condition(db_or()
+        ->condition('name', 'api\_%', 'LIKE')
+        ->condition('name', '%\_api', 'LIKE')
+        ->condition('name', '%\_api\_%', 'LIKE')
+      )
+      ->execute()
+      ->fetchCol();
+    $this->assertEqual(count($vars), 0, 'No API variables are left over (' . implode(', ', $vars) . ')');
+
+    // Verify that there are no auto-complete files left over.
+    $this->assertFalse(is_dir('public://api'), 'API files directory is empty');
+  }
+}

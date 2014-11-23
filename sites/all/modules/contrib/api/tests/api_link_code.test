@@ -1,0 +1,201 @@
+<?php
+/**
+ * @file
+ * Tests for the api_link_code() function of the API module.
+ */
+
+module_load_include('php', 'api', 'tests/api_test_case');
+module_load_include('inc', 'api', 'api.formatting');
+
+/**
+ * Tests the api_link_code() function.
+ */
+class ApiLinkCodeTest extends ApiTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Code linking',
+      'description' => 'Test the api_link_code() function.',
+      'group' => 'API module',
+    );
+  }
+
+  /**
+   * Overrides ApiTestCase::setUp() so we do have the PHP branch.
+   */
+  function setUp() {
+    $this->baseSetUp();
+    $this->setUpBranchAPICall();
+
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+    $count = $this->processApiParseQueue();
+    $this->assertEqual($count, 11, "11 files were parsed ($count)");
+  }
+
+  /**
+   * Tests the api_link_code() function.
+   */
+  function testApiLinkCode() {
+    $branch = $this->getBranch();
+    $interface = api_object_load('SampleInterface', $branch, 'interface', 'classes.php');
+    $class = api_object_load('Sample', $branch, 'class', 'classes.php');
+    $subclass = api_object_load('SubSample', $branch, 'class', 'classes.php');
+
+    $tests = array(
+      // Should be linked
+      array(
+        'message' => 'Marked-up function name linking',
+        'data' => '<span class="php-function-or-constant">sample_function</span>',
+        'expected' => '<span class="php-function-or-constant"><a href="' . url('api/test/sample.php/function/sample_function/6') . '" title="A sample function." class="local">sample_function</a></span>',
+      ),
+      array(
+        'message' => 'Linking to method defined in multiple classes from self',
+        'data' => '<span class="php-function-or-constant function member-of-self">foo</span>',
+        'expected' => '<span class="php-function-or-constant"><a href="' . url('api/test/classes.php/function/Sample::foo/6') . '" title="Metasyntatic member function." class="local">foo</a></span>',
+        'class_did' => $class->did,
+      ),
+      array(
+        'message' => 'Linking to method defined in multiple classes as parent',
+        'data' => '<span class="php-function-or-constant function member-of-parent">foo</span>',
+        'expected' => '<span class="php-function-or-constant"><a href="' . url('api/test/classes.php/function/Sample::foo/6') . '" title="Metasyntatic member function." class="local">foo</a></span>',
+        'class_did' => $subclass->did,
+      ),
+      array(
+        'message' => 'Linking to method defined in multiple subclasses',
+        'data' => '<span class="php-function-or-constant function member-of-variable">baz</span>',
+        'expected' => '<span class="php-function-or-constant"><a href="' . url('api/' . $branch->project . '/' . $branch->branch_name . '/search/baz') . '" title="Multiple implementations exist." class="local">baz</a></span>',
+      ),
+      array(
+        'message' => 'Marked-up class name linking',
+        'data' => '<span class="php-function-or-constant">Sample</span>',
+        'expected' => '<span class="php-function-or-constant"><a href="' . url('api/test/classes.php/class/Sample/6') . '" title="Sample class." class="local">Sample</a></span>',
+      ),
+      array(
+        'message' => 'Duplicate function name linking',
+        'data' => '<span class="php-function-or-constant">duplicate_function</span>',
+        'expected' => '<span class="php-function-or-constant"><a href="' . url('api/' . $branch->project . '/' . $branch->branch_name . '/search/duplicate_function') . '" title="Multiple implementations exist." class="local">duplicate_function</a></span>',
+      ),
+      array(
+        'message' => 'Duplicate constant linking',
+        'data' => '<span class="php-function-or-constant">DUPLICATE_CONSTANT</span>',
+        'expected' => '<span class="php-function-or-constant"><a href="' . url('api/' . $branch->project . '/' . $branch->branch_name . '/search/DUPLICATE_CONSTANT') . '" title="Multiple implementations exist." class="local">DUPLICATE_CONSTANT</a></span>',
+      ),
+      array(
+        'message' => 'Linking to a PHP function',
+        'data' => '<span class="php-function-or-constant">strpos</span>',
+        'expected' => '<span class="php-function-or-constant"><a href="http://php.net/strpos" title="mixed strpos(string $haystack, mixed $needle [, int $offset = &#039;&#039;]) Find the position of the first occurrence of a substring in a string" class="php-manual">strpos</a></span>',
+      ),
+      array(
+        'message' => 'Marked-up global linking',
+        'data' => '<span class="php-keyword">global</span> <span class="php-variable">$sample_global</span>',
+        'expected' => '<span class="php-keyword">global</span> <span class="php-variable">$<a href="' . url('api/test/sample.php/global/sample_global/6') . '" title="A sample global." class="local">sample_global</a></span>',
+      ),
+      array(
+        'message' => 'String that is function name linking',
+        'data' => '<span class="php-string">\'sample_function\'</span>',
+        'expected' => '<span class="php-function-or-constant">\'<a href="' . url('api/test/sample.php/function/sample_function/6') . '" title="A sample function." class="local">sample_function</a>\'</span>',
+      ),
+      array(
+        'message' => 'String that is theme hook linking to function',
+        'data' => '<span class="php-function-or-constant">theme</span>(<span class="php-string potential-theme">\'sample_one\'</span>',
+        'expected' => '<span class="php-function-or-constant">theme</span>(<span class="php-function-or-constant">\'<a href="' . url('api/test/sample.php/function/theme_sample_one/6') . '" title="Returns HTML for a sample." class="local">sample_one</a>\'</span>',
+      ),
+      array(
+        'message' => 'String that is theme hook linking to template',
+        'data' => '<span class="php-function-or-constant">theme</span>(<span class="php-string potential-theme">\'sample_three\'</span>',
+        'expected' => '<span class="php-function-or-constant">theme</span>(<span class="php-function-or-constant">\'<a href="' . url('api/test/sample-three.tpl.php/6') . '" title="Displays yet another sample." class="local">sample_three</a>\'</span>',
+      ),
+      array(
+        'message' => 'String that is theme hook linking to template when function also exists',
+        'data' => '<span class="php-function-or-constant">theme</span>(<span class="php-string potential-theme">\'sample_two\'</span>',
+        'expected' => '<span class="php-function-or-constant">theme</span>(<span class="php-function-or-constant">\'<a href="' . url('api/test/subdirectory!sample-two.tpl.php/6') . '" title="Displays a sample." class="local">sample_two</a>\'</span>',
+      ),
+      array(
+        'message' => 'String that is theme hook with base linking to function',
+        'data' => '<span class="php-function-or-constant">theme</span>(<span class="php-string potential-theme">\'sample_four__option\'</span>',
+        'expected' => '<span class="php-function-or-constant">theme</span>(<span class="php-function-or-constant">\'<a href="' . url('api/test/sample.php/function/theme_sample_four/6') . '" title="Returns HTML for yet another sample." class="local">sample_four__option</a>\'</span>',
+      ),
+      array(
+        'message' => 'String that is hook linking to function in module_invoke_all()',
+        'data' => '<span class="php-function-or-constant">module_invoke_all</span>(<span class="php-string potential-hook">\'sample_name\'</span>',
+        'expected' => '<span class="php-function-or-constant">module_invoke_all</span>(<span class="php-function-or-constant">\'<a href="' . url('api/test/sample.php/function/hook_sample_name/6') . '" title="Respond to sample updates." class="local">sample_name</a>\'</span>',
+      ),
+      array(
+        'message' => 'String that is hook linking to function in module_implements()',
+        'data' => '<span class="php-function-or-constant">module_implements</span>(<span class="php-string potential-hook">\'sample_name\'</span>',
+        'expected' => '<span class="php-function-or-constant">module_implements</span>(<span class="php-function-or-constant">\'<a href="' . url('api/test/sample.php/function/hook_sample_name/6') . '" title="Respond to sample updates." class="local">sample_name</a>\'</span>',
+      ),
+      array(
+        'message' => 'String that is hook linking to function in module_invoke()',
+        'data' => '<span class="php-function-or-constant">module_invoke</span>(<span class="php-variable">$module</span>, <span class="php-string potential-hook">\'sample_name\'</span>',
+        'expected' => '<span class="php-function-or-constant">module_invoke</span>(<span class="php-variable">$module</span>, <span class="php-function-or-constant">\'<a href="' . url('api/test/sample.php/function/hook_sample_name/6') . '" title="Respond to sample updates." class="local">sample_name</a>\'</span>',
+      ),
+      array(
+        'message' => 'String that is alter hook linking to function in drupal_alter()',
+        'data' => '<span class="php-function-or-constant">drupal_alter</span>(<span class="php-string potential-alter">\'another_sample\'</span>',
+        'expected' => '<span class="php-function-or-constant">drupal_alter</span>(<span class="php-function-or-constant">\'<a href="' . url('api/test/sample.php/function/hook_another_sample_alter/6') . '" title="Alter samples." class="local">another_sample</a>\'</span>',
+      ),
+      // Should not be linked
+      array(
+        'message' => 'Function name linking',
+        'data' => 'sample_function',
+        'expected' => 'sample_function',
+      ),
+      array(
+        'message' => 'Function name linking with (',
+        'data' => 'sample_function(',
+        'expected' => 'sample_function(',
+      ),
+      array(
+        'message' => 'String that is not a function name',
+        'data' => '<span class="php-string">\'not_an_actual_function\'</span>',
+        'expected' => '<span class="php-string">\'not_an_actual_function\'</span>',
+      ),
+      array(
+        'message' => 'String that is nonexistent global',
+        'data' => '<span class="php-keyword">global</span> <span class="php-variable">$not_a_global_name</span>',
+        'expected' => '<span class="php-keyword">global</span> <span class="php-variable">$not_a_global_name</span>',
+      ),
+      array(
+        'message' => 'String that is nonexistent theme hook',
+        'data' => '<span class="php-function-or-constant">theme</span>(<span class="php-string potential-theme">\'not_a_theme_hook_name\'</span>',
+        'expected' => '<span class="php-function-or-constant">theme</span>(<span class="php-string">\'not_a_theme_hook_name\'</span>',
+      ),
+      array(
+        'message' => 'String that is nonexistent hook in module_invoke_all()',
+        'data' => '<span class="php-function-or-constant">module_invoke_all</span>(<span class="php-string potential-hook">\'not_a_sample_hook_name\'</span>',
+        'expected' => '<span class="php-function-or-constant">module_invoke_all</span>(<span class="php-string">\'not_a_sample_hook_name\'</span>',
+      ),
+      array(
+        'message' => 'String that is nonexistent hook in module_implements()',
+        'data' => '<span class="php-function-or-constant">module_implements</span>(<span class="php-string potential-hook">\'not_a_sample_hook_name\'</span>',
+        'expected' => '<span class="php-function-or-constant">module_implements</span>(<span class="php-string">\'not_a_sample_hook_name\'</span>',
+      ),
+      array(
+        'message' => 'String that is nonexistent hook in module_invoke()',
+        'data' => '<span class="php-function-or-constant">module_invoke</span>(<span class="php-variable">$module</span>, <span class="php-string potential-hook">\'not_a_hook_name\'</span>',
+        'expected' => '<span class="php-function-or-constant">module_invoke</span>(<span class="php-variable">$module</span>, <span class="php-string">\'not_a_hook_name\'</span>',
+      ),
+      array(
+        'message' => 'String that is nonexistent alter hook in drupal_alter()',
+        'data' => '<span class="php-function-or-constant">drupal_alter</span>(<span class="php-string potential-alter">\'not_a_hook_name\'</span>',
+        'expected' => '<span class="php-function-or-constant">drupal_alter</span>(<span class="php-string">\'not_a_hook_name\'</span>',
+      ),
+    );
+
+    foreach ($tests as $test) {
+      if (!isset($test['class_did'])) {
+        $test['class_did'] = NULL;
+      }
+      if (!isset($test['file_did'])) {
+        $test['file_did'] = NULL;
+      }
+      $result = api_link_code($test['data'], $this->getBranch(), $test['file_did'], $test['class_did']);
+      // Compare result and expected with slightly liberal matching -- all
+      // whitespace is considered equal for HTML.
+      $result = preg_replace('|\s+|', ' ', $result);
+      $expected = preg_replace('|\s+|', ' ', $test['expected']);
+      $this->assertEqual($result, $expected, $test['message'] . ' Got: <code>' . check_plain($result) . ' and expected ' . check_plain($expected) . '</code>');
+    }
+  }
+}

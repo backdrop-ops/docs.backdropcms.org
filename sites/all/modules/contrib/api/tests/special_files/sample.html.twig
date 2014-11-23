@@ -1,0 +1,47 @@
+{#
+/**
+ * @file
+ * Sample Twig template file, taken from node.html.twig in Drupal 8.x Core.
+ *
+ * Available variables:
+ * - label: the title of the node.
+ * - content: node items. Use {{ content }} to print them all,
+ *   or print a subset such as {{ content.field_example }}. Use
+ *   {% hide(content.field_example) %} to temporarily suppress the printing
+ *   of a given element.
+ * - user_picture: The node author's picture from user-picture.html.twig.
+ */
+#}
+{#
+/**
+ * For testing, here is another comment. It should not be shown in the docs.
+ */
+#}
+<article id="node-{{ node.nid }}" class="{{ attributes.class }} clearfix"{{ attributes }}>
+
+  {{ title_prefix }}
+  {% if not page %}
+    <h2{{ title_attributes }}>
+      <a href="{{ node_url }}" rel="bookmark">{{ label }}</a>
+    </h2>
+  {% endif %}
+  {{ title_suffix }}
+
+  {% if display_submitted %}
+    <footer>
+      {{ user_picture }}
+      <p class="submitted">{{ submitted }}</p>
+    </footer>
+  {% endif %}
+
+  <div class="content"{{ content_attributes }}>
+    {# We hide the comments and links now so that we can render them later. #}
+    {% hide(content.comments) %}
+    {% hide(content.links) %}
+    {{ content }}
+  </div>
+
+  {{ content.links }}
+  {{ content.comments }}
+
+</article>

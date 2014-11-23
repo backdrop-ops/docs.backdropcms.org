@@ -1,0 +1,64 @@
+<?php
+
+/**
+ * @file
+ * Tests that files in .. directories work in the API module.
+ */
+
+module_load_include('php', 'api', 'tests/api_test_case');
+
+/**
+ * Tests that files in .. directories are scanned.
+ */
+class ApiDotDotTestCase extends ApiTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Dot dot directories',
+      'description' => 'Tests that the API module can parse files in .. directories',
+      'group' => 'API module',
+    );
+  }
+
+  function setUp() {
+    $this->baseSetUp();
+
+    // Make a branch for sample code, using a .. in the path.
+    $base = getcwd();
+    $parts = explode('/', $base);
+    $last = array_pop($parts);
+    $prefix = '../' . $last . '/';
+
+    $this->setUpBranchAPICall($prefix);
+    $this->removePHPBranch();
+
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+
+    $count = $this->processApiParseQueue();
+    $this->assertEqual($count, 11, "11 files were parsed ($count)");
+  }
+
+  /**
+   * Tests that all the files were parsed.
+   */
+  function testParsing() {
+    // Make sure we have the right number of doc objects.
+    $this->assertObjectCount();
+
+    // Verify that the top-level directory was parsed.
+    $branch = $this->getBranch();
+    $object = api_filename_load('sample.php', $branch->project, $branch->branch_name);
+    $this->assertTrue(isset($object) && $object, 'sample.php was found (top level)');
+
+    $object = api_object_load('sample_function', $branch, 'function');
+    $this->assertTrue(isset($object) && $object, 'sample_function was found (top level)');
+
+    // Verify that the subdirectory was parsed.
+
+    $object = api_filename_load('subdirectory/sample-subdir.php', $branch->project, $branch->branch_name);
+    $this->assertTrue(isset($object) && $object, 'sample_insubdir.php was found (sub-directory)');
+
+    $object = api_object_load('sample_insubdir_function', $branch, 'function');
+    $this->assertTrue(isset($object) && $object, 'sample_insubdir_function was found (sub-directory)');
+  }
+}

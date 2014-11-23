@@ -1,0 +1,4 @@
+int foo_function($bar, $baz)
+     Does a foo functionality.
+string bar_function($foo, $baz)
+     Does a bar functionality.
