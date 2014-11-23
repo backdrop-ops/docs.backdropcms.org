@@ -13,15 +13,12 @@ dependencies[] = features
 dependencies[] = file
 dependencies[] = list
 dependencies[] = options
-dependencies[] = strongarm
 dependencies[] = taxonomy
 dependencies[] = text
 
 
 
 ; Features
-
-features[ctools][] = strongarm:strongarm:1
 
 features[features_api][] = api:2
 
