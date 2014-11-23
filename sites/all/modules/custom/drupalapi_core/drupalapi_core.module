@@ -5,11 +5,6 @@
  */
 
 /**
- * Features include.
- */
-include_once('drupalapi_core.features.inc');
-
-/**
  * Implements hook_init().
  */
 function drupalapi_core_init() {
