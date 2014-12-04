@@ -1,0 +1,3 @@
+name = Unfeaturize
+description = Gets your content types out of features.
+core = 7.x
