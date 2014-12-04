@@ -13,7 +13,6 @@ dependencies[] = features
 dependencies[] = file
 dependencies[] = list
 dependencies[] = options
-dependencies[] = taxonomy
 dependencies[] = text
 
 
@@ -30,7 +29,6 @@ features[field_instance][] = node-changenotice-field_introduced_in_branch
 features[field_instance][] = node-changenotice-field_introduced_in_version
 features[field_instance][] = node-changenotice-field_progress
 features[field_instance][] = node-changenotice-field_project
-features[field_instance][] = node-changenotice-field_term_issues
 features[field_instance][] = node-changenotice-field_updates_done
 
 features[node][] = changenotice
