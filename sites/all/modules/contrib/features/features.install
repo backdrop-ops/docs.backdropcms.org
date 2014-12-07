@@ -27,6 +27,7 @@ function features_uninstall() {
   variable_del('features_ignored_orphans');
   variable_del('features_feature_locked');
   variable_del('features_lock_mode');
+  require_once dirname(__FILE__) . '/features.module';
   foreach (array_keys(features_get_components()) as $component) {
     variable_del('features_admin_show_component_' . $component);
     variable_del('features_component_locked_' . $component);
