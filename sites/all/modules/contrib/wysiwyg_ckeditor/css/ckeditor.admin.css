@@ -1,0 +1,161 @@
+/**
+ * @file
+ * Styles for configuration of CKEditor module.
+ *
+ * Many of these styles are adapted directly from the default CKEditor theme
+ * "moono".
+ */
+
+.ckeditor-toolbar-active {
+  border: 1px solid #b6b6b6;
+  padding: 6px 8px 2px;
+  box-shadow: 0 1px 0 white inset;
+  background: #cfd1cf;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(whiteSmoke), to(#cfd1cf));
+  background-image: -moz-linear-gradient(top, whiteSmoke, #cfd1cf);
+  background-image: -o-linear-gradient(top, whiteSmoke, #cfd1cf);
+  background-image: -ms-linear-gradient(top, whiteSmoke, #cfd1cf);
+  background-image: linear-gradient(top, whiteSmoke, #cfd1cf);
+  filter: progid:DXImageTransform.Microsoft.gradient(gradientType=0, startColorstr='#fff5f5f5', endColorstr='#ffcfd1cf');
+  margin: 5px 0;
+  overflow: nowrap;
+}
+.ckeditor-toolbar-disabled {
+  margin: 5px 0;
+}
+
+.ckeditor-toolbar-configuration ul.ckeditor-buttons {
+  min-height: 26px;
+  min-width: 26px;
+  list-style: none;
+
+  float: left;
+  clear: left;
+  padding: 0;
+  margin: 0 6px 5px 0;
+  border: 1px solid #a6a6a6;
+  border-bottom-color: #979797;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .5), 0 0 2px rgba(255, 255, 255, .15) inset, 0 1px 0 rgba(255, 255, 255, .15) inset;
+}
+ul.ckeditor-buttons li {
+  display: inline-block;
+  height: 18px;
+  padding: 4px 6px;
+  outline: none;
+  cursor: move;
+  float: left;
+  border: 0;
+  white-space: nowrap;
+
+  background: #e4e4e4;
+  background-image: -webkit-gradient(linear,left top,left bottom,from(white),to(#e4e4e4));
+  background-image: -moz-linear-gradient(top,white,#e4e4e4);
+  background-image: -webkit-linear-gradient(top,white,#e4e4e4);
+  background-image: -o-linear-gradient(top,white,#e4e4e4);
+  background-image: -ms-linear-gradient(top,white,#e4e4e4);
+  background-image: linear-gradient(top,white,#e4e4e4);
+  filter: progid:DXImageTransform.Microsoft.gradient(gradientType=0,startColorstr='#ffffffff',endColorstr='#ffe4e4e4');
+}
+ul.ckeditor-buttons li:first-child {
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
+}
+ul.ckeditor-buttons li:last-child {
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
+}
+ul.ckeditor-buttons li.ckeditor-button-placeholder {
+  background: #333;
+  opacity: 0.3;
+}
+ul.ckeditor-multiple-buttons {
+  padding: 2px;
+  margin: 0;
+  list-style: none;
+  float: left;
+}
+ul.ckeditor-multiple-buttons li {
+  padding: 2px 0;
+  margin: 0;
+  display: inline-block;
+  height: 18px;
+  cursor: move;
+  float: left;
+}
+.ckeditor-multiple-label {
+  float: left;
+  padding: 4px;
+}
+ul.ckeditor-buttons li.ckeditor-group-button-separator,
+ul.ckeditor-multiple-buttons li.ckeditor-group-button-separator {
+  background: url(../images/group-separator.png) no-repeat center center;
+  width: 13px;
+  padding: 0;
+  height: 29px;
+  margin: -1px -3px -2px;
+  position: relative;
+  z-index: 10;
+}
+ul.ckeditor-buttons li.ckeditor-button-separator {
+  width: 2px;
+  padding: 0 4px;
+  height: 26px;
+  margin: 0 -4px;
+  position: relative;
+  z-index: 10;
+
+  background: #e4e4e4;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(white), to(#e4e4e4));
+  background-image: -moz-linear-gradient(top, white, #e4e4e4);
+  background-image: -webkit-linear-gradient(top, white, #e4e4e4);
+  background-image: -o-linear-gradient(top, white, #e4e4e4);
+  background-image: -ms-linear-gradient(top, white, #e4e4e4);
+  background-image: linear-gradient(top, white, #e4e4e4);
+  filter: progid:DXImageTransform.Microsoft.gradient(gradientType=0, startColorstr='#ffffffff', endColorstr='#ffe4e4e4');
+}
+ul.ckeditor-multiple-buttons li.ckeditor-button-separator {
+  width: 2px;
+  padding: 0;
+  height: 26px;
+  margin: 0 10px;
+}
+.ckeditor-separator {
+  background-color: silver;
+  background-color: rgba(0, 0, 0, .2);
+  margin: 5px 0;
+  height: 18px;
+  width: 1px;
+  display: block;
+  -webkit-box-shadow: 1px 0 1px rgba(255, 255, 255, .5);
+  -moz-box-shadow: 1px 0 1px rgba(255,255,255,.5);
+  box-shadow: 1px 0 1px rgba(255, 255, 255, .5)
+}
+.ckeditor-button-arrow {
+  width: 0;
+  text-align: center;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 3px solid #333;
+  display: inline-block;
+  margin: 0 4px 2px;
+}
+
+.ckeditor-row-controls {
+  float: right;
+  font-size: 18px;
+  width: 40px;
+  text-align: right;
+}
+.ckeditor-row-controls a {
+  display: inline-block;
+  padding: 6px 2px;
+  height: 16px;
+  width: 16px;
+  line-height: 0.9;
+  font-weight: bold;
+  color: #333;
+}
+.ckeditor-row-controls a:hover {
+  text-decoration: none;
+}

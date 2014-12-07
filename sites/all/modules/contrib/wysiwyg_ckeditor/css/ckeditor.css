@@ -1,0 +1,63 @@
+/**
+ * Common styles used by CKEditor. Added to front-end theme and iframe editors.
+ */
+.align-left {
+  text-align: left; /* RTL */
+}
+.align-right {
+  text-align: right; /* RTL */
+}
+.align-center {
+  text-align: center;
+}
+.align-justify {
+  text-align: justify;
+}
+img.align-left {
+  float: left;
+  margin-right: 12px;
+}
+img.align-right {
+  float: right;
+  margin-left: 12px;
+}
+img.align-center {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+img.full-width {
+  width: 100%;
+  height: auto;
+}
+.underline {
+  text-decoration: underline;
+}
+.indent1 {
+  margin: 0 0 0 40px; /* RTL */
+}
+.indent2 {
+  margin: 0 0 0 80px; /* RTL */
+}
+.indent3 {
+  margin: 0 0 0 120px; /* RTL */
+}
+.caption-left {
+  float: left; /* RTL */
+}
+.caption-right {
+  float: right; /* RTL */
+}
+.caption-center {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+.align-justify {
+  text-align: justify;
+}
+
+/* Fix for the Seven theme affecting modals */
+table.cke_dialog tr td:last-child {
+  border-right: none;
+}

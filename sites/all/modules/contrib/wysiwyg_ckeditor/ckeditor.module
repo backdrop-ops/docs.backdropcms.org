@@ -1,0 +1,485 @@
+<?php
+
+/**
+ * @file
+ * Provides integration with the CKEditor WYSIWYG editor.
+ */
+
+require_once dirname(__FILE__) . '/includes/ckeditor.wysiwyg.inc';
+
+define('CKEDITOR_VERSION', '4.0.1');
+
+/**
+ * Implements hook_editor_info().
+ */
+function ckeditor_editor_info() {
+  $editors['ckeditor'] = array(
+    'label' => t('CKEditor'),
+    'library' => array('ckeditor', 'drupal.ckeditor'),
+    'default settings' => array(
+      'toolbar' => array(
+        array(
+          'Source', '|', 'Bold', 'Italic', '|',
+          'NumberedList', 'BulletedList', 'Blockquote', '|',
+          'JustifyLeft', 'JustifyCenter', 'JustifyRight', '|',
+          'Link', 'Unlink', '|', 'Image', 'Maximize',
+        ),
+      ),
+      'format_list' => array('p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'),
+      'style_list' => array(),
+    ),
+    'settings callback' => 'ckeditor_settings_form',
+    'js settings callback' => 'ckeditor_add_settings',
+  );
+
+  return $editors;
+}
+
+/**
+ * Implements hook_library().
+ */
+function ckeditor_library() {
+  $module_path = drupal_get_path('module', 'ckeditor');
+
+  $libraries['drupal.ckeditor.admin'] = array(
+    'title' => 'Drupal behavior to enable CKEditor on textareas.',
+    'version' => VERSION,
+    'js' => array(
+      $module_path . '/js/ckeditor.admin.js' => array(),
+    ),
+    'css' => array(
+      $module_path . '/css/ckeditor.admin.css' => array(),
+    ),
+    'dependencies' => array(
+      array('system', 'jquery.once'),
+      array('system', 'ui.sortable'),
+      array('system', 'ui.draggable'),
+    ),
+  );
+  $libraries['ckeditor'] = array(
+    'title' => 'Loads the main CKEditor library.',
+    'version' => CKEDITOR_VERSION,
+    'js' => array(
+      $module_path . '/lib/ckeditor/ckeditor.js' => array(),
+    ),
+  );
+
+  return $libraries;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function ckeditor_theme() {
+  return array(
+    'ckeditor_settings_toolbar' => array(
+      'variables' => array('editor' => NULL, 'plugins' => NULL),
+      'file' => 'includes/ckeditor.admin.inc',
+    ),
+  );
+}
+
+/**
+ * Implements hook_init().
+ */
+function ckeditor_init() {
+  // Add our CSS file that adds common needed classes, such as align-left,
+  // align-right, underline, indent, etc.
+  drupal_add_css(drupal_get_path('module', 'ckeditor') . '/css/ckeditor.css');
+
+  // In Drupal 8 these settings are added by hook_library(), but the D7 version
+  // doesn't have a library for integration because it uses WYSIWYG API.
+  $settings = array(
+    'ckeditor' => array(
+      'modulePath' => drupal_get_path('module', 'ckeditor'),
+    ),
+  );
+  drupal_add_js($settings, array('type' => 'setting'));
+}
+
+/**
+ * Retrieves the full list of installed CKEditor plugins.
+ */
+function ckeditor_plugins() {
+  $plugins = module_invoke_all('ckeditor_plugins');
+  drupal_alter('ckeditor_plugins', $plugins);
+  return $plugins;
+}
+
+/**
+ * Implements hook_ckeditor_plugins().
+ *
+ * Return a list of all plugins provided by this module.
+ */
+function ckeditor_ckeditor_plugins() {
+  $image_prefix = drupal_get_path('module', 'ckeditor') . '/images/buttons/';
+  $buttons = array(
+    'Bold' => array(
+      'label' => t('Bold'),
+      'required_tags' => array('strong'),
+    ),
+    'Italic' => array(
+      'label' => t('Italic'),
+      'required_tags' => array('em'),
+    ),
+    'Underline' => array(
+      'label' => t('Underline'),
+      // A class is used on spans for underline.
+      'required_tags' => array('span'),
+    ),
+    'Strike' => array(
+      'label' => t('Strike-through'),
+      'required_tags' => array('del'),
+    ),
+    'JustifyLeft' => array(
+      'label' => t('Align left'),
+      'required_tags' => array('p'),
+    ),
+    'JustifyCenter' => array(
+      'label' => t('Align center'),
+      'required_tags' => array('p'),
+    ),
+    'JustifyRight' => array(
+      'label' => t('Align right'),
+      'required_tags' => array('p'),
+    ),
+    'JustifyBlock' => array(
+      'label' => t('Justify'),
+      'required_tags' => array('p'),
+    ),
+    'BulletedList' => array(
+      'label' => t('Bullet list'),
+      'image_rtl' => $image_prefix . '/bulletedlist-rtl.png',
+      'required_tags' => array('ul', 'li'),
+    ),
+    'NumberedList' => array(
+      'label' => t('Numbered list'),
+      'image_rtl' => $image_prefix . '/numberedlist-rtl.png',
+      'required_tags' => array('ol', 'li'),
+    ),
+    'Outdent' => array(
+      'label' => t('Outdent'),
+      'image_rtl' => $image_prefix . '/outdent-rtl.png',
+      'required_tags' => array('p'),
+    ),
+    'Indent' => array(
+      'label' => t('Indent'),
+      'image_rtl' => $image_prefix . '/indent-rtl.png',
+      'required_tags' => array('p'),
+    ),
+    'Undo' => array(
+      'label' => t('Undo'),
+      'image_rtl' => $image_prefix . '/undo-rtl.png',
+    ),
+    'Redo' => array(
+      'label' => t('Redo'),
+      'image_rtl' => $image_prefix . '/redo-rtl.png',
+    ),
+    'Link' => array(
+      'label' => t('Link'),
+      'required_tags' => array('a'),
+    ),
+    'Unlink' => array(
+      'label' => t('Unlink'),
+      'required_tags' => array('a'),
+    ),
+    'Anchor' => array(
+      'image_rtl' => $image_prefix . '/anchor-rtl.png',
+      'label' => t('Anchor'),
+      'required_tags' => array('a'),
+    ),
+    'Superscript' => array(
+      'label' => t('Superscript'),
+      'required_tags' => array('sub'),
+    ),
+    'Subscript' => array(
+      'label' => t('Subscript'),
+      'required_tags' => array('sup'),
+    ),
+    'Blockquote' => array(
+      'label' => t('Blockquote'),
+      'required_tags' => array('blockquote'),
+    ),
+    'Source' => array(
+      'label' => t('Source code'),
+    ),
+    'HorizontalRule' => array(
+      'label' => t('Horizontal rule'),
+      'required_tags' => array('hr'),
+    ),
+    'Cut' => array(
+      'label' => t('Cut'),
+    ),
+    'Copy' => array(
+      'label' => t('Copy'),
+    ),
+    'Paste' => array(
+      'label' => t('Paste'),
+    ),
+    'PasteText' => array(
+      'label' => t('Paste Text'),
+      'image_rtl' => $image_prefix . '/pastetext-rtl.png',
+    ),
+    'PasteFromWord' => array(
+      'label' => t('Paste from Word'),
+      'image_rtl' => $image_prefix . '/pastefromword-rtl.png',
+    ),
+    'ShowBlocks' => array(
+      'label' => t('Show blocks'),
+      'image_rtl' => $image_prefix . '/showblocks-rtl.png',
+    ),
+    'RemoveFormat' => array(
+      'label' => t('Remove format'),
+    ),
+    'SpecialChar' => array(
+      'label' => t('Character map'),
+    ),
+    'Format' => array(
+      'label' => t('HTML block format'),
+      'image_alternative' => '<span class="ckeditor-button-dropdown">' . t('Format') . '<span class="ckeditor-button-arrow"></span></span>',
+    ),
+    'Styles' => array(
+      'label' => t('Font style'),
+      'image_alternative' => '<span class="ckeditor-button-dropdown">' . t('Styles') . '<span class="ckeditor-button-arrow"></span></span>',
+    ),
+    'Table' => array(
+      'label' => t('Table'),
+      'required_tags' => array('table', 'thead', 'tbody', 'tr', 'td', 'th'),
+    ),
+    'Maximize' => array(
+      'label' => t('Maximize'),
+    ),
+    '|' => array(
+      'label' => t('Group separator'),
+      'image_alternative' => '<span class="ckeditor-group-separator">&nbsp;</span>',
+      'attributes' => array('class' => array('ckeditor-group-button-separator')),
+      'multiple' => TRUE,
+    ),
+    '-' => array(
+      'label' => t('Separator'),
+      'image_alternative' => '<span class="ckeditor-separator">&nbsp;</span>',
+      'attributes' => array('class' => array('ckeditor-button-separator')),
+      'multiple' => TRUE,
+    ),
+  );
+
+  // Populate image locations that match button names.
+  foreach ($buttons as $button_name => &$button) {
+    if (!isset($button['image_alternative']) && !isset($button['image'])) {
+      // Because button names are ASCII text, drupal_strtolower() is not needed.
+      $button['image'] = $image_prefix . strtolower($button_name) . '.png';
+    }
+  }
+
+  // List all the basic plugin buttons as an "internal" plugin.
+  $plugins['default'] = array(
+    'buttons' => $buttons,
+    'internal' => TRUE,
+  );
+
+  // The drupalimage plugin replaces normal image functionality.
+  $plugins['drupalimage'] = array(
+    'path' => drupal_get_path('module', 'ckeditor') . '/js/plugins/drupalimage',
+    'file' => 'plugin.js',
+    'buttons' => array(
+      'DrupalImage' => array(
+        'label' => t('Image'),
+        'required_tags' => array('img'),
+        'image' => $image_prefix . '/image.png',
+      ),
+    ),
+  );
+
+  // The drupalcaption plugin provides consistent behaviors for image captions.
+  $plugins['drupalcaption'] = array(
+    'path' => drupal_get_path('module', 'ckeditor') . '/js/plugins/drupalcaption',
+    'file' => 'plugin.js',
+    'css' => array(drupal_get_path('module', 'ckeditor') . '/css/ckeditor-caption.css'),
+    'enabled callback' => 'ckeditor_image_plugin_check',
+  );
+
+  // The drupalbreak plugin provides support for Drupal's <!--break--> comment.
+  $plugins['drupalbreak'] = array(
+    'path' => drupal_get_path('module', 'ckeditor') . '/js/plugins/drupalbreak',
+    'file' => 'plugin.js',
+    'buttons' => array(
+      'DrupalBreak' => array(
+        'label' => t('Teaser break'),
+        'image' => $image_prefix . '/pagebreak.png',
+        'image_rtl' => $image_prefix . '/pagebreak-rtl.png',
+      ),
+    ),
+  );
+
+  // Webkit support for resizing images.
+  $plugins['dragresize'] = array(
+    'path' => drupal_get_path('module', 'ckeditor') . '/js/plugins/dragresize',
+    'file' => 'plugin.js',
+    'enabled callback' => 'ckeditor_image_plugin_check',
+    //'css' => array(drupal_get_path('module', 'ckeditor') . '/js/plugins/dragresize/_source.css'),
+  );
+
+  return $plugins;
+}
+
+/**
+ * Enabled callback for hook_ckeditor_plugins().
+ *
+ * Checks if our Caption plugin should be enabled based on the configuration of
+ * a text format and editor.
+ */
+function ckeditor_image_plugin_check($editor, $format) {
+  // Automatically enable caption support if the DrupalImage button is enabled.
+  foreach ($editor->settings['toolbar'] as $row) {
+    if (in_array('DrupalImage', $row)) {
+      return TRUE;
+    }
+  }
+}
+
+/**
+ * Editor JS settings callback; Add Aloha settings to the page for a format.
+ *
+ * @param $editor
+ *   The editor object for which Aloha is adding its settings.
+ * @param $format
+ *   The filter format object for which Aloha is adding its settings.
+ * @param $existing_settings
+ *   Settings that have already been added to the page by filters.
+ */
+function ckeditor_add_settings($editor, $format, $existing_settings) {
+  global $language;
+
+  // Loop through all available plugins and check to see if it has been
+  // explicitly enabled. At the same time, associate each plugin with its
+  // buttons (if any) so we can check if the plugin should be enabled implicitly
+  // based on the toolbar.
+  $plugin_info = ckeditor_plugins();
+  $external_plugins = array();
+  $external_css = array();
+  $all_buttons = array();
+  foreach ($plugin_info as $plugin_name => $plugin) {
+    // Check if this plugin should be enabled.
+    if (isset($plugin['enabled callback'])) {
+      if ($plugin['enabled callback'] === TRUE || $plugin['enabled callback']($editor, $plugin_name) && !empty($plugin['path'])) {
+        $external_plugins[$plugin_name]['file'] = $plugin['file'];
+        $external_plugins[$plugin_name]['path'] = $plugin['path'];
+        if (isset($plugin['css'])) {
+          $external_css = array_merge($external_css, $plugin['css']);
+        }
+      }
+    }
+    // Associate each plugin with its button.
+    if (isset($plugin['buttons'])) {
+      if (empty($plugin['internal'])) {
+        foreach ($plugin['buttons'] as $button_name => &$button) {
+          $button['plugin'] = $plugin;
+          $button['plugin']['name'] = $plugin_name;
+          unset($button['plugin']['buttons']);
+        }
+      }
+      $all_buttons = array_merge($all_buttons, $plugin['buttons']);
+    }
+  }
+
+  // Change the toolbar separators into groups and record needed plugins based
+  // on use in the toolbar.
+  $toolbar = array();
+  foreach ($editor->settings['toolbar'] as $row_number => $row) {
+    $button_group = array();
+    foreach ($row as $button_name) {
+      if ($button_name === '|') {
+        $toolbar[] = $button_group;
+        $button_group = array();
+      }
+      else {
+        // Sanity check that the button exists in our installation.
+        if (isset($all_buttons[$button_name])) {
+          $button_group['items'][] = $button_name;
+
+          // Keep track of the needed plugin for this button, if any.
+          if (isset($all_buttons[$button_name]['plugin']['path'])) {
+            $plugin_name = $all_buttons[$button_name]['plugin']['name'];
+            $external_plugin = $all_buttons[$button_name]['plugin'];
+            $external_plugins[$plugin_name]['file'] = $external_plugin['file'];
+            $external_plugins[$plugin_name]['path'] = $external_plugin['path'];
+            if (isset($external_plugin['css'])) {
+              $external_css = array_merge($external_css, $external_plugin['css']);
+            }
+          }
+        }
+      }
+    }
+    $toolbar[] = $button_group;
+    $toolbar[] = '/';
+  }
+
+  // Collect a list of CSS files to be added to the editor instance.
+  $css = array(
+    drupal_get_path('module', 'ckeditor') . '/css/ckeditor.css',
+    drupal_get_path('module', 'ckeditor') . '/css/ckeditor-iframe.css',
+  );
+  $css = array_merge($css, $external_css, _ckeditor_theme_css());
+  drupal_alter('ckeditor_css', $css, $editor, $format);
+
+  // Convert all paths to be relative to root.
+  foreach ($css as $key => $css_path) {
+    $css[$key] = base_path() . $css_path;
+  }
+
+  // Initialize reasonable defaults that provide expected basic bahvior.
+  $settings = array(
+    'toolbar' => $toolbar,
+    'extraPlugins' => implode(',', array_keys($external_plugins)),
+    'removePlugins' => 'image',
+    'removeButtons' => '',
+    //'forcePasteAsPlainText' => TRUE,
+    'contentsCss' => array_values($css),
+    'pasteFromWordPromptCleanup' => TRUE,
+    // TODO: Backport allowedContent checking to match filter config.
+    // See https://drupal.org/node/2073063.
+    'allowedContent' => TRUE,
+    'indentClasses' => array('indent1', 'indent2', 'indent3'),
+    'justifyClasses' => array('align-left', 'align-center', 'align-right', 'align-justify'),
+    'coreStyles_underline' => array('element' => 'span', 'attributes' => array('class' => 'underline')),
+    'format_tags' => implode(';', $editor->settings['format_list']),
+    'removeDialogTabs' => 'image:Link;image:advanced;link:advanced',
+    'language' => isset($language->language) ? $language->language : '',
+    'resize_dir' => 'vertical',
+  );
+
+  // These settings are used specifically by Drupal.
+  $settings['externalPlugins'] = $external_plugins;
+
+  return $settings;
+}
+
+/**
+ * Retrieves the default theme's CKEditor stylesheets defined in the .info file.
+ *
+ * Themes may specify iframe-specific CSS files for use with CKEditor by
+ * including a "ckeditor_stylesheets" key in the theme .info file.
+ *
+ * @code
+ * ckeditor_stylesheets[] = css/ckeditor-iframe.css
+ * @endcode
+ */
+function _ckeditor_theme_css($theme = NULL) {
+  $css = array();
+  if (!isset($theme)) {
+    $theme = variable_get('theme_default');
+  }
+  if ($theme_path = drupal_get_path('theme', $theme)) {
+    $info = system_get_info('theme', $theme);
+    if (isset($info['ckeditor_stylesheets'])) {
+      $css = $info['ckeditor_stylesheets'];
+      foreach ($css as $key => $path) {
+        $css[$key] = $theme_path . '/' . $path;
+      }
+    }
+    if (isset($info['base theme'])) {
+      $css = array_merge($css, _ckeditor_theme_css($info['base theme']));
+    }
+  }
+  return $css;
+}
