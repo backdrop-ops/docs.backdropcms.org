@@ -10,21 +10,9 @@ project = drupalapi_core
 
 dependencies[] = api
 dependencies[] = ctools
-dependencies[] = features
 dependencies[] = gplib
 dependencies[] = libraries
 dependencies[] = menu
 dependencies[] = views
 
-
-
-; Features
-
-features[features_api][] = api:2
-
-features[user_permission][] = access API reference
-
-features[variable][] = api_default_branch
-features[variable][] = api_default_project
-features[variable][] = site_frontpage
 
