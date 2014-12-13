@@ -5,7 +5,7 @@ This repository holds the codebase for [api.backdropcms.org](https://api.backdro
 
 ## Issues
 
-This project contains an [issue tracker](https://github.com/backdrop-ops/backdropcms.org/issues) specifically for api.backdropcms.org. Please use this issue tracker when:
+This project contains an [issue tracker](https://github.com/backdrop-ops/api.backdropcms.org/issues) specifically for api.backdropcms.org. Please use this issue tracker when:
 * filing bug reports
 * requesting new features
 * requesting content changes
