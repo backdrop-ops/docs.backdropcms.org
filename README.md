@@ -1,10 +1,18 @@
-api.backdropcms.org
-===================
+# API site for Backdrop CMS
 
-API website for Backdrop documentation.
-
-Updated Dec 6 2014.
-
-Verifying that git push works as expected before I do too much work here :)
+This repository holds the codebase for [api.backdropcms.org](https://api.backdropcms.org).
 
 
+## Issues
+
+This project contains an [issue tracker](https://github.com/backdrop-ops/backdropcms.org/issues) specifically for api.backdropcms.org. Please use this issue tracker when:
+* filing bug reports
+* requesting new features
+* requesting content changes
+
+
+## Pull Requests
+
+You can help make improvements to api.backdropcms.org by submitting pull requests to this repository.
+
+Please do not create pull requests for content changes, instead please create an issue requesting editorial access to the API site.
