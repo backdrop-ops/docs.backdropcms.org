@@ -5,3 +5,18 @@ td.active {
 th {
   background-color: inherit !important;
 }
+
+h2 {
+  font-weight: 500;
+}
+code {
+  border: none;
+  background-color: #F7F7F7;
+  margin-bottom: 2em;
+}
+
+blockquote.d7diff {
+  background-color: #eee;
+  border:none;
+  padding: 20px 20px 5px 50px;
+}
