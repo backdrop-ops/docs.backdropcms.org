@@ -1,8 +1,0 @@
-.DS_Store
-libraries/*
-!libraries/libraries.make
-modules/*
-!modules/custom
-.sources/*
-!.sources/sources.make
-!.sources/drupal-source.make
