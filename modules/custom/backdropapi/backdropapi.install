@@ -1,0 +1,33 @@
+<?php
+/**
+ * @file
+ * Install and update functions for the Backdrop API site.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function backdropapi_install() {
+  // Do a little cleanup from Drupal 7 upgrade.
+
+  // Set the theme to Bartik.
+  theme_enable(array('bartik'));
+  config_set('system.core', 'theme_default', 'bartik');
+
+  // Set install profile to standard.
+  config_set('system.core', 'install_profile', 'standard');
+  db_update('system')
+    ->fields(array(
+      'filename' => 'profiles/standard/standard.profile',
+      'name' => 'standard',
+      'status' => 1,
+      'schema_version' => 0,
+    ))
+    ->condition('name', 'drupalapi')
+    ->execute();
+
+  module_enable(array(
+    'contextual',
+    'api_search',
+  ));
+}

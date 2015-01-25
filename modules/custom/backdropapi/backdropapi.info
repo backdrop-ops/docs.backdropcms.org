@@ -1,0 +1,4 @@
+name = Backdrop API Customizations
+description = Custom module for the Backdrop API site.
+package = Custom
+backdrop = 1.x
