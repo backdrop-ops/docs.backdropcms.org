@@ -1,0 +1,155 @@
+{
+    "_config_name": "views.view.api_branches",
+    "name": "api_branches",
+    "description": "Blocks for listing branches in the API module. Used directly by the API module. Do not delete or disable.",
+    "module": "api",
+    "storage": 4,
+    "tag": "api",
+    "disabled": false,
+    "base_table": "api_branch",
+    "human_name": "API Branches",
+    "core": 1,
+    "display": {
+        "default": {
+            "display_title": "Master",
+            "display_plugin": "default",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "use_ajax": true,
+                "use_more_always": false,
+                "access": {
+                    "type": "perm",
+                    "perm": "administer API reference"
+                },
+                "cache": {
+                    "type": "none"
+                },
+                "exposed_form": {
+                    "type": "basic"
+                },
+                "pager": {
+                    "type": "full",
+                    "options": {
+                        "items_per_page": "50"
+                    }
+                },
+                "style_plugin": "table",
+                "style_options": {
+                    "columns": {
+                        "project_name": "project_name",
+                        "core_compatibility": "core_compatibility",
+                        "title": "title",
+                        "branch_name": "branch_name"
+                    },
+                    "default": "project_name",
+                    "info": {
+                        "project_name": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "core_compatibility": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "title": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "branch_name": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        }
+                    }
+                },
+                "relationships": {
+                    "project": {
+                        "id": "project",
+                        "table": "api_branch",
+                        "field": "project",
+                        "required": true
+                    }
+                },
+                "fields": {
+                    "project_name": {
+                        "id": "project_name",
+                        "table": "api_project",
+                        "field": "project_name",
+                        "relationship": "project",
+                        "label": "Project"
+                    },
+                    "core_compatibility": {
+                        "id": "core_compatibility",
+                        "table": "api_branch",
+                        "field": "core_compatibility"
+                    },
+                    "title": {
+                        "id": "title",
+                        "table": "api_branch",
+                        "field": "title"
+                    },
+                    "branch_name": {
+                        "id": "branch_name",
+                        "table": "api_branch",
+                        "field": "branch_name",
+                        "label": "Branch identifier"
+                    },
+                    "branch_ops": {
+                        "id": "branch_ops",
+                        "table": "api_branch",
+                        "field": "branch_ops",
+                        "label": "Operations"
+                    }
+                },
+                "filters": {
+                    "project_name": {
+                        "id": "project_name",
+                        "table": "api_project",
+                        "field": "project_name",
+                        "relationship": "project",
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "project_name_op",
+                            "label": "Filter by project",
+                            "operator": "project_name_op",
+                            "identifier": "project_name",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "block_branch_admin": {
+            "display_title": "Branch Admin Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "defaults": {
+                    "hide_admin_links": false
+                },
+                "block_description": ""
+            }
+        }
+    }
+}

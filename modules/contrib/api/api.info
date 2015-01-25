@@ -1,0 +1,6 @@
+name = API
+description = Generates and displays API documentation pages.
+package = Development
+backdrop = 1.x
+configure = admin/config/development/api
+stylesheets[all][] = api.css

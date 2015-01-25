@@ -1,0 +1,79 @@
+<?php
+
+/**
+ * @file
+ * Tests for legacy redirects in the API module.
+ */
+
+module_load_include('php', 'api', 'tests/api_test_case');
+module_load_include('inc', 'api', 'legacy');
+
+/**
+ * Tests that legacy redirects are correct.
+ */
+class ApiLegacyTest extends ApiTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'Legacy redirects',
+      'description' => 'Test legacy.inc redirect functions.',
+      'group' => 'API module',
+    );
+  }
+
+  /**
+   * Tests that legacy URL redirects are correct.
+   */
+  function testApiLegacy() {
+    $tests = array(
+      // Function
+      array(
+        'function' => 'api_legacy_1_2_object_load',
+        'arguments' => array('sample_function', 'function', ''),
+        'redirect' => 'api/test/sample.php/function/sample_function/6',
+      ),
+      array(
+        'function' => 'api_legacy_1_2_object_load',
+        'arguments' => array('sample_function', 'function', '6'),
+        'redirect' => 'api/test/sample.php/function/sample_function/6',
+      ),
+      // Constant
+      array(
+        'function' => 'api_legacy_1_2_object_load',
+        'arguments' => array('SAMPLE_CONSTANT', 'constant', ''),
+        'redirect' => 'api/test/sample.php/constant/SAMPLE_CONSTANT/6',
+      ),
+      array(
+        'function' => 'api_legacy_1_2_object_load',
+        'arguments' => array('SAMPLE_CONSTANT', 'constant', '6'),
+        'redirect' => 'api/test/sample.php/constant/SAMPLE_CONSTANT/6',
+      ),
+      // Global
+      array(
+        'function' => 'api_legacy_1_2_object_load',
+        'arguments' => array('sample_global', 'global', ''),
+        'redirect' => 'api/test/sample.php/global/sample_global/6',
+      ),
+      array(
+        'function' => 'api_legacy_1_2_object_load',
+        'arguments' => array('sample_global', 'global', '6'),
+        'redirect' => 'api/test/sample.php/global/sample_global/6',
+      ),
+      // Topic
+      array(
+        'function' => 'api_legacy_1_2_object_load',
+        'arguments' => array('samp_GRP-6.x', 'group', ''),
+        'redirect' => 'api/test/sample.php/group/samp_GRP-6.x/6',
+      ),
+      array(
+        'function' => 'api_legacy_1_2_object_load',
+        'arguments' => array('samp_GRP-6.x', 'group', '6'),
+        'redirect' => 'api/test/sample.php/group/samp_GRP-6.x/6',
+      ),
+    );
+
+    foreach ($tests as $test) {
+      $result = call_user_func_array($test['function'], $test['arguments']);
+      $this->assertEqual($result, $test['redirect'], $test['function'] . ': ' . implode(', ', $test['arguments']) . ' Got: <code>' . check_plain($result) . '</code>');
+    }
+  }
+}

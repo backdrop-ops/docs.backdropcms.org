@@ -1,0 +1,826 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for API module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function api_schema() {
+  $schema['api_project'] = array(
+    'description' => 'Name and type of each project',
+    'fields' => array(
+      'project_name' => array(
+        'description' => 'Short name of the project',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'project_title' => array(
+        'description' => 'Long name of the project',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'project_type' => array(
+        'description' => 'module, theme, core, etc.',
+        'type' => 'varchar',
+        'length' => '30',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('project_name'),
+    'indexes' => array(
+      'project_type' => array('project_type'),
+    ),
+  );
+
+  $schema['api_branch'] = array(
+    'description' => 'Information about each branch within an {api_project}',
+    'fields' => array(
+      'branch_id' => array(
+        'description' => 'Primary key, numeric ID',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'branch_name' => array(
+        'descripton' => 'Short name for branch, unique within project only',
+        'type' => 'varchar',
+        'length' => '31',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'core_compatibility' => array(
+        'description' => '1.x, 2.x, etc.',
+        'type' => 'varchar',
+        'length' => '31',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'preferred' => array(
+        'description' => 'Whether this is the preferred branch within this core compatibility for this project',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'project' => array(
+        'description' => '{api_project}.{project_name}',
+        'type' => 'varchar',
+        'length' => '50',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'data' => array(
+        'description' => 'Serialized data on directories etc.',
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'Displayed name of branch including project',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'weight' => array(
+        'description' => 'Ordering weight',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'last_updated' => array(
+        'description' => 'When this branch was last checked for updated files',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'update_frequency' => array(
+        'description' => 'Number of seconds to wait before updating again',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'queue_valid' => array(
+        'description' => 'File parse jobs before this time are invalid',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'queued' => array(
+        'description' => 'Time when this branch was queued for update checking',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('branch_id'),
+    'unique keys' => array(
+      'project_name' => array('project', 'branch_name'),
+    ),
+    'indexes' => array(
+      'weight' => array('weight'),
+      'branch_name' => array('branch_name'),
+      'last_updated' => array('last_updated'),
+      'core_preferred' => array('core_compatibility', 'preferred'),
+    ),
+  );
+
+  $schema['api_php_branch'] = array(
+    'description' => 'Information about PHP reference branches (e.g., php.net functions)',
+    'fields' => array(
+      'branch_id' => array(
+        'description' => 'Primary key, numeric ID',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'Administratively-displayed name',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'data' => array(
+        'description' => 'Serialized data on URLs etc.',
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'reference_type' => array(
+        'description' => 'Type of references: php, api, etc.',
+        'type' => 'varchar',
+        'length' => '30',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'last_updated' => array(
+        'description' => 'When this branch was last updated',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'update_frequency' => array(
+        'description' => 'Number of seconds to wait before updating again',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'queued' => array(
+        'description' => 'Time when this branch was queued for update checking',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      )
+    ),
+    'primary key' => array('branch_id'),
+    'indexes' => array(
+      'last_updated' => array('last_updated'),
+    ),
+  );
+
+  $schema['api_documentation'] = array(
+    'fields' => array(
+      'did' => array(
+        'description' => 'Primary key, documentation ID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'branch_id' => array(
+        'description' => 'Branch ID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'object_name' => array(
+        'description' => 'Name of object',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'member_name' => array(
+        'description' => 'For class members, the name without Class::',
+        'type' => 'varchar',
+        'length' => 127,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'object_type' => array(
+        'description' => 'Type of object: function, class, etc.',
+        'type' => 'varchar',
+        'length' => '31',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'title' => array(
+        'description' => 'Display title',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'file_name' => array(
+        'description' => 'Full path of file',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'summary' => array(
+        'description' => 'Short description from documentation',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+      'documentation' => array(
+        'description' => 'Full documentation',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+      'code' => array(
+        'description' => 'Formatted source code',
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'start_line' => array(
+        'description' => 'Start line of object in file',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'see' => array(
+        'description' => 'See also references',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+      'var' => array(
+        'description' => 'Variable type from var tag',
+        'type' => 'varchar',
+        'length' => 127,
+        'not null' => TRUE,
+      ),
+      'throws' => array(
+        'description' => 'Throws section',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+      'deprecated' => array(
+        'description' => 'Deprecated descriptions',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+      ),
+      'class_did' => array(
+        'description' => 'Documentation ID of class this is part of',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'namespace' => array(
+        'description' => 'Namespace, if any',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'namespaced_name' => array(
+        'description' => 'Fully-qualified namespaced name, starting with backslash',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'modifiers' => array(
+        'description' => 'Modifiers such as static, abstract, etc.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'is_backdrop' => array(
+        'description' => 'Whether this is or is not a Backdrop object',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'primary key' => array('did'),
+    'indexes' => array(
+      'object_name' => array('object_name', 'branch_id', 'object_type'),
+      'object_type' => array('object_type'),
+      'branch_id' => array('branch_id'),
+      'title' => array('title'),
+      'class_did' => array('class_did'),
+      'file_name' => array('file_name'),
+      'member_name' => array('member_name'),
+      'namespace' => array('namespace'),
+      'namespaced_name' => array('namespaced_name'),
+      'branch_object_class' => array('branch_id', 'object_type', 'class_did'),
+      'is_backdrop' => array('is_backdrop'),
+    ),
+  );
+
+  $schema['api_php_documentation'] = array(
+    'fields' => array(
+      'did' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'branch_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'object_name' => array(
+        'type' => 'varchar',
+        'length' => '127',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'member_name' => array(
+        'description' => 'For class members, the name without Class::',
+        'type' => 'varchar',
+        'length' => 127,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'object_type' => array(
+        'type' => 'varchar',
+        'length' => '31',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'documentation' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('did'),
+    'indexes' => array(
+      'object_name' => array('object_name', 'branch_id', 'object_type'),
+      'object_type' => array('object_type'),
+      'branch_id' => array('branch_id'),
+      'member_name' => array('member_name'),
+    ),
+  );
+
+  $schema['api_external_documentation'] = array(
+    'fields' => array(
+      'did' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'branch_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'object_name' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'namespaced_name' => array(
+        'description' => 'Fully-qualified namespaced name, starting with backslash',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'title' => array(
+        'description' => 'Display title',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'member_name' => array(
+        'description' => 'For class members, the name without Class::',
+        'type' => 'varchar',
+        'length' => 127,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'object_type' => array(
+        'type' => 'varchar',
+        'length' => '31',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'summary' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+      'url' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('did'),
+    'indexes' => array(
+      'object_name' => array('object_name', 'branch_id', 'object_type'),
+      'object_type' => array('object_type'),
+      'branch_id' => array('branch_id'),
+      'member_name' => array('member_name'),
+      'namespaced_name' => array('namespaced_name'),
+      'title' => array('title'),
+    ),
+  );
+
+  $schema['api_file'] = array(
+    'fields' => array(
+      'did' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'modified' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'queued' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'basename' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('did'),
+    'indexes' => array(
+      'basename' => array('basename'),
+    ),
+  );
+
+  $schema['api_function'] = array(
+    'fields' => array(
+      'did' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'signature' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+      'parameters' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+      'return_value' => array(
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('did'),
+  );
+
+  $schema['api_reference_storage'] = array(
+    'documentation' => 'Keep track of references.',
+    'fields' => array(
+      'object_name' => array(
+        'type' => 'varchar',
+        'mysql_type' => 'varbinary(127)',
+        'length' => '127',
+      ),
+      'branch_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'object_type' => array(
+        'type' => 'varchar',
+        'length' => '31',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'from_did' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'extends_did' => array(
+        'description' => 'If this is a class or interface inheritance, the computed did value',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+    ),
+    'indexes' => array(
+      'from_did' => array('from_did'),
+      'object_name' => array('object_name'),
+      'object_type' => array('object_type'),
+      'branch_id' => array('branch_id'),
+      'extends_did' => array('extends_did'),
+    ),
+  );
+
+  $schema['api_overrides'] = array(
+    'description' => 'Keep track of method, property, and class constant parents.',
+    'fields' => array(
+      'did' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'overrides_did' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'documented_did' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'did' => array('did'),
+      'overrides_did' => array('overrides_did'),
+    ),
+  );
+
+  $schema['api_members'] = array(
+    'description' => 'Keep track of class members, including inherited members.',
+    'fields' => array(
+      'class_did' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'did' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'member_alias' => array(
+        'description' => 'Alias of the member, for trait inheritance',
+        'type' => 'varchar',
+        'length' => 127,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+    ),
+    'indexes' => array(
+      'did' => array('did'),
+      'class_did' => array('class_did'),
+    ),
+  );
+
+  $schema['api_namespace'] = array(
+    'documentation' => 'Keep track of namespace and use declarations.',
+    'fields' => array(
+      'did' => array(
+        'description' => 'Documentation ID of file',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'object_type' => array(
+        'description' => 'namespace or use_alias',
+        'type' => 'varchar',
+        'length' => '31',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'class_alias' => array(
+        'description' => 'Alias of the class, blank for namespaces',
+        'type' => 'varchar',
+        'mysql_type' => 'varbinary(127)',
+        'length' => '127',
+        'default' => '',
+      ),
+      'class_name' => array(
+        'description' => 'Name of class or namespace',
+        'type' => 'varchar',
+        'mysql_type' => 'varbinary(127)',
+        'length' => '127',
+        'default' => '',
+      ),
+    ),
+    'indexes' => array(
+      'did' => array('did'),
+      'object_type' => array('object_type'),
+      'class_alias' => array('class_alias'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function api_install() {
+  $api_type = array(
+    'type' => 'api',
+    'name' => st('API'),
+    'description' => st("A hidden node type that is only created automatically by API module."),
+    'settings' => array(
+      'status_default' => TRUE,
+      'promote_enabled' => FALSE,
+      'promote_default' => FALSE,
+      'sticky_enabled' => FALSE,
+      'sticky_default' => FALSE,
+      'revision_enabled' => FALSE,
+      'revision_default' => FALSE,
+      'show_submitted_info' => FALSE,
+      'comment_default' => COMMENT_NODE_CLOSED,
+    ),
+    'base' => 'api',
+    'module' => 'api',
+    'is_new' => TRUE,
+  );
+  $api_type = node_type_set_defaults($api_type);
+  node_type_save($api_type);
+}
+
+/**
+ * Implements hook_enable().
+ */
+function api_enable() {
+  // Make sure a few things are reset. This is only necessary for running tests.
+  backdrop_static_reset('api_get_branches');
+  backdrop_static_reset('api_get_branch_names');
+  backdrop_static_reset('api_get_php_branches');
+
+  // Create the PHP branch if it doesn't already exist.
+  $exists = FALSE;
+  $result = db_select('api_php_branch', 'b')
+    ->fields('b', array('title'))
+    ->condition('reference_type', 'php')
+    ->range(0, 1)
+    ->execute()
+    ->fetchCol();
+
+  if (count($result) < 1) {
+    // Create new PHP branch.
+    $branch = new stdClass();
+    $branch->reference_type = 'php';
+    $branch->title = 'PHP functions';
+    $branch->update_time = 604800;
+    $branch->data = array(
+      'summary' => 'http://doc.php.net/downloads/json/php_manual_en.json',
+      'path' => 'http://php.net/!function',
+    );
+    api_save_php_branch($branch);
+
+    // Turn off cron runs until the API administration page has been visited,
+    // because it can take a long time to parse the PHP branch.
+    state_set('api_do_cron', 0);
+  }
+
+  // Make sure that the comment body field exists for our fake node type.
+  if (module_exists('comment')) {
+    $info = (object) array('type' => 'api');
+    _comment_body_field_create($info);
+  }
+}
+
+/**
+ * Implements hook_disable().
+ */
+function api_disable() {
+  // If there are any files branches in the database, warn the user about
+  // uninstalling the module.
+  $file_branches = db_select('api_branch', 'b')
+    ->fields('b', array('branch_id'))
+    ->execute()
+    ->fetchCol();
+  if (count($file_branches) > 0) {
+    backdrop_set_message(t('If you plan to uninstall the API module (removing all its data), you need to first re-enable the API module and delete all the branches from the administration screen. The data deletion might otherwise run out of time if you attempt to do it all during the uninstall process.'));
+  }
+}
+
+/**
+ * Implements hook_update_last_removed();
+ */
+function api_update_last_removed() {
+  return 7138; // 7.x-1.7.
+}
+
+/**
+ * Remove variables and other data on uninstall.
+ */
+function api_uninstall() {
+  // Delete variables: some wildcards and some exact variable names.
+  $names = db_select('variable', 'v')
+    ->condition(db_or()
+      ->condition('name', 'comment\_%\_api', 'LIKE')
+      ->condition('name', 'api\_last\_updated\_%', 'LIKE')
+    )
+    ->fields('v', array('name'))
+    ->execute()
+    ->fetchCol();
+  $names[] = 'api_default_branch';
+  $names[] = 'api_do_cron';
+  $names[] = 'comment_api';
+  $names[] = 'api_default_core_compatibility';
+  $names[] = 'api_default_project';
+  $names[] = 'api_opensearch_name';
+  $names[] = 'api_opensearch_description';
+  foreach ($names as $name) {
+    variable_del($name);
+  }
+
+  // Remove all tasks from the queues.
+  foreach (array('api_parse', 'api_branch_update', 'api_node_delete') as $name) {
+    $queue = BackdropQueue::get($name);
+    $queue->deleteQueue();
+  }
+
+  // Delete all API nodes, in batches of 100.
+  // This might run out of time, but we warned about it in hook_disable(),
+  // so just plunge ahead and hope for the best.
+  $nids = db_select('node', 'n')
+    ->condition('type', 'api')
+    ->fields('n', array('nid'))
+    ->execute()
+    ->fetchCol();
+  $count = count($nids);
+  $done = 0;
+  while ($done < $count) {
+    $this_batch = array_slice($nids, $done, 100);
+    $done += 100;
+    node_delete_multiple($this_batch);
+  }
+
+  // Delete the API node type.
+  node_type_delete('api');
+
+  // Delete our added Views.
+  $views = array(
+    'api_branches',
+    'api_listings',
+    'api_members',
+    'api_namespaces',
+    'api_projects',
+    'api_references',
+    'api_search',
+  );
+  foreach ($views as $view_name) {
+    if ($view = views_get_view($view_name)) {
+      $view->delete();
+    }
+  }
+}
+
+/**
+ * Works like api_mark_for_reparse() without loading modules.
+ */
+function api_update_mark_for_reparse() {
+  // Get rid of everything currently in the parse queue.
+  $queue = BackdropQueue::get('api_parse');
+  $queue->deleteQueue();
+
+  // Set all files to reparse: say they are not yet queued, and that the
+  // last time they were touched was long ago.
+  $time_in_past = 52;
+  return db_update('api_file')
+    ->fields(array(
+        'modified' => $time_in_past,
+        'queued' => 0,
+      ))
+    ->execute();
+}

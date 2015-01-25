@@ -1,0 +1,3363 @@
+<?php
+
+/**
+ * @file
+ * Generates and displays API documentation pages.
+ *
+ * This is an implementation of a subset of the Doxygen documentation generator
+ * specification, tuned to produce output that best benefits the Backdrop Codex
+ * base. It is designed to assume the code it documents follows Backdrop coding
+ * conventions, and supports documentation blocks in formats described on
+ * http://drupal.org/node/1354
+ */
+
+/**
+ * Regular expression for matching file names with one or more extensions.
+ */
+define('API_RE_FILENAME', '([a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)+)');
+
+/**
+ * Regular expression for matching PHP functions and methods in text.
+ *
+ * These are patterns like ClassName::methodName(), or just function_name().
+ * Possibly with namespaces. Doesn't include the ().
+ */
+define('API_RE_FUNCTION_IN_TEXT', '\\\\*[a-zA-Z_\x7f-\xff][\\\\a-zA-Z0-9_\x7f-\xff:]*');
+
+/**
+ * Regular expression for matching group/topic names.
+ */
+define('API_RE_GROUP_NAME', '[a-zA-Z_0-9\.\-]+');
+
+/**
+ * Regular expression for matching characters interior to function names.
+ */
+define('API_RE_FUNCTION_CHARACTERS', '[a-zA-Z0-9_\x7f-\xff]+');
+
+/**
+ * Regular expression for aggressively matching class names in text.
+ *
+ * Although class names can technically be just like function names, we
+ * only want to match class names if they include a capital letter, so as
+ * not to be too overly aggressive. Possibly can include namespaces.
+ */
+define('API_RE_CLASS_NAME_TEXT', '[\\\\a-zA-Z0-9_\x7f-\xff]*[A-Z][\\\\a-zA-Z0-9_\x7f-\xff]*');
+
+/**
+ * Regular expression for less-aggressively matching class names in text.
+ *
+ * Matches class names that are namespaced, because we know these are not just
+ * plain text words.
+ */
+define('API_RE_DEFINITE_CLASS_NAME_TEXT', '[\\\\a-zA-Z0-9_\x7f-\xff]*[\\\\][\\\\a-zA-Z0-9_\x7f-\xff]*');
+
+/**
+ * Regular expression for matching YAML strings.
+ *
+ * These can contain ., _, letters, and numbers, and are top-level keys
+ * in YAML files.
+ */
+define('API_RE_YAML_STRING', '[a-zA-Z0-9_\.\x7f-\xff]+');
+
+/**
+ * Regular expression for starting inline \@tags.
+ */
+define('API_RE_TAG_START', '(?<!\\\)@');
+
+/**
+ * Regular expression for word boundary start for API linking.
+ */
+define('API_RE_WORD_BOUNDARY_START', '(?<=\s|^|\(|@|\>)');
+
+/**
+ * Regular expression for word boundary end for API linking.
+ */
+define('API_RE_WORD_BOUNDARY_END', '(?=$|[\s.,:;?!)\<\[])');
+
+/**
+ * File path separator.
+ */
+define('API_FILEPATH_SEPARATOR', '/');
+
+/**
+ * Namespace separator.
+ */
+define('API_NAMESPACE_SEPARATOR', '\\');
+
+/**
+ * File path separator replacement.
+ */
+define('API_FILEPATH_SEPARATOR_REPLACEMENT', '!');
+
+/**
+ * File path separator replacement for API v 1.3.
+ */
+define('API_v1_3_FILEPATH_SEPARATOR_REPLACEMENT', '--');
+
+/**
+ * Implements hook_help().
+ */
+function api_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#api':
+      return t('
+<p>This is an implementation of a subset of the Doxygen documentation generator specification, tuned to produce output that best benefits the Backdrop code base. It is designed to assume the code it documents follows Backdrop coding conventions, and supports documentation blocks in formats described on !doxygen_link.</p>
+
+<h3>Set up</h3>
+
+<p>Visit the !api_settings_page to configure the module. You must have the relevant Backdrop code base on the same machine as the site hosting the API module. Set up Projects and Branches to index your Backdrop code base.</p>
+
+<p>Indexing of PHP functions is also supported, by setting up a PHP Reference Branch. If the site has internet access, then the default settings should work fine. For local development environments that have a PHP manual installed, you can edit the link path to point to the appropriate location.</p>
+
+<p>The module indexes code branches during cron runs, so make sure the site has cron functionality set up properly.</p>
+', array('!api_settings_page' => l(t('API settings page'), 'admin/config/development/api'), '!doxygen_link' => l('http://drupal.org/node/1354', 'http://drupal.org/node/1354')));
+
+    case 'admin/config/development/api':
+      return '<h3>' . t('Definitions:') . '</h3><ul>' .
+        '<li>' . t('File parse queue: parses PHP and other files for display.') . '</li>' .
+        '<li>' . t('Branch update queue: scans branches for files that have been updated or removed, and adds jobs to the file parse and node cleanup queues.') . '</li>' .
+        '<li>' . t('Node cleanup queue: deletes nodes for removed files.') . '</li>' .
+        '<li>' . t('Reset the file parse queue: remove existing jobs and mark files as not queued for parsing. Next time each branch is scanned, files will be re-added to the queue as needed.') . '</li>' .
+        '<li>' . t('OpenSearch: This module provides an OpenSearch discovery link in the HTML header, which needs a name and description. See <a href="http://en.wikipedia.org/wiki/OpenSearch">OpenSearch on Wikipedia</a> for more information.') . '</li>' .
+        '</ul>';
+
+    case 'admin/config/development/api/projects':
+      return '<h3>' . t('Definitions:') . '</h3><ul>' .
+        '<li>' . t('Project: A module, theme, Backdrop Core, or other group of files that the API module is parsing.') . '</li>' .
+        '<li>' . t('Project type: Normally "core", "module", "theme", or "library". The type "core" is special: core project functions are given priority when turning function, class, and other names into links in code listings.') . '</li>' .
+        '</ul>';
+
+    case 'admin/config/development/api/branches':
+      return '<h3>' . t('Definitions:') . '</h3><ul>' .
+        '<li>' . t('Project: A module, theme, Backdrop Core, or other group of files that the API module is parsing. Set up on the Projects tab.') . '</li>' .
+        '<li>' . t('Branch: Within a Project, a particular version of the files (1.x-1.x, 1.x, 2.x-1.3, etc.).') . '</li>' .
+        '<li>' . t('Core compatibility: usually 1.x, 2.x, etc. Branches with matching core compatibility are used to make cross-project links, and the default project and core compatibility (set on the Overview tab) determines the default branch.') . '</li>' .
+        '<li>' . t('Reparse: Force a parse of every file in the branch, starting next time the branch is updated.') . '</li>' .
+        '<li>' . t('Update: Force a scan of the file directories in the branch for updated and removed files. This normally happens during cron runs after a minimum time (set on branch edit page) has passed.') . '</li>' .
+        '</ul>';
+
+    case 'admin/config/development/api/php_branches':
+      return '<h3>' . t('Definitions:') . '</h3><ul>' .
+        '<li>' . t('PHP reference branch: Queries an external PHP web site, such as php.net, for its function list, in order to make links to these functions.') . '</li>' .
+        '<li>' . t('API reference branch: Queries an external web site running the API module, such as api.drupal.org, in order to make links to Backdrop API classes, functions, etc.') . '</li>' .
+        '<li>' . t('Update: Force a scan of the selected branch. This normally happens during cron runs after a minimum time (set on branch edit page) has passed.') . '</li>' .
+        '</ul>';
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function api_menu() {
+  $items = array();
+
+  // Admin overview.
+  $items['admin/config/development/api'] = array(
+    'title' => 'API reference',
+    'description' => 'Configure projects and branches for API documentation.',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'api_page_admin_overview',
+    'file' => 'api.admin.inc',
+  );
+
+  $items['admin/config/development/api/overview'] = array(
+    'title' => 'Overview',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 1,
+  );
+
+  $items['admin/config/development/api/reset_queue'] = array(
+    'title' => 'Reset parse queue',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_reset_queue_form'),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // Projects admin.
+  $items['admin/config/development/api/projects'] = array(
+    'title' => 'Projects',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'api_admin_project_list',
+    'file' => 'api.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5,
+  );
+
+  $items['admin/config/development/api/projects/list'] = array(
+    'title' => 'List',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/config/development/api/projects/new'] = array(
+    'title' => 'Add new project',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_project_edit_form'),
+    'file' => 'api.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
+  $items['admin/config/development/api/projects/%'] = array(
+    'title' => 'Edit project',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_project_edit_form', 5),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/config/development/api/projects/%/delete'] = array(
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_project_delete_form', 5),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // Branches admin.
+  $items['admin/config/development/api/branches'] = array(
+    'title' => 'Branches',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'api_admin_branch_list',
+    'file' => 'api.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
+  );
+  $items['admin/config/development/api/branches/list'] = array(
+    'title' => 'List',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/config/development/api/branches/new'] = array(
+    'title' => 'Add new branch',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_branch_edit_form'),
+    'file' => 'api.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
+
+  $items['admin/config/development/api/branches/%'] = array(
+    'title' => 'Edit branch',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_branch_edit_form', 5),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/config/development/api/branches/%/reparse'] = array(
+    'title' => 'Reparse branch',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'api_admin_reparse',
+    'page arguments' => array(5),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/config/development/api/branches/%/update'] = array(
+    'title' => 'Update branch',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'api_admin_update',
+    'page arguments' => array('branch', 5),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/config/development/api/branches/%/delete'] = array(
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_branch_delete_form', 5),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // PHP reference branches admin.
+  $items['admin/config/development/api/php_branches'] = array(
+    'title' => 'Reference branches',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'api_php_branch_list',
+    'file' => 'api.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 15,
+  );
+
+  $items['admin/config/development/api/php_branches/new'] = array(
+    'title' => 'Add new PHP reference branch',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_php_branch_edit_form'),
+    'file' => 'api.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
+
+  $items['admin/config/development/api/php_branches/new_api'] = array(
+    'title' => 'Add new API reference branch',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_api_branch_edit_form'),
+    'file' => 'api.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
+
+  $items['admin/config/development/api/php_branches/%'] = array(
+    'title' => 'Edit PHP reference branch',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_php_branch_edit_form', 5),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/config/development/api/api_branches/%'] = array(
+    'title' => 'Edit API reference branch',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_api_branch_edit_form', 5),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/config/development/api/php_branches/%/delete'] = array(
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('api_php_branch_delete_form', 5),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/config/development/api/php_branches/%/update'] = array(
+    'title' => 'Update branch',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer API reference'),
+    'page callback' => 'api_admin_update',
+    'page arguments' => array('php_branch', 5),
+    'file' => 'api.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // Projects autocomplete callback. This is always available.
+  $items['api/project/autocomplete'] = array(
+    'page callback' => 'api_project_autocomplete',
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+  );
+
+  // The rest of the menu items require there to be at least one branch.
+  $branches = api_get_branches();
+  if (!count($branches)) {
+    return $items;
+  }
+
+  $default_branch = api_get_branch_by_id();
+  $projects = _api_make_menu_projects();
+  if (!count($projects) || !isset($default_branch->project)) {
+    return $items;
+  }
+
+  // Legacy search URLs.
+  $items['api/search'] = array(
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array('api/' . $default_branch->project . '/' . $default_branch->branch_name . '/search', array(), '302'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+  );
+
+  foreach ($branches as $branch) {
+    if (!isset($items['api/search/' . $branch->branch_name . '/%'])) {
+      $items['api/search/' . $branch->branch_name . '/%'] = array(
+        'page callback' => 'api_legacy_search_redirect',
+        'page arguments' => array($branch, 3),
+        'access arguments' => array('access API reference'),
+        'type' => MENU_CALLBACK,
+        'file' => 'legacy.inc',
+      );
+    }
+  }
+
+  // Special URL to use for a redirect to search on 404.
+  $items['apis'] = array(
+    'title' => 'API search',
+    'page callback' => 'api_search_redirect',
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+
+  // OpenSearch metadata callback.
+  $items['api/opensearch'] = array(
+    'page callback' => 'api_opensearch',
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+
+  // OpenSearch suggestions callback.
+  $items['api/suggest/%'] = array(
+    'page callback' => 'api_suggest',
+    'page arguments' => array(2),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+
+  // Search autocomplete callback.
+  $items['api/search/autocomplete'] = array(
+    'page callback' => 'api_search_autocomplete',
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+  );
+
+  // Function dumps for IDEs and code editors.
+  $items['api/function_dump/%'] = array(
+    'page callback' => 'api_page_function_dump',
+    'page arguments' => array(2),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+
+  // Project list.
+  $items['api/projects'] = array(
+    'title' => 'Projects',
+    'page callback' => 'api_page_projects',
+    'access arguments' => array('access API reference'),
+    'type' => MENU_SUGGESTED_ITEM,
+    'file' => 'api.pages.inc',
+  );
+
+  // File pages.
+  $items['api/%/%api_filename'] = array(
+    'title' => 'File',
+    'load arguments' => array(1, 3), // project, branch
+    'page callback' => 'api_page_file',
+    'page arguments' => array(2),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%api_filename/theme_invokes'] = array(
+    'title' => 'File',
+    'load arguments' => array(1, 4), // project, branch
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(2, 'theme_invokes'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%api_filename/theme_references'] = array(
+    'title' => 'File',
+    'load arguments' => array(1, 4), // project, branch
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(2, 'theme_references'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%api_filename/yml_config'] = array(
+    'title' => 'File',
+    'load arguments' => array(1, 4), // project, branch
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(2, 'yml_config'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%api_filename/yml_keys'] = array(
+    'title' => 'File',
+    'load arguments' => array(1, 4), // project, branch
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(2, 'yml_keys'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+
+  // Individual item pages.
+  $items['api/%/%/function/%api_item'] = array(
+    'title' => 'Function',
+    'load arguments' => array(1, 5, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function',
+    'page arguments' => array(4),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+
+  $items['api/%/%/function/calls/%api_item'] = array(
+    'title' => 'Function calls',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'calls'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/function/implementations/%api_item'] = array(
+    'title' => 'Function implementations',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'implementations'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/function/references/%api_item'] = array(
+    'title' => 'Function references',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'references'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/function/invokes/%api_item'] = array(
+    'title' => 'Hook invocations',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'invokes'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/function/theme_invokes/%api_item'] = array(
+    'title' => 'Theme invokes',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'theme_invokes'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/function/theme_references/%api_item'] = array(
+    'title' => 'Theme invokes',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'theme_references'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/function/overrides/%api_item'] = array(
+    'title' => 'Function calls',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'overrides'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+
+  $items['api/%/%/constant/%api_item'] = array(
+    'title' => 'Constant',
+    'load arguments' => array(1, 5, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_simple_item',
+    'page arguments' => array(4, 'constant'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/constant/constants/%api_item'] = array(
+    'title' => 'Constant uses',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'constants'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/global/%api_item'] = array(
+    'title' => 'Global',
+    'load arguments' => array(1, 5, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_simple_item',
+    'page arguments' => array(4, 'global'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/property/%api_item'] = array(
+    'title' => 'Property',
+    'load arguments' => array(1, 5, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_simple_item',
+    'page arguments' => array(4, 'property'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/class/%api_item'] = array(
+    'title' => 'Class',
+    'load arguments' => array(1, 5, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_class',
+    'page arguments' => array(4),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/class/hierarchy/%api_item'] = array(
+    'title' => 'Class hierarchy',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_class_hierarchy',
+    'page arguments' => array(5),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/class/uses/%api_item'] = array(
+    'title' => 'Class uses',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'uses'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/class/annotations/%api_item'] = array(
+    'title' => 'Class annotations',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'annotations'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/class/services/%api_item'] = array(
+    'title' => 'Class services',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'services'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/interface/%api_item'] = array(
+    'title' => 'Interface',
+    'load arguments' => array(1, 5, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_class',
+    'page arguments' => array(4),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/trait/%api_item'] = array(
+    'title' => 'Trait',
+    'load arguments' => array(1, 5, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_class',
+    'page arguments' => array(4),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/interface/hierarchy/%api_item'] = array(
+    'title' => 'Class hierarchy',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_class_hierarchy',
+    'page arguments' => array(5),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/interface/uses/%api_item'] = array(
+    'title' => 'Class uses',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'uses'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/interface/services/%api_item'] = array(
+    'title' => 'Class services',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'services'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/service/%api_item'] = array(
+    'title' => 'Service',
+    'load arguments' => array(1, 5, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_service',
+    'page arguments' => array(4),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/service/use/%api_item'] = array(
+    'title' => 'Service uses',
+    'load arguments' => array(1, 6, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_function_calls',
+    'page arguments' => array(5, 'use'),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+  $items['api/%/%/group/%api_item'] = array(
+    'title' => 'Group',
+    'load arguments' => array(1, 5, 2, 3), // project, branch, filename, type
+    'page callback' => 'api_page_group',
+    'page arguments' => array(4),
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+
+  $items['api/%/namespace/%/%'] = array(
+    'title' => 'Namespace',
+    'page callback' => 'api_page_namespace',
+    'page arguments' => array(1, 4, 3), // project, branch, namespace
+    'access arguments' => array('access API reference'),
+    'type' => MENU_CALLBACK,
+    'file' => 'api.pages.inc',
+  );
+
+  foreach ($branches as $branch) {
+    $is_default = !is_null($default_branch) && ($branch->branch_name === $projects[$branch->project]['use branch']);
+
+    // Main branch page
+    if ($is_default) {
+      $items['api/' . $branch->project] = array(
+        'title' => 'API reference',
+        'page callback' => 'api_page_branch',
+        'page arguments' => array($branch),
+        'access arguments' => array('access API reference'),
+        'type' => $branch->branch_id === $default_branch->branch_id ? MENU_NORMAL_ITEM : MENU_SUGGESTED_ITEM,
+        'file' => 'api.pages.inc',
+      );
+    }
+    $items['api/' . $branch->project . '/' . $branch->branch_name] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_page_branch',
+      'page arguments' => array($branch),
+      'access arguments' => array('access API reference'),
+      'type' => $is_default ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'api.pages.inc',
+    );
+
+    // Branch search page.
+    $items['api/' . $branch->project . '/' . $branch->branch_name . '/search'] = array(
+      'title' => $branch->title,
+      'page callback' => 'backdrop_get_form',
+      'page arguments' => array('api_search_form', $branch),
+      'access arguments' => array('access API reference'),
+      'type' => MENU_NORMAL_ITEM,
+    );
+
+    $items['api/' . $branch->project . '/' . $branch->branch_name . '/search/%menu_tail'] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_search_listing',
+      'page arguments' => array($branch, 4),
+      'load arguments' => array('%map', '%index'),
+      'access arguments' => array('access API reference'),
+      'type' => MENU_NORMAL_ITEM,
+      'file' => 'api.pages.inc',
+    );
+
+    // Listings within a branch.
+
+    if ($is_default) {
+      $items['api/' . $branch->project . '/functions'] = array(
+        'title' => 'Functions',
+        'page callback' => 'api_page_listing',
+        'access arguments' => array('access API reference'),
+        'page arguments' => array($branch, 'function'),
+        'type' => MENU_SUGGESTED_ITEM,
+        'file' => 'api.pages.inc',
+      );
+    }
+    $items['api/' . $branch->project . '/functions/' . $branch->branch_name] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_page_listing',
+      'page arguments' => array($branch, 'function'),
+      'access arguments' => array('access API reference'),
+      'type' => $is_default ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'api.pages.inc',
+    );
+
+    if ($is_default) {
+      $items['api/' . $branch->project . '/constants'] = array(
+        'title' => 'Constants',
+        'page callback' => 'api_page_listing',
+        'access arguments' => array('access API reference'),
+        'page arguments' => array($branch, 'constant'),
+        'type' => MENU_SUGGESTED_ITEM,
+        'file' => 'api.pages.inc',
+      );
+    }
+    $items['api/' . $branch->project . '/constants/' . $branch->branch_name] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_page_listing',
+      'page arguments' => array($branch, 'constant'),
+      'access arguments' => array('access API reference'),
+      'type' => $is_default ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'api.pages.inc',
+    );
+
+    if ($is_default) {
+      $items['api/' . $branch->project . '/globals'] = array(
+        'title' => 'Globals',
+        'page callback' => 'api_page_listing',
+        'access arguments' => array('access API reference'),
+        'page arguments' => array($branch, 'global'),
+        'type' => MENU_SUGGESTED_ITEM,
+        'file' => 'api.pages.inc',
+      );
+    }
+    $items['api/' . $branch->project . '/globals/' . $branch->branch_name] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_page_listing',
+      'page arguments' => array($branch, 'global'),
+      'access arguments' => array('access API reference'),
+      'type' => $is_default ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'api.pages.inc',
+    );
+
+    if ($is_default) {
+      $items['api/' . $branch->project . '/files'] = array(
+        'title' => 'Files',
+        'page callback' => 'api_page_listing',
+        'access arguments' => array('access API reference'),
+        'page arguments' => array($branch, 'file'),
+        'type' => MENU_SUGGESTED_ITEM,
+        'file' => 'api.pages.inc',
+      );
+    }
+    $items['api/' . $branch->project . '/files/' . $branch->branch_name] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_page_listing',
+      'page arguments' => array($branch, 'file'),
+      'access arguments' => array('access API reference'),
+      'type' => $is_default ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'api.pages.inc',
+    );
+
+    if ($is_default) {
+      $items['api/' . $branch->project . '/classes'] = array(
+        'title' => 'Classes, traits, and interfaces',
+        'page callback' => 'api_page_listing',
+        'access arguments' => array('access API reference'),
+        'page arguments' => array($branch, 'class'),
+        'type' => MENU_SUGGESTED_ITEM,
+        'file' => 'api.pages.inc',
+      );
+    }
+    $items['api/' . $branch->project . '/classes/' . $branch->branch_name] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_page_listing',
+      'page arguments' => array($branch, 'class'),
+      'access arguments' => array('access API reference'),
+      'type' => $is_default ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'api.pages.inc',
+    );
+
+    if ($is_default) {
+      $items['api/' . $branch->project . '/groups'] = array(
+        'title' => 'Topics',
+        'page callback' => 'api_page_listing',
+        'access arguments' => array('access API reference'),
+        'page arguments' => array($branch, 'group'),
+        'type' => MENU_SUGGESTED_ITEM,
+        'file' => 'api.pages.inc',
+      );
+    }
+    $items['api/' . $branch->project . '/groups/' . $branch->branch_name] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_page_listing',
+      'page arguments' => array($branch, 'group'),
+      'access arguments' => array('access API reference'),
+      'type' => $is_default ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'api.pages.inc',
+    );
+
+    if ($is_default) {
+      $items['api/' . $branch->project . '/namespaces'] = array(
+        'title' => 'Namespaces',
+        'page callback' => 'api_page_listing',
+        'access arguments' => array('access API reference'),
+        'page arguments' => array($branch, 'namespace'),
+        'type' => MENU_SUGGESTED_ITEM,
+        'file' => 'api.pages.inc',
+      );
+    }
+    $items['api/' . $branch->project . '/namespaces/' . $branch->branch_name] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_page_listing',
+      'page arguments' => array($branch, 'namespace'),
+      'access arguments' => array('access API reference'),
+      'type' => $is_default ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'api.pages.inc',
+    );
+
+    if ($is_default) {
+      $items['api/' . $branch->project . '/deprecated'] = array(
+        'title' => 'Deprecated',
+        'page callback' => 'api_page_listing',
+        'access arguments' => array('access API reference'),
+        'page arguments' => array($branch, 'deprecated'),
+        'type' => MENU_SUGGESTED_ITEM,
+        'file' => 'api.pages.inc',
+      );
+    }
+    $items['api/' . $branch->project . '/deprecated/' . $branch->branch_name] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_page_listing',
+      'page arguments' => array($branch, 'deprecated'),
+      'access arguments' => array('access API reference'),
+      'type' => $is_default ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'api.pages.inc',
+    );
+
+    if ($is_default) {
+      $items['api/' . $branch->project . '/services'] = array(
+        'title' => 'Services',
+        'page callback' => 'api_page_listing',
+        'access arguments' => array('access API reference'),
+        'page arguments' => array($branch, 'service'),
+        'type' => MENU_SUGGESTED_ITEM,
+        'file' => 'api.pages.inc',
+      );
+    }
+    $items['api/' . $branch->project . '/services/' . $branch->branch_name] = array(
+      'title' => $branch->title,
+      'page callback' => 'api_page_listing',
+      'page arguments' => array($branch, 'service'),
+      'access arguments' => array('access API reference'),
+      'type' => $is_default ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'file' => 'api.pages.inc',
+    );
+
+    // Dump of all documentation items in the branch.
+    // Note that you can put query parameters on this URL: 'limit' to limit
+    // the number of items output, and 'page' to move on to the next page if
+    // limit is set (page numbering starts at 0 just like the standard Backdrop
+    // pager). Query params are optional.
+    if ($is_default) {
+      $items['api/' . $branch->project . '/full_list'] = array(
+        'title' => 'Full list of items',
+        'page callback' => 'api_dump_full_list',
+        'access arguments' => array('access API reference'),
+        'page arguments' => array($branch),
+        'type' => MENU_CALLBACK,
+        'file' => 'api.pages.inc',
+      );
+    }
+
+    // See note on previous block about query parameters.
+    $items['api/' . $branch->project . '/full_list/' . $branch->branch_name] = array(
+      'title' => 'Full list of items',
+      'page callback' => 'api_dump_full_list',
+      'access arguments' => array('access API reference'),
+      'page arguments' => array($branch),
+      'type' => MENU_CALLBACK,
+      'file' => 'api.pages.inc',
+    );
+  }
+
+  // Redirect 1.0 file links.
+  $items['api/file/%menu_tail'] = array(
+    'page callback' => 'api_file_redirect',
+    'page arguments' => array(2),
+    'load arguments' => array('%map', '%index'),
+    'access callback' => TRUE,
+    'file' => 'legacy.inc',
+  );
+
+  // Redirect 1.1 links.
+  // Objects
+  $items['api/function/%api_legacy_1_2_object'] = array(
+    'load arguments' => array('function', 3),
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array(2, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/function/%api_legacy_1_2_object/%'] =  $items['api/function/%api_legacy_1_2_object'];
+
+
+  $items['api/constant/%api_legacy_1_2_object'] = array(
+    'load arguments' => array('constant', 3),
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array(2, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/constant/%api_legacy_1_2_object/%'] = $items['api/constant/%api_legacy_1_2_object'];
+
+
+  $items['api/global/%api_legacy_1_2_object'] = array(
+    'load arguments' => array('global', 3),
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array(2, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/global/%api_legacy_1_2_object/%'] = $items['api/global/%api_legacy_1_2_object'];
+
+
+  $items['api/group/%api_legacy_1_2_object'] = array(
+    'load arguments' => array('group', 3),
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array(2, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/group/%api_legacy_1_2_object/%'] = $items['api/group/%api_legacy_1_2_object'];
+
+  // Default listings
+  $items['api/functions'] = array(
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array('api/' . $default_branch->project . '/functions', array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/files'] = array(
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array('api/' . $default_branch->project . '/files', array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/constants'] = array(
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array('api/' . $default_branch->project . '/constants', array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/globals'] = array(
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array('api/' . $default_branch->project . '/globals', array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/groups'] = array(
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array('api/' . $default_branch->project . '/groups', array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api'] = array(
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array('api/' . $default_branch->project, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  // Branch listings
+  $items['api/functions/%api_legacy_1_2_listing'] = array(
+    'load arguments' => array('functions'),
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array(2, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/files/%api_legacy_1_2_listing'] = array(
+    'load arguments' => array('files'),
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array(2, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/constants/%api_legacy_1_2_listing'] = array(
+    'load arguments' => array('constants'),
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array(2, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/globals/%api_legacy_1_2_listing'] = array(
+    'load arguments' => array('globals'),
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array(2, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/groups/%api_legacy_1_2_listing'] = array(
+    'load arguments' => array('groups'),
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array(2, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['api/%api_legacy_1_2_listing'] = array(
+    'page callback' => 'backdrop_goto',
+    'page arguments' => array(1, array(), '302'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Returns a list of projects with their default branches, for use in menus.
+ *
+ * Basically, we need to define a default branch for each project: the first
+ * "preferred" branch with the correct core compatibility.
+ *
+ * @return array
+ *   Associative array whose keys are project names, and whose values are
+ *   each an associative array with elements:
+ *   - max branch: Name of the highest-numbered (or technically, latest in
+ *     alphabetical order) branch found for each project.
+ *   - use branch: Name of the branch to use as the default for this project,
+ *     which must be marked "preferred" and have the default core
+ *     compatibility. However if none is found, the "max" branch is used.
+ */
+function _api_make_menu_projects() {
+  $branches = api_get_branches();
+  if (!count($branches)) {
+    return array();
+  }
+
+  $compatibility = config_get('api.settings', 'default_core_compatibility');
+  $projects = array();
+
+  foreach ($branches as $branch) {
+    if (!isset($projects[$branch->project])) {
+      $projects[$branch->project] = array(
+        'max branch' => $branch->branch_name,
+        'use branch' => NULL,
+      );
+    }
+    else {
+      $projects[$branch->project]['max branch'] = max($projects[$branch->project]['max branch'], $branch->branch_name);
+    }
+
+    if ($branch->core_compatibility === $compatibility && $branch->preferred) {
+      $projects[$branch->project]['use branch'] = $branch->branch_name;
+    }
+  }
+
+  foreach (array_keys($projects) as $project) {
+    if (is_null($projects[$project]['use branch'])) {
+      $projects[$project]['use branch'] = $projects[$project]['max branch'];
+    }
+  }
+
+  return $projects;
+}
+
+/**
+ * Finds objects for old URLs and returns the new URL.
+ *
+ * @param $object_name
+ *   Name of the object to find the URL of.
+ * @param $object_type
+ *   Type of object ('function', 'constant', etc.).
+ * @param $branch_name
+ *   Name of the branch to find the object in (across projects).
+ *
+ * @return
+ *   First matching URL for this combination of object name, type, and branch
+ *   name, or FALSE if none is found (so it can be used as a hook_menu() magic
+ *   argument loader function).
+ */
+function api_legacy_1_2_object_load($object_name, $object_type, $branch_name) {
+  foreach (api_get_branches_by_name($branch_name) as $branch) {
+    $object = api_object_load($object_name, $branch, $object_type);
+    if (isset($object)) {
+      return api_url($object);
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Returns the current path to listing pages accessed with old URLs.
+ *
+ * @param $branch_name
+ *   Name of the branch to redirect.
+ * @param $type
+ *   Type of listing page ('functions', etc.), or NULL for the home page.
+ *
+ * @return
+ *   URL to redirect this listing to, in the default project.
+ */
+function api_legacy_1_2_listing_load($branch_name, $type = NULL) {
+  $branch = api_get_branch_by_id();
+  if (empty($branch_name)) {
+    if (isset($branch)) {
+      $branch_name = $branch->branch_name;
+    }
+    else {
+      $branch_name = '';
+    }
+  }
+  if (isset($type)) {
+    return 'api/' . $branch->project . '/' . $type . '/' . $branch_name;
+  }
+  else {
+    return 'api/' . $branch->project . '/' . $branch_name;
+  }
+}
+
+/**
+ * Loads an API object for the menu router.
+ *
+ * Menu object load callback for %api_item in menu paths.
+ *
+ * @param $object_name
+ *   The object name matching {api_documentation}.object_name.
+ * @param $project
+ *   The project name matching {api_branch}.project.
+ * @param $branch_name
+ *   The branch name matching {api_branch}.branch_name.
+ * @param $file_name
+ *   The name of the file the object is in, with API_FILEPATH_SEPARATOR for path
+ *   separators. We convert all API_FILEPATH_SEPARATOR_REPLACEMENTs back to
+ *   API_FILEPATH_SEPARATORs to maintain the original file path information.
+ *   (When a URL is created for a documentation object, all
+ *   API_FILEPATH_SEPARATORs in the original file path are replaced with
+ *   API_FILEPATH_SEPARATOR_REPLACEMENTs so that API_FILEPATH_SEPARATORs won't
+ *   be interpreted as part the of URL.
+ * @param $type
+ *   API item type; one of function, constant, global, property, class,
+ *   interface, or group.
+ *
+ * @return
+ *   Loaded documentation object, or FALSE if not found (returning FALSE will
+ *   cause the Backdrop menu system to recognize it's a 404 error).
+ */
+function api_item_load($object_name, $project, $branch_name, $file_name, $type) {
+  // Check type
+  if (!in_array($type, array('function', 'constant', 'global', 'property', 'class', 'interface', 'trait', 'group', 'service'))) {
+    return FALSE;
+  }
+
+  // Load branch
+  $branch = api_get_branch_by_name($project, $branch_name);
+  if (is_null($branch)) {
+    return FALSE;
+  }
+
+  // Load object
+  $back_to_orig_filename = str_replace(API_FILEPATH_SEPARATOR_REPLACEMENT, API_FILEPATH_SEPARATOR, $file_name);
+  $doc_object = api_object_load($object_name, $branch, $type, $back_to_orig_filename);
+
+  if (empty($doc_object) && (strpos($file_name, API_v1_3_FILEPATH_SEPARATOR_REPLACEMENT) !== FALSE)) {
+    // May be an API 1.3 style path. See if we can load a valid object with the
+    // old replacement pattern.
+    $doc_object = api_object_load($object_name, $branch, $type, str_replace(API_v1_3_FILEPATH_SEPARATOR_REPLACEMENT, API_FILEPATH_SEPARATOR, $file_name) );
+    // If we could, redirect to the current URL.
+    if (!empty($doc_object)) {
+      backdrop_goto(api_url($doc_object));
+    }
+  }
+
+  if (empty($doc_object)) {
+    return FALSE;
+  }
+
+  return $doc_object;
+}
+
+/**
+ * Loads an API file object for the menu router.
+ *
+ * Menu object load callback for %api_filename in menu paths.
+ *
+ * API v 1.3 replaced all '/'s in the file path with '--' for the URL generated
+ * for the file. We need to handle a URL with '--' (=
+ * API_v1_3_FILEPATH_SEPARATOR_REPLACEMENT) and redirected it to the current,
+ * correct URL.  We now convert all '/'s (= API_FILEPATH_SEPARATOR) to
+ * API_FILEPATH_SEPARATOR_REPLACEMENT when a URL is created for a documentatio
+ * object. Here we need to go back to the original filename and path.
+ *
+ * @param $file_name
+ *   Name of the file to load.
+ * @param $project
+ *   Name of the project the file is in.
+ * @param $branch_name
+ *   Name of the branch the file is in.
+ *
+ * @return
+ *   Loaded documentation object, or FALSE if not found (returning FALSE will
+ *   cause the Backdrop menu system to recognize it's a 404 error).
+ */
+function api_filename_load($file_name, $project, $branch_name) {
+  $branch = api_get_branch_by_name($project, $branch_name);
+  if (is_null($branch)) {
+    return FALSE;
+  }
+
+  $doc_object = api_object_load(str_replace(API_FILEPATH_SEPARATOR_REPLACEMENT, API_FILEPATH_SEPARATOR, $file_name), $branch, 'file');
+
+  if (empty($doc_object) && (strpos($file_name, API_v1_3_FILEPATH_SEPARATOR_REPLACEMENT) !== FALSE)) {
+    // May be an API 1.3 style path. See if we can load a valid object with the
+    // old replacement pattern.
+    $doc_object = api_object_load(str_replace(API_v1_3_FILEPATH_SEPARATOR_REPLACEMENT, API_FILEPATH_SEPARATOR, $file_name), $branch, 'file');
+    // If we could, redirect to the current URL.
+    if (!empty($doc_object)) {
+      backdrop_goto(api_url($doc_object));
+    }
+  }
+
+  if (empty($doc_object)) {
+    return FALSE;
+  }
+
+  return $doc_object;
+}
+
+/**
+ * Loads a documentation object.
+ *
+ * @param $object_name_or_did
+ *   The string object name or integer documentation ID to load.
+ * @param $branch
+ *   Branch object. Ignored if $object_name_or_did is an integer.
+ * @param $object_type
+ *   A string type, or array of strings: class, interface, function, etc.
+ *   Can be omitted if $object_name_or_did is an integer.
+ * @param $file_name
+ *   Name of the file the object is in (if needed). Ignored if
+ *   $object_name_or_did is an integer.
+ *
+ * @return
+ *   Object with information about the matching documentation, or NULL if it
+ *   does not exist.
+ */
+function api_object_load($object_name_or_did, $branch = NULL, $object_type = '', $file_name = NULL) {
+  static $cache;
+
+  if (!is_array($object_type)) {
+    $object_type = array($object_type);
+  }
+
+  if (is_numeric($object_name_or_did)) {
+    $key = $object_name_or_did;
+  }
+  else {
+    $key = $object_name_or_did . ':' . implode('-', $object_type) . ':' . $branch->branch_id . ':' . $file_name;
+  }
+
+  // See if we have this cached.
+  if (isset($cache[$key])) {
+    return $cache[$key];
+  }
+
+  // We don't have a cached value. Prepare the query.
+
+  // Set up the basic query.
+  $query = db_select('api_documentation', 'ad');
+  $ao = $query->leftJoin('api_overrides', 'ao', 'ao.did = ad.did');
+  $query
+    ->fields('ad')
+    ->fields($ao, array('documented_did', 'overrides_did'));
+
+  if (is_numeric($object_name_or_did)) {
+    // Quick query on just the documentation ID.
+    $query->condition('ad.did', $object_name_or_did);
+  }
+  else {
+    $query
+      ->condition('ad.object_type', $object_type)
+      ->condition('ad.branch_id', $branch->branch_id)
+      ->condition('ad.object_name', $object_name_or_did);
+    if (!is_null($file_name)) {
+      $query->condition('ad.file_name', $file_name);
+    }
+  }
+
+  // Set up extra fields, depending on the object type.
+  if (in_array('function', $object_type)) {
+    $afunc = $query->leftJoin('api_function', 'afunc', 'afunc.did = ad.did');
+    $query->fields($afunc, array('signature', 'parameters', 'return_value'));
+  }
+  elseif (in_array('file', $object_type)) {
+    $afile = $query->leftJoin('api_file', 'afile', 'afile.did = ad.did');
+    $query->fields($afile, array('modified', 'queued'));
+  }
+
+  // Set up field for the file's doc ID.
+  $query->leftJoin('api_documentation', 'adfile', "adfile.file_name = ad.file_name AND adfile.object_type = 'file' AND adfile.branch_id = ad.branch_id");
+  $query->addField('adfile', 'did', 'file_did');
+
+  // Execute the query, and store in cache if it's successful.
+  $query = $query->range(0, 1);
+  $result = $query->execute();
+  $result_object = NULL;
+  foreach ($result as $result_object) {
+    // Grab documentation from documented parent.
+    if (!empty($result_object->documented_did) && $result_object->documented_did !== $result_object->did) {
+      $documented_object = api_object_load((int) $result_object->documented_did, $branch, $object_type);
+      if (isset($documented_object)) {
+        foreach (array('documentation', 'parameters', 'return_value', 'see', 'deprecated', 'throws', 'var') as $member) {
+          $result_object->$member = $documented_object->$member;
+        }
+      }
+    }
+    // Store in the cache.
+    $cache[$key] = $result_object;
+    return $result_object;
+  }
+
+  return NULL;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function api_permission() {
+  return array(
+    'access API reference' => array(
+      'title' => t('Access API reference pages'),
+    ),
+    'administer API reference' => array(
+      'title' => t('Administer API reference'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function api_theme() {
+  return array(
+    'api_defined' => array(
+      'variables' => array(
+        'branch' => NULL,
+        'object' => NULL,
+      ),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-defined',
+      'file' => 'api.theme.inc',
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_api_defined'),
+    ),
+    'api_functions' => array(
+      'variables' => array(
+        'functions' => array(),
+      ),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-functions',
+    ),
+    'api_function_page' => array(
+      'variables' => array(
+        'branch' => NULL,
+        'object' => NULL,
+        'signatures' => NULL,
+        'documentation' => NULL,
+        'parameters' => NULL,
+        'return' => NULL,
+        'related_topics' => NULL,
+        'call_links' => array(),
+        'code' => NULL,
+        'see' => NULL,
+        'deprecated' => NULL,
+        'throws' => NULL,
+        'class' => NULL,
+      ),
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_api_object_page'),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-function-page',
+      'file' => 'api.theme.inc',
+    ),
+    'api_constant_page' => array(
+      'variables' => array(
+        'branch' => NULL,
+        'object' => NULL,
+        'documentation' => NULL,
+        'code' => NULL,
+        'related_topics' => NULL,
+        'see' => NULL,
+        'deprecated' => NULL,
+        'class' => NULL,
+        'call_links' => array(),
+      ),
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_api_object_page'),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-constant-page',
+      'file' => 'api.theme.inc',
+    ),
+    'api_global_page' => array(
+      'variables' => array(
+        'branch' => NULL,
+        'object' => NULL,
+        'documentation' => NULL,
+        'code' => NULL,
+        'related_topics' => NULL,
+        'see' => NULL,
+        'deprecated' => NULL,
+      ),
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_api_object_page'),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-global-page',
+      'file' => 'api.theme.inc',
+    ),
+    'api_property_page' => array(
+      'variables' => array(
+        'branch' => NULL,
+        'object' => NULL,
+        'documentation' => NULL,
+        'code' => NULL,
+        'related_topics' => NULL,
+        'see' => NULL,
+        'deprecated' => NULL,
+        'var' => NULL,
+        'class' => NULL,
+      ),
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_api_object_page'),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-property-page',
+      'file' => 'api.theme.inc',
+    ),
+    'api_class_page' => array(
+      'variables' => array(
+        'branch' => NULL,
+        'object' => NULL,
+        'documentation' => NULL,
+        'implements' => NULL,
+        'hierarchy' => NULL,
+        'objects' => NULL,
+        'code' => NULL,
+        'related_topics' => NULL,
+        'see' => NULL,
+        'deprecated' => NULL,
+        'call_links' => array(),
+      ),
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_api_object_page'),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-class-page',
+      'file' => 'api.theme.inc',
+    ),
+    'api_service_page' => array(
+      'variables' => array(
+        'branch' => NULL,
+        'object' => NULL,
+        'class' => NULL,
+        'code' => NULL,
+        'tags' => NULL,
+        'call_links' => array(),
+      ),
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_api_object_page'),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-service-page',
+      'file' => 'api.theme.inc',
+    ),
+    'api_file_page' => array(
+      'variables' => array(
+        'object' => NULL,
+        'documentation' => NULL,
+        'objects' => NULL,
+        'code' => NULL,
+        'see' => NULL,
+        'deprecated' => NULL,
+        'related_topics' => NULL,
+        'defined' => '',
+        'call_links' => array(),
+      ),
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_api_object_page'),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-file-page',
+      'file' => 'api.theme.inc',
+    ),
+    'api_group_page' => array(
+      'variables' => array(
+        'branch' => NULL,
+        'object' => NULL,
+        'documentation' => NULL,
+        'objects' => NULL,
+        'see' => NULL,
+        'related_topics' => NULL,
+      ),
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_api_object_page'),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-group-page',
+      'file' => 'api.theme.inc',
+    ),
+    'api_branch_default_page' => array(
+      'variables' => array(
+        'branch' => NULL,
+      ),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-branch-default-page',
+    ),
+    'api_function_reference_link' => array(
+      'variables' => array(
+        'type' => '',
+        'count' => 0,
+        'function' => (object) array(),
+        'override_text' => '',
+      ),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'file' => 'api.theme.inc',
+    ),
+    'api_class_section' => array(
+      'variables' => array(
+        'class' => NULL,
+        'branch' => NULL,
+      ),
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'template' => 'api-class-section',
+      'file' => 'api.theme.inc',
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_api_class_section'),
+    ),
+    'api_views_view_dl_list' => array(
+      'variables' => array(
+      ),
+      'template' => 'api-views-view-dl-list',
+      'path' => backdrop_get_path('module', 'api') . '/templates',
+      'file' => 'api.theme.inc',
+      'preprocess functions' => array('template_preprocess', 'api_preprocess_views_view_dl_list'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for html.tpl.php.
+ *
+ * Sets the page title if it's an API module page and a title was set in
+ * api_set_html_page_title().
+ */
+function api_preprocess_html(&$variables) {
+  $title = api_set_html_page_title();
+  if ($title) {
+    $variables['head_title'] = $title;
+  }
+}
+
+/**
+ * Saves or returns a string to use for the HTML page title.
+ *
+ * @param string $title
+ *   If provided, stores this as the page title.
+ *
+ * @return string|null
+ *   The previously-set page title, or NULL if it has not been set during
+ *   this page load.
+ */
+function api_set_html_page_title($title = NULL) {
+  static $page_title = NULL;
+
+  if (isset($title)) {
+    $page_title = $title;
+  }
+
+  return $page_title;
+}
+
+/**
+ * Implements hook_init().
+ *
+ * Adds CSS and JavaScript for the search auto-complete. Adds OpenSearch
+ * autodiscovery link. Redirects nodes of type 'api' to the correct URL.
+ */
+function api_init() {
+  $branch = api_get_active_branch();
+
+  // If we happen to be on an API node page, redirect.
+  if (($node = menu_get_object('node')) && $node->type == 'api') {
+    $result = db_select('api_documentation', 'd')
+      ->fields('d', array('branch_id', 'object_type', 'file_name', 'object_name'))
+      ->condition('did', $node->nid)
+      ->range(0, 1)
+      ->execute()
+      ->fetchObject();
+    backdrop_goto(api_url($result));
+  }
+
+  // Add OpenSearch autodiscovery link.
+  $title = config_get('api.settings', 'opensearch_name');
+  $url = url('api/opensearch', array('absolute' => TRUE));
+  $weight = 100;
+  backdrop_add_html_head(array(
+      '#tag' => 'link',
+      '#weight' => $weight,
+      '#attributes' => array(
+        'href' => $url,
+        'title' => $title,
+        'rel' => 'search',
+        'type' => 'application/opensearchdescription+xml',
+      ),
+    ), $title);
+}
+
+/**
+ * Implements hook_node_access().
+ */
+function api_node_access($node, $op, $account) {
+  // Do not allow creation, edit, or delete of API nodes through the UI.
+  if (($node === 'api' || (is_object($node) && $node->type === 'api')) && $op !== 'view') {
+    return FALSE;
+  }
+}
+
+/**
+ * Implements hook_query_TAG_alter() for node_access queries.
+ *
+ * Excludes nodes of type 'api' from queries tagged 'node_access', unless the
+ * 'api_ignore_node_access' tag is also present. Also skips this if we are on
+ * the comment admin page.
+ */
+function api_query_node_access_alter($query) {
+  // Skip this processing if the 'api_ignore_node_access' query tag has been
+  // set. This allows building things like comment forms in Views.
+  if ($query->hasTag('api_ignore_node_access')) {
+    return;
+  }
+
+  // Skip processing if another module asks us to.
+  foreach (module_implements('api_ignore_node_access') as $module) {
+    $function = $module . '_api_ignore_node_access';
+    if ($function($query)) {
+      return;
+    }
+  }
+
+  // Skip this processing on the comment admin page.
+  $arg = arg();
+  if (count($arg) >= 3 && $arg[0] == 'admin' && $arg[1] == 'content' && $arg[2] == 'comment') {
+    return;
+  }
+
+  // Find all instances of the 'node' table, and make sure they exclude API
+  // nodes.
+  $tables = $query->getTables();
+  foreach ($tables as $alias => $table_info) {
+    if (is_array($table_info) && isset($table_info['table']) && $table_info['table'] == 'node') {
+      $or = db_or()
+        ->isNull($alias . '.type')
+        ->condition($alias . '.type', 'api', '<>');
+      $query->condition($or);
+    }
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function api_block_info() {
+  return array(
+    'api-search' => array(
+      'info' => t('API search'),
+      // This needs to be non-cached as it's a form with a form
+      // token in it, and they can't be stale.
+      'cache' => DRUPAL_NO_CACHE,
+    ),
+    'navigation' => array(
+      'info' => t('API navigation'),
+      'cache' => DRUPAL_CACHE_PER_PAGE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function api_block_view($delta) {
+  $branch = api_get_active_branch();
+
+  switch ($delta) {
+    case 'api-search':
+      if (user_access('access API reference') && !empty($branch)) {
+        return array(
+          'subject' => t('Search @branch', array('@branch' => $branch->title)),
+          'content' => backdrop_get_form('api_search_form', $branch),
+        );
+      }
+      return;
+
+    case 'navigation':
+      if (user_access('access API reference') && !empty($branch)) {
+        // Figure out if this is the default branch for this project, the same
+        // way the menu system decides.
+
+        $default_branch = api_get_branch_by_id();
+        $projects = _api_make_menu_projects();
+        $is_default = ($branch->branch_name === $projects[$branch->project]['use branch']);
+        $suffix = ($is_default) ? '' : '/' . $branch->branch_name;
+
+        $links = array();
+        $links[] = l($branch->title, 'api/' . $branch->project . $suffix);
+        $counts = api_listing_counts($branch);
+        if ($counts['groups'] > 0) {
+          $links[] = l(t('Topics'), 'api/' . $branch->project . '/groups' . $suffix);
+        }
+        if ($counts['classes'] > 0) {
+          $links[] = l(t('Classes'), 'api/' . $branch->project . '/classes' . $suffix);
+        }
+        if ($counts['functions'] > 0) {
+          $links[] = l(t('Functions'), 'api/' . $branch->project . '/functions' . $suffix);
+        }
+        if ($counts['files'] > 0) {
+          $links[] = l(t('Files'), 'api/' . $branch->project . '/files' . $suffix);
+        }
+        if ($counts['namespaces'] > 0) {
+          $links[] = l(t('Namespaces'), 'api/' . $branch->project . '/namespaces' . $suffix);
+        }
+        if ($counts['services'] > 0) {
+          $links[] = l(t('Services'), 'api/' . $branch->project . '/services' . $suffix);
+        }
+        if ($counts['constants'] > 0) {
+          $links[] = l(t('Constants'), 'api/' . $branch->project . '/constants' . $suffix);
+        }
+        if ($counts['globals'] > 0) {
+          $links[] = l(t('Globals'), 'api/' . $branch->project . '/globals' . $suffix);
+        }
+        if ($counts['deprecated'] > 0) {
+          $links[] = l(t('Deprecated'), 'api/' . $branch->project . '/deprecated' . $suffix);
+        }
+
+        return array(
+          'subject' => t('API Navigation'),
+          'content' => theme('item_list', array('items' => $links)),
+        );
+      }
+      return;
+  }
+}
+
+/**
+ * Counts items by type for a branch.
+ *
+ * @param $branch
+ *   Object representing the branch to count.
+ *
+ * @return
+ *   Associative array where the keys are the type of listing ('functions',
+ *   'classes', etc.) and the values are the count of how many there are in
+ *   that listing for the given branch.
+ */
+function api_listing_counts($branch) {
+  static $cached_counts = array();
+
+  // Check the cache.
+  $key = $branch->branch_name . $branch->branch_id;
+  if (isset($cached_counts[$key])) {
+    return $cached_counts[$key];
+  }
+
+  $return = array(
+    'groups' => 0,
+    'classes' => 0,
+    'functions' => 0,
+    'constants' => 0,
+    'globals' => 0,
+    'files' => 0,
+    'namespaces' => 0,
+    'deprecated' => 0,
+    'services' => 0,
+  );
+
+  // These queries mirror what is done in the views used by api_page_listing().
+  $query = db_select('api_documentation', 'ad')
+    ->condition('branch_id', $branch->branch_id)
+    ->condition('object_type', 'group')
+    ->groupBy('branch_id');
+  $query->addExpression('COUNT(*)', 'num');
+  $return['groups'] = $query
+    ->execute()
+    ->fetchField();
+
+  $query = db_select('api_documentation', 'ad')
+    ->condition('branch_id', $branch->branch_id)
+    ->condition('namespace', '', '<>')
+    ->groupBy('namespace');
+  $query->addExpression('COUNT(*)', 'num');
+  $return['namespaces'] = $query
+    ->execute()
+    ->fetchField();
+
+  $query = db_select('api_documentation', 'ad')
+    ->condition('branch_id', $branch->branch_id)
+    ->condition('object_type', array('class', 'interface', 'trait'))
+    ->condition('class_did', 0)
+    ->groupBy('branch_id');
+  $query->addExpression('COUNT(*)', 'num');
+  $return['classes'] = $query
+    ->execute()
+    ->fetchField();
+
+  $query = db_select('api_documentation', 'ad')
+    ->condition('branch_id', $branch->branch_id)
+    ->condition('deprecated', '', '<>')
+    ->groupBy('branch_id');
+  $query->addExpression('COUNT(*)', 'num');
+  $return['deprecated'] = $query
+    ->execute()
+    ->fetchField();
+
+  foreach (array('function', 'constant', 'global', 'file', 'service') as $type) {
+    $query = db_select('api_documentation', 'ad')
+      ->condition('branch_id', $branch->branch_id)
+      ->condition('object_type', $type)
+      ->condition('class_did', 0)
+      ->groupBy('branch_id');
+    $query->addExpression('COUNT(*)', 'num');
+    $return[$type . 's'] = $query
+      ->execute()
+      ->fetchField();
+  }
+
+  $cached_counts[$key] = $return;
+  return $return;
+}
+
+/**
+ * Implements hook_filter_info().
+ */
+function api_filter_info() {
+  return array(
+    'api_filter' => array(
+      'title' => t('API filter'),
+      'description' => t('Add links to API objects, like theme() or theme.inc.'),
+      'process callback' => 'api_filter_documentation_process',
+      'tips callback' => 'api_filter_documentation_tips',
+    ),
+  );
+}
+
+/**
+ * Returns filter help ("tips") for the API text filter.
+ */
+function api_filter_documentation_tips($filter, $format, $long) {
+  return t('Function names (and classes, constants, etc.) turn into links.');
+}
+
+/**
+ * Filters text: turns documentation into links.
+ *
+ * This is the process callback for the API documentation filter. It turns
+ * function names into links on output, using the currently active branch.
+ * Other parameters are passed to this function, but they are not actually used.
+ *
+ * @param $text
+ *   Text to be filtered.
+ */
+function api_filter_documentation_process($text) {
+  module_load_include('inc', 'api', 'api.formatting');
+
+  // Try to get the current branch.
+  $branch = api_get_active_branch();
+
+  // If we are on an API module page, load the current menu router item and
+  // see if we can extract an API class and file ID from it. If we are not on
+  // an API module page, there is no point trying, and besides calling
+  // menu_get_item() could lead to recursion if it is trying to load a text
+  // field formatted with the API text filter (on a node for instance).
+  $class_did = 0;
+  $file_did = 0;
+  $arg = arg();
+  if ($arg[0] == 'api') {
+    $item = menu_get_item();
+    if (isset($item['load_functions']) && is_array($item['load_functions'])) {
+      foreach ($item['load_functions'] as $index => $function) {
+        if ($function == 'api_item_load' && isset($item['map'][$index]) && is_object($item['map'][$index])) {
+          $obj = $item['map'][$index];
+          $class_did = $obj->class_did;
+          $file_did = $obj->file_did;
+          if (!$class_did && ($obj->object_type == 'class' || $obj->object_type == 'interface')) {
+            $class_did = $obj->did;
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  return api_link_documentation($text, $branch, $file_did, $class_did, TRUE, FALSE);
+}
+
+/**
+ * Constructs a link to an API object page.
+ *
+ * Constructs a URL for an object, replacing any API_FILEPATH_SEPARATOR in a
+ * file path with API_FILEPATH_SEPARATOR_REPLACEMENT.
+ *
+ * @param $object
+ *   An API object with object_type, object_name, branch_id, and file_name
+ *   properties.
+ * @param bool $file
+ *   TRUE links to the object’s containing file, FALSE links to the object
+ *   itself.
+ *
+ * @return
+ *   A URL string, or an empty string if there was a problem.
+ */
+function api_url($object, $file = FALSE) {
+  $branch = api_get_branch_by_id($object->branch_id);
+  if (!$branch) {
+    return '';
+  }
+
+  if ($file) {
+    $replaced_string = str_replace(API_FILEPATH_SEPARATOR, API_FILEPATH_SEPARATOR_REPLACEMENT, $object->file_name);
+    return 'api/' . $branch->project . '/' . $replaced_string . '/' . $branch->branch_name;
+  }
+  elseif ($object->object_type === 'file') {
+    $replaced_string = str_replace(API_FILEPATH_SEPARATOR, API_FILEPATH_SEPARATOR_REPLACEMENT, $object->object_name);
+    return 'api/' . $branch->project . '/' . $replaced_string . '/' . $branch->branch_name;
+  }
+  else {
+    $replaced_string = str_replace(API_FILEPATH_SEPARATOR, API_FILEPATH_SEPARATOR_REPLACEMENT, $object->file_name);
+    return 'api/' . $branch->project . '/' . $replaced_string . '/' . $object->object_type . '/' . $object->object_name . '/' . $branch->branch_name;
+  }
+}
+
+/**
+ * Constructs a link to an API namespace page.
+ *
+ * Constructs a URL for a namespace, replacing any API_NAMESPACE_SEPARATOR in a
+ * file path with API_FILEPATH_SEPARATOR_REPLACEMENT.
+ *
+ * @param $branch_id
+ *   ID of the branch to make the link in.
+ * @param $namespace
+ *   Namespace to make the link for.
+ *
+ * @return
+ *   A URL string, or an empty string if there was a problem.
+ */
+function api_namespace_url($branch_id, $namespace) {
+  $branch = api_get_branch_by_id($branch_id);
+  if (!$branch) {
+    return '';
+  }
+
+  $replaced_string = str_replace(API_NAMESPACE_SEPARATOR, API_FILEPATH_SEPARATOR_REPLACEMENT, $namespace);
+  return 'api/' . $branch->project . '/namespace/' . $replaced_string . '/' . $branch->branch_name;
+}
+
+/**
+ * Saves an API branch.
+ *
+ * @param $branch
+ *   A branch object.
+ */
+function api_save_branch($branch) {
+  $branch->data = serialize($branch->data);
+  // Update the queue valid timestamp for this branch so that old queue jobs
+  // are invalid.
+  $branch->queue_valid = time();
+  // Update the last updated timestamp for this branch so that it will be
+  // updated as soon as possible.
+  $branch->last_updated = 0;
+
+  if (empty($branch->branch_id)) {
+    backdrop_write_record('api_branch', $branch);
+  }
+  else {
+    backdrop_write_record('api_branch', $branch, 'branch_id');
+
+    // We've just updated a files branch, so we need to mark all of the files
+    // that were in the parse queue so that they are re-queued next time
+    // we scan this branch for files.
+    $query = db_select('api_file', 'f')
+      ->fields('f', array('did'))
+      ->condition('queued', 0, '<>');
+    $query->leftJoin('api_documentation', 'd', 'f.did = d.did');
+    $dids = $query->condition('d.branch_id', $branch->branch_id)
+      ->execute()
+      ->fetchCol();
+    if (count($dids)) {
+      db_update('api_file')
+        ->condition('did', $dids)
+        ->fields(array('queued' => 0))
+        ->execute();
+    }
+  }
+
+  api_reset_branches();
+}
+
+/**
+ * Deletes a branch and all of its related documentation records.
+ *
+ * @param $branch_id
+ *   The numeric ID of the branch to delete.
+ * @param $finalize
+ *   TRUE to redo the menus etc., FALSE to postpone (because other deletes
+ *   are coming).
+ */
+function api_delete_branch($branch_id, $finalize = TRUE) {
+  // Find out which documentation IDs need to be deleted.
+  $dids = db_select('api_documentation', 'ad')
+    ->fields('ad', array('did'))
+    ->condition('branch_id', $branch_id)
+    ->execute()
+    ->fetchCol();
+
+  // Fully delete these items, and the branch record.
+  api_delete_items($dids);
+  db_delete('api_branch')
+    ->condition('branch_id', $branch_id)
+    ->execute();
+
+  if ($finalize) {
+    api_reset_branches();
+  }
+}
+
+/**
+ * Saves an API reference branch.
+ *
+ * @param $branch
+ *   A reference branch object.
+ */
+function api_save_php_branch($branch) {
+  // If core compatibility has not yet been set and we've just added an
+  // API reference branch, set it now.
+  $version = config_get('api.settings', 'default_core_compatibility');
+  if (!$version && isset($branch->data['core_compatibility'])) {
+    config_set('api.settings', 'default_core_compatibility', $branch->data['core_compatibility']);
+  }
+
+  $branch->data = serialize($branch->data);
+  if (empty($branch->branch_id)) {
+    backdrop_write_record('api_php_branch', $branch);
+  }
+  else {
+    backdrop_write_record('api_php_branch', $branch, 'branch_id');
+  }
+
+  api_get_php_branches(TRUE);
+}
+
+/**
+ * Deletes a reference branch and all of its related documentation records.
+ *
+ * @param $branch_id
+ *   The numeric ID of the branch to delete.
+ */
+function api_delete_php_branch($branch_id) {
+  // This could be a PHP or API reference branch. We could check the type,
+  // but it is also fine to just delete from both documentation tables.
+  db_delete('api_php_documentation')
+    ->condition('branch_id', $branch_id)
+    ->execute();
+  db_delete('api_external_documentation')
+    ->condition('branch_id', $branch_id)
+    ->execute();
+  db_delete('api_php_branch')
+    ->condition('branch_id', $branch_id)
+    ->execute();
+
+  api_get_php_branches(TRUE);
+}
+
+/**
+ * Saves an API project.
+ *
+ * @param $project
+ *   A project to save.
+ * @param $old_name
+ *   If the project_name (primary key) field is changing, provide the previous
+ *   name.
+ */
+function api_save_project($project, $old_name = '') {
+  if (!strlen($old_name)) {
+    $old_name = $project->project_name;
+  }
+  db_delete('api_project')
+    ->condition('project_name', $old_name)
+    ->execute();
+  backdrop_write_record('api_project', $project);
+
+  if ($old_name != $project->project_name) {
+    // Update existing branches to the new name.
+    db_update('api_branch')
+      ->condition('project', $old_name)
+      ->fields(array('project' => $project->project_name))
+      ->execute();
+  }
+
+  // See if our current default project is valid, and reset if not.
+  $default = config_get('api.settings', 'default_project');
+  if (!api_project_exists($default)) {
+    config_set('api.settings', 'default_project', $project->project_name);
+  }
+
+  api_reset_branches();
+}
+
+/**
+ * Deletes a project and all of its branches and documentation records.
+ *
+ * @param $project_name
+ *   The name of the project to delete.
+ */
+function api_delete_project($project_name) {
+  // Delete all of the branches.
+  $branch_ids = db_select('api_branch', 'b')
+    ->condition('project', $project_name)
+    ->fields('b', array('branch_id'))
+    ->execute()
+    ->fetchCol();
+  foreach ($branch_ids as $id) {
+    api_delete_branch($id, FALSE);
+  }
+
+  // Delete the project itself.
+  db_delete('api_project')
+    ->condition('project_name', $project_name)
+    ->execute();
+
+  // Clean up.
+  api_reset_branches();
+}
+
+/**
+ * Checks to see if a project exists.
+ *
+ * @param project_name
+ *   Name to check for.
+ *
+ * @return
+ *   TRUE if the project exists, and FALSE if not.
+ */
+function api_project_exists($project_name) {
+  $result = db_select('api_project', 'p')
+    ->fields('p')
+    ->condition('project_name', $project_name)
+    ->execute()
+    ->fetchObject();
+  return isset($result->project_name) && $result->project_name == $project_name;
+}
+
+/**
+ * Fixes up branches, after one is updated, added, or deleted.
+ */
+function api_reset_branches() {
+  // Recalculate the default branch.
+  $project = config_get('api.settings', 'default_project');
+  $version = config_get('api.settings', 'default_core_compatibility');
+  $branches = api_get_branches(TRUE);
+  $default_id = config_get('api.settings', 'default_branch');
+  $values_set = FALSE;
+  foreach ($branches as $branch) {
+    if (($branch->project == $project) && $branch->preferred && ($branch->core_compatibility == $version) && ($default_id != $branch->branch_id)) {
+      $values_set = TRUE;
+      config_set('api.settings', 'default_branch', $branch->branch_id);
+      break;
+    }
+  }
+
+  $branches = api_get_branches(TRUE);
+
+  // Make sure the default branch variable is set to something.
+  $default_id = config_get('api.settings', 'default_branch');
+  $default_branch = api_get_branch_by_id($default_id);
+  if (!$default_branch && count($branches) > 0) {
+    $default_branch = reset($branches);
+  }
+
+  if (isset($default_branch) && (!$default_id || ($default_branch->branch_id != $default_id))) {
+    $values_set = TRUE;
+    config_set('api.settings', 'default_branch', $default_branch->branch_id);
+  }
+
+  // Make sure the default project and core compatibility are set to agree
+  // with the default branch.
+  if ($default_branch && (!$project || ($project != $default_branch->project))) {
+    $values_set = TRUE;
+    config_set('api.settings', 'default_project', $default_branch->project);
+  }
+  if ($default_branch && (!$version || ($version != $default_branch->core_compatibility))) {
+    $values_set = TRUE;
+    config_set('api.settings', 'default_core_compatibility', $default_branch->core_compatibility);
+  }
+
+  if ($values_set) {
+    backdrop_set_message(t('Default branch, project, and/or core compatibility values were reset to stay consistent'));
+  }
+
+  // Reset the branch lists.
+  backdrop_static_reset('api_get_branch_names');
+  $branches = api_get_branches(TRUE);
+
+  // Reweight all branches.
+  usort($branches, 'api_branch_sort');
+  $weight = 0;
+  foreach ($branches as $branch) {
+    $branch->weight = $weight;
+    $weight += 1;
+    backdrop_write_record('api_branch', $branch, 'branch_id');
+  }
+  backdrop_static_reset('api_get_branches');
+
+  // Tell the menu system it needs rebuilding.
+  state_set('menu_rebuild_needed', TRUE);
+}
+
+/**
+ * Sorts branches by project, version number, and branch name.
+ *
+ * Callback for usort() within api_reset_branches().
+ */
+function api_branch_sort($a, $b) {
+  // Sort by project.
+  if ($a->project != $b->project) {
+    $default_project = config_get('api.settings', 'default_project');
+    // If one of a or b is in the default project and the other isn't, that
+    // one is preferred.
+    if ($a->project == $default_project) {
+      return -1;
+    }
+    if ($b->project == $default_project) {
+      return 1;
+    }
+
+    // If one is core and the other isn't, that's preferred.
+    if ($a->project_type == 'core' && $b->project_type != 'core') {
+      return -1;
+    }
+    if ($a->project_type != 'core' && $b->project_type == 'core') {
+      return 1;
+    }
+
+    // Otherwise, sort alphabetically.
+    return strcasecmp($a->project, $b->project);
+  }
+
+  // Sort by core compatibility.
+  if ($a->core_compatibility != $b->core_compatibility) {
+    $default_version = config_get('api.settings', 'default_core_compatibility');
+
+    // If one of a or b is in the default compatibility and the other isn't,
+    // that one is preferred.
+    if ($a->core_compatibility == $default_version) {
+      return -1;
+    }
+    if ($b->core_compatibility == $default_version) {
+      return 1;
+    }
+
+    // Otherwise, sort by version.
+    $result = version_compare($a->core_compatibility, $b->core_compatibility);
+  }
+
+  // Sort by preferred (preferred over not preferred within one project and
+  // core compatibility).
+  if ($a->preferred && !$b->preferred) {
+    return -1;
+  }
+  if ($b->preferred && !$a->preferred) {
+    return 1;
+  }
+
+  // If all else fails, just do alphabetical.
+  return strcasecmp($a->branch_name, $b->branch_name);
+}
+
+/**
+ * Completely deletes an array of documentation items.
+ *
+ * All records pertaining to the items, including nodes and comments, are
+ * removed. If there are a lot, the batch API may be invoked, or a job may
+ * be queued.
+ *
+ * @param $dids
+ *   Array of the IDs of the items to delete.
+ * @param $interactive
+ *   TRUE if the batch_set() can be used if there are too many items to delete;
+ *   FALSE if queue jobs need to be set up instead.
+ *
+ * @return
+ *   TRUE if the items were deleted directly; FALSE if a batch or queue job
+ *   was set up to delete some of them. In this case, in interactive mode, the
+ *   calling function needs to ensure that the batch is processed. This is
+ *   automatic if it's part of a form submission handler, but not otherwise.
+ */
+function api_delete_items($dids, $interactive = TRUE) {
+  // Count the cumulative effect of calls in this page request.
+  $total_count = &backdrop_static(__FUNCTION__, 0);
+
+  // If there's nothing to do, return early.
+  $count = count($dids);
+  if ($count < 1) {
+    return TRUE;
+  }
+
+  // Delete the items from api tables in batches of 100, because placeholder
+  // queries can be a problem. This is fast though, so do not worry about
+  // batching.
+  $done = 0;
+  $to_reparse = array();
+  while ($done < $count) {
+    $this_batch = array_slice($dids, $done, 100);
+    $done += 100;
+
+    db_delete('api_documentation')
+      ->condition(db_or()
+        ->condition('did', $this_batch)
+        ->condition('class_did', $this_batch)
+      )
+      ->execute();
+    db_delete('api_file')
+      ->condition('did', $this_batch)
+      ->execute();
+    db_delete('api_namespace')
+      ->condition('did', $this_batch)
+      ->execute();
+    db_delete('api_function')
+      ->condition('did', $this_batch)
+      ->execute();
+    db_delete('api_members')
+      ->condition(db_or()
+        ->condition('did', $this_batch)
+        ->condition('class_did', $this_batch)
+      )
+      ->execute();
+
+    // For overrides, we want to delete any records for these IDs. But there
+    // could also be overrides information referencing these. We don't want to
+    // lose the records entirely, but we need to mark those items to be
+    // reparsed so the overrides can be recalculated.
+    db_delete('api_overrides')
+      ->condition('did', $this_batch)
+      ->execute();
+
+    $bad_overrides = db_select('api_overrides', 'ao')
+      ->condition('overrides_did', $this_batch)
+      ->fields('ao', array('did'))
+      ->execute()
+      ->fetchCol();
+    if (count($bad_overrides)) {
+      db_update('api_overrides')
+        ->fields(array('overrides_did' => 0))
+        ->condition('did', $bad_overrides)
+        ->execute();
+      $to_reparse = array_merge($to_reparse, $bad_overrides);
+    }
+
+    $bad_overrides = db_select('api_overrides', 'ao')
+      ->condition('documented_did', $this_batch)
+      ->fields('ao', array('did'))
+      ->execute()
+      ->fetchCol();
+    if (count($bad_overrides)) {
+      db_update('api_overrides')
+        ->fields(array('documented_did' => 0))
+        ->condition('did', $bad_overrides)
+        ->execute();
+      $to_reparse = array_merge($to_reparse, $bad_overrides);
+    }
+
+    // We need to do something similar in api_reference_storage with the
+    // extends_did column.
+
+    db_delete('api_reference_storage')
+      ->condition('from_did', $this_batch)
+      ->execute();
+
+    $bad_overrides = db_select('api_reference_storage', 'ars')
+      ->condition('extends_did', $this_batch)
+      ->fields('ars', array('from_did'))
+      ->execute()
+      ->fetchCol();
+    if (count($bad_overrides)) {
+      db_update('api_reference_storage')
+        ->fields(array('extends_did' => 0))
+        ->condition('from_did', $bad_overrides)
+        ->execute();
+      $to_reparse = array_merge($to_reparse, $bad_overrides);
+    }
+  }
+
+  // We may have also now found some documentation items whose files need to
+  // be reparsed. But there is no sense trying to reparse items that we just
+  // deleted.
+  $to_reparse = array_unique(array_diff($to_reparse, $dids));
+  api_mark_items_for_reparse($to_reparse);
+
+  // The slow part is deleting the nodes. If there are more than 100 to delete
+  // during this page request, do them using batch/queue jobs.
+  // Also, if this particular call has only a few nodes, go ahead and delete,
+  // to avoid having a ton of small jobs in the queue from a branch update.
+  $total_count += $count;
+  if ($total_count < 100 || $count < 5) {
+    node_delete_multiple($dids);
+    return TRUE;
+  }
+
+  // If we get here, we need to use batch/queue to delete the nodes.
+  if ($interactive) {
+    batch_set(array('operations' => array(array('_api_delete_nodes_batch', array($dids)))));
+  }
+  else {
+    $queue = BackdropQueue::get('api_node_delete');
+    $done = 0;
+    while ($done < $count) {
+      $this_batch = array_slice($dids, $done, 100);
+      $done += 100;
+      $queue->createItem(array('nids' => $this_batch));
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Deletes API nodes using the Batch API.
+ *
+ * @param $nids
+ *   IDs of the nodes to delete.
+ * @param $context
+ *   Batch context.
+ */
+function _api_delete_nodes_batch($nids, &$context) {
+  if (!isset($context['sandbox']['progress'])) {
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['max'] = count($nids);
+    $context['sandbox']['nids'] = $nids;
+  }
+
+  $this_batch = array_slice($context['sandbox']['nids'], $context['sandbox']['progress'], 100);
+  $context['sandbox']['progress'] += count($this_batch);
+  node_delete_multiple($this_batch);
+  $context['finished'] = min(1, $context['sandbox']['progress'] / $context['sandbox']['max']);
+  if (!count($this_batch)) {
+    // Just make sure we don't run an endless loop here.
+    $context['finished'] = 1;
+  }
+}
+
+/**
+ * Returns the currently active branch object.
+ */
+function api_get_active_branch() {
+  static $branch;
+  static $branch_set = FALSE;
+
+  if (!$branch_set) {
+    $branch_set = TRUE;
+    $branches = api_get_branches();
+    if (!count($branches)) {
+      return NULL;
+    }
+    $branch_names = api_get_branch_names();
+    $default_branch = config_get('api.settings', 'default_branch');
+
+    // See if we are on an API page and get the active branch from that.
+    // If we are not on an API page, calling menu_get_item() here could lead
+    // to recursion, because it could be trying to load a text
+    // field formatted with the API text filter, which calls this function,
+    // and so on. So check arg() first.
+    $arg = arg();
+    if ($arg[0] != 'api') {
+      // Just use the default branch, if it exists.
+      if (!is_null($default_branch) && isset($branches[$default_branch])) {
+        $branch = $branches[$default_branch];
+      }
+      return $branch;
+    }
+
+    // If we're on an API path, it should be safe to call menu_get_item().
+    $item = menu_get_item();
+
+    // See if we can extract a branch ID from a loaded component of $item.
+    if (isset($item['page_arguments'][0]->branch_id)) {
+      $branch = $branches[$item['page_arguments'][0]->branch_id];
+    }
+    elseif (isset($item['page_arguments'][0]->branch_name)) {
+      $branch = $item['page_arguments'][0];
+    }
+    elseif ($item['path'] == 'api/%/namespace/%/%') {
+      $project = $item['page_arguments'][0];
+      $branch_name = $item['page_arguments'][1];
+      $branch = api_get_branch_by_name($project, $branch_name);
+    }
+    elseif (strpos($item['path'], 'api/search') === 0 && isset($branch_names[$item['page_arguments'][0]])) {
+      // This is a search page for a particular branch. Figure out what project
+      // it corresponds to, using the default project if possible
+      foreach ($branches as $possible_branch) {
+        if ($possible_branch->project === $branches[$default_branch]->project && $possible_branch->branch_name === $item['page_arguments'][0]) {
+          // Best case, this is a branch on the default project.
+          $branch = $possible_branch;
+          break;
+        }
+        elseif ($possible_branch->branch_name === $item['page_arguments'][0]) {
+          // Second-best case, this at least matches. Keep looking.
+          $branch = $possible_branch;
+        }
+      }
+    }
+
+    // If all else fails, use the default branch.
+    if (!isset($branch)) {
+      if (!is_null($default_branch) && isset($branches[$default_branch])) {
+        $branch = $branches[$default_branch];
+      }
+      else {
+        $branch = NULL;
+      }
+    }
+  }
+
+  return $branch;
+}
+
+/**
+ * Returns a list of all defined branches.
+ *
+ * @param bool $_reset
+ *   If set to TRUE, the cached return value is reset.
+ *
+ * @return array
+ *   Array of branch objects, in order by branch weight.
+ */
+function api_get_branches($_reset = FALSE) {
+  $branches = &backdrop_static(__FUNCTION__);
+
+  if (!isset($branches) || $_reset) {
+    $query = db_select('api_branch', 'b')
+      ->fields('b');
+    $query->leftJoin('api_project', 'p', 'b.project = p.project_name');
+    $result = $query
+      ->fields('p', array('project_title', 'project_type'))
+      ->orderBy('weight', 'ASC')
+      ->execute();
+    $branches = array();
+    foreach ($result as $branch) {
+      api_unpack_branch_data($branch);
+      $branches[$branch->branch_id] = $branch;
+    }
+  }
+
+  return $branches;
+}
+
+/**
+ * Unpacks and adds defaults to branch data.
+ */
+function api_unpack_branch_data($branch) {
+  backdrop_unpack($branch);
+  if (!isset($branch->directories)) {
+    $branch->directories = '';
+  }
+  if (!isset($branch->excluded_directories)) {
+    $branch->excluded_directories = '';
+  }
+  if (!isset($branch->exclude_files_regexp)) {
+    $branch->exclude_files_regexp = '';
+  }
+}
+
+/**
+ * Returns a branch object, given a branch ID number.
+ *
+ * @param int $id
+ *   Branch ID number.
+ *
+ * @return object|null
+ *   Branch object for the given branch ID. If $id is not set, the default
+ *   branch is returned. If the requested branch does not exist, NULL.
+ */
+function api_get_branch_by_id($id = NULL) {
+  $branches = api_get_branches();
+  if (!isset($id)) {
+    $id = config_get('api.settings', 'default_branch');
+  }
+  if (isset($id) && isset($branches[$id])) {
+    return $branches[$id];
+  }
+
+  return NULL;
+}
+
+/**
+ * Attempts to locate a core branch corresponding to the given branch.
+ *
+ * @param $branch
+ *   Branch object to find a core branch for.
+ *
+ * @return
+ *   Branch object for the core branch, if there is one. If not, FALSE.
+ */
+function api_find_core_branch($branch) {
+  if (!$branch) {
+    return FALSE;
+  }
+
+  $query = db_select('api_branch', 'b');
+  $query->innerJoin('api_project', 'p', 'b.project = p.project_name');
+  $query->condition('p.project_type', 'core');
+  $query->condition('b.core_compatibility', $branch->core_compatibility);
+  $query->fields('b');
+  $query->fields('p', array('project_title', 'project_type'));
+  $query->orderBy('b.weight', 'ASC');
+  $result = $query->execute();
+  // There shouldn't be more than one result, so assume that's the case and
+  // return the first result found.
+  foreach ($result as $branch) {
+    api_unpack_branch_data($branch);
+    return $branch;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Returns the list of currently-used branch names across all projects.
+ *
+ * @param bool $_reset
+ *   If set to TRUE, the cached return value is reset.
+ *
+ * @return array
+ *   Array of branch names in use.
+ */
+function api_get_branch_names($_reset = FALSE) {
+  $branch_names = &backdrop_static(__FUNCTION__);
+
+  if (!isset($branch_names) || $_reset) {
+    $result = db_select('api_branch', 'b')
+      ->fields('b', array('branch_name'))
+      ->execute()
+      ->fetchCol();
+    $branch_names = backdrop_map_assoc($result);
+  }
+
+  return $branch_names;
+}
+
+/**
+ * Returns a list of all defined reference branches.
+ *
+ * @param bool $_reset
+ *   If set to TRUE, the cached return value is reset.
+ *
+ * @return array
+ *   Array of reference branch objects, in order by title.
+ */
+function api_get_php_branches($_reset = FALSE) {
+  $branches = backdrop_static(__FUNCTION__);
+
+  if (!isset($branches) || $_reset) {
+    $result = db_select('api_php_branch', 'b')
+      ->fields('b')
+      ->orderBy('title')
+      ->execute();
+    $branches = array();
+    foreach ($result as $branch) {
+      api_unpack_branch_data($branch);
+      $branches[$branch->branch_id] = $branch;
+    }
+  }
+
+  return $branches;
+}
+
+/**
+ * Finds all branches matching a branch name, across projects.
+ *
+ * @param string $branch_name
+ *   Branch name to match. If empty, defaults to the default branch.
+ *
+ * @return array
+ *   Array of all branch objects with this name.
+ */
+function api_get_branches_by_name($branch_name) {
+  $return = array();
+  if (empty($branch_name)) {
+    $branch = api_get_branch_by_id();
+    if (isset($branch)) {
+      $branch_name = $branch->branch_name;
+    }
+    else {
+      return array();
+    }
+  }
+
+  foreach (api_get_branches() as $branch) {
+    if ($branch->branch_name === $branch_name) {
+      $return[] = $branch;
+    }
+  }
+
+  return $return;
+}
+
+/**
+ * Loads a branch, given a project and branch name.
+ *
+ * @param string $project
+ *   The project name matching {api_branch}.project.
+ * @param string $branch_name
+ *   The branch name matching {api_branch}.branch_name. If not set, uses the
+ *   default branch name.
+ *
+ * @return object|null
+ *   Object representing the branch, or NULL if there is no match.
+ */
+function api_get_branch_by_name($project, $branch_name) {
+  if (empty($branch_name)) {
+    $branch = api_get_branch_by_id();
+    if (isset($branch)) {
+      $branch_name = $branch->branch_name;
+    }
+    else {
+      $branch_name = '';
+    }
+  }
+
+  foreach (api_get_branches() as $branch) {
+    if ($branch->project === $project && $branch->branch_name === $branch_name) {
+      return $branch;
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Form constructor for the API search form.
+ *
+ * @param $branch
+ *   Object representing the branch to build the search form for.
+ *
+ * @see api_search_form_submit()
+ */
+function api_search_form($form, $form_state, $branch) {
+  $form['#attributes']['class'] = 'api-search-form';
+  $form['#branch'] = $branch;
+
+  $form['search'] = array(
+    '#title' => t('Function, file, or topic'),
+    '#type' => 'textfield',
+    '#default_value' => '',
+    '#required' => TRUE,
+    '#attributes' => array('class' => array('api-search-keywords')),
+    '#autocomplete_path' => 'api/search/autocomplete/' . $branch->branch_id,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Search'),
+  );
+
+  return $form;
+}
+
+/**
+ * Form submission handler for api_search_form().
+ */
+function api_search_form_submit($form, &$form_state) {
+  $branch = $form['#branch'];
+  $form_state['redirect'] = 'api/' . $branch->project . '/' . $branch->branch_name . '/search/' . $form_state['values']['search'];
+}
+
+/**
+ * Implements hook_cron().
+ */
+function api_cron() {
+  // Do not do cron unless there is at least one branch, or if the
+  // API admin page has been visited at least once.
+  $doit = state_get('api_do_cron', 0);
+  if (!$doit) {
+    $doit = (count(api_get_branches()) > 0);
+  }
+
+  if ($doit) {
+    module_load_include('inc', 'api', 'parser');
+    api_update_all_branches();
+  }
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function api_cron_queue_info() {
+  // Note that the order here is the order the queues will be invoked.
+  return array(
+    'api_branch_update' => array(
+      'worker callback' => 'api_queue_update_branch',
+      'time' => 30,
+    ),
+    'api_parse' => array(
+      'worker callback' => 'api_queue_parse_file',
+      'time' => 60,
+    ),
+    'api_node_delete' => array(
+      'worker callback' => 'api_queue_node_delete',
+      'time' => 15,
+    ),
+  );
+}
+
+/**
+ * Flags a file, branch, or all branches, to be reparsed on the next cron run.
+ *
+ * @param $branch_or_file
+ *   (optional) Identifier or ID number of the branch to reparse, or name of a
+ *   single file to reparse. If omitted all branches will be reparsed. File
+ *   names must include the path relative to the common path to the directories
+ *   indexed by this branch.
+ * @param $is_branch_name
+ *   If passing in a branch name, set to TRUE so that if it happens to be an
+ *   integer, it won't be considered to be a branch ID number by mistake.
+ *   Otherwise, just leave this as the default FALSE.
+ *
+ * @return
+ *   Number of files marked for reparsing.
+ */
+function api_mark_for_reparse($branch_or_file = NULL, $is_branch_name = FALSE) {
+  $time_in_past = 52;
+
+  // See if it's a request to reparse everything.
+  if (empty($branch_or_file)) {
+    return db_update('api_file')
+      ->fields(array(
+          'modified' => $time_in_past,
+        ))
+      ->execute();
+  }
+
+  // See if it's a request for a particular branch.
+  if (!$is_branch_name && is_numeric($branch_or_file) && ($branch_or_file == intval($branch_or_file))) {
+    $branch_id = $branch_or_file;
+  }
+  else {
+    $branch_id = db_select('api_branch', 'b')
+      ->fields('b', array('branch_id'))
+      ->condition('branch_name', $branch_or_file)
+      ->execute()
+      ->fetchField();
+  }
+
+  if (!empty($branch_id)) {
+    // Reparse a branch.
+    // This is a query using a WHERE EXISTS, and there is no apparent way
+    // to write it using the database API, so use ANSI syntax.
+    $out = db_query("UPDATE {api_file} SET modified = :mod_time WHERE EXISTS ( SELECT * FROM {api_documentation} d WHERE d.branch_id = :branch_id AND d.object_type = 'file' AND d.did = {api_file}.did )", array(':mod_time' => $time_in_past, ':branch_id' => $branch_id));
+    return $out->rowCount();
+  }
+
+  // If we get here, it's a request to reparse just one file. So find the file
+  // ID, and then request its reparse.
+  $did = db_select('api_documentation', 'd')
+    ->fields('d', array('did'))
+    ->condition('file_name', $branch_or_file)
+    ->condition('object_type', 'file')
+    ->execute()
+    ->fetchField();
+
+  if ($did) {
+    $out = db_update('api_file')
+      ->fields(array(
+          'modified' => $time_in_past,
+        ))
+      ->condition('did', $did)
+      ->execute();
+
+    return $out;
+  }
+
+  return 0;
+}
+
+/**
+ * Marks the files containing a set of documentation IDs for reparse.
+ *
+ * @param int[] $dids
+ *   Documentation IDs whose files need reparsing.
+ */
+function api_mark_items_for_reparse($dids) {
+  $count = count($dids);
+  if ($count < 1) {
+    return;
+  }
+
+  // Find all the affected file IDs.
+  // Use batches of 200 due to placeholders.
+  $done = 0;
+  $file_ids = array();
+  while ($done < $count) {
+    $this_batch = array_slice($dids, $done, 200);
+    $done += 200;
+
+    $query = db_select('api_documentation', 'ad');
+    $query->innerJoin('api_documentation', 'adf', 'ad.file_name = adf.file_name');
+    $files = $query
+      ->condition('adf.object_type', 'file')
+      ->condition('ad.did', $this_batch)
+      ->fields('adf', array('did'))
+      ->execute()
+      ->fetchCol();
+    $file_ids = array_merge($file_ids, $files);
+  }
+  $file_ids = array_unique($file_ids);
+
+  // Now mark these files for reparse, again in batches.
+  $count = count($file_ids);
+  if ($count < 1) {
+    // We didn't find any files after all.
+    return;
+  }
+  $done = 0;
+  while ($done < $count) {
+    $this_batch = array_slice($file_ids, $done, 200);
+    $done += 200;
+    db_update('api_file')
+      ->fields(array('modified' => 52))
+      ->condition('did', $this_batch)
+      ->execute();
+  }
+}
+
+/**
+ * Parses a queued file.
+ *
+ * @data
+ *   Array of information about the file to be parsed.
+ */
+function api_queue_parse_file($data) {
+  // Verify that the branch this job was saved with still exists.
+  $branch = $data['branch'];
+  $new_branch = api_get_branch_by_id($branch->branch_id);
+  if (is_null($new_branch)) {
+    watchdog('api', 'Invalid or deleted branch requested in API parse %project branch %branch %file', array('%branch' => $branch->branch_name, '%project' => $branch->project, '%file' => $data['file']));
+    return;
+  }
+  $branch = $new_branch;
+
+  // Verify that it's still a valid parse job (if the branch has been updated,
+  // the parse job is not valid any more).
+  $when_queued = (isset($data['timestamp']) ? $data['timestamp'] : 0);
+  $valid_time = (isset($branch->queue_valid) ? $branch->queue_valid : 0);
+  if ($when_queued < $valid_time) {
+    watchdog('api', 'Skipped API parse %project branch %branch %file', array('%branch' => $branch->branch_name, '%project' => $branch->project, '%file' => $data['file']));
+    return;
+  }
+
+  if ($when_queued >= $valid_time) {
+    watchdog('api', 'API parse %project branch %branch %file', array('%branch' => $branch->branch_name, '%project' => $branch->project, '%file' => $data['file']));
+
+    module_load_include('inc', 'api', 'parser');
+    api_parse_file($data['parser'], $data['path'], $branch, $data['file']);
+  }
+}
+
+/**
+ * Checks a queued branch for updates.
+ *
+ * @data
+ *   Array of information about the branch to be checked for updates.
+ */
+function api_queue_update_branch($data) {
+  $type = $data['type'];
+  $id = $data['branch_id'];
+  if ($type == 'files') {
+    $branch = api_get_branch_by_id($id);
+    if (!is_null($branch)) {
+      module_load_include('inc', 'api', 'parser');
+      api_update_branch_files($branch);
+      return;
+    }
+  }
+
+  if ($type == 'php') {
+    $branches = api_get_php_branches();
+    if (isset($branches[$id])) {
+      module_load_include('inc', 'api', 'parser');
+      api_update_branch_php($branches[$id]);
+      return;
+    }
+  }
+
+  if ($type == 'api') {
+    $branches = api_get_php_branches();
+    if (isset($branches[$id])) {
+      module_load_include('inc', 'api', 'parser');
+      api_update_branch_api($branches[$id]);
+      return;
+    }
+  }
+
+  watchdog('api', 'Invalid or deleted branch requested in API update %type branch %branch', array('%type' => $type, '%branch' => $id), WATCHDOG_ERROR);
+}
+
+/**
+ * Deletes obsolete nodes.
+ *
+ * @param $data
+ *   Array with element 'nids' giving the IDs of the nodes to delete.
+ */
+function api_queue_node_delete($data) {
+  watchdog('api', 'Removing a batch of %count obsolete nodes.', array('%count' => count($data['nids'])));
+  node_delete_multiple($data['nids']);
+}
+
+/**
+ * Resets the parse queue.
+ *
+ * Empties all parse jobs from the queue, and sets all files to "unqueued"
+ * status.
+ */
+function api_reset_parse_queue() {
+  $queue = BackdropQueue::get('api_parse');
+  $queue->deleteQueue();
+
+  db_update('api_file')
+    ->fields(array(
+        'queued' => 0,
+      ))
+    ->execute();
+}
+
+/**
+ * Verifies that the required libraries are loaded for parsing.
+ *
+ * @param $watchdog
+ *   TRUE to log an error if the library is not loaded (first time only).
+ *
+ * @return
+ *   TRUE if OK, FALSE if parsing will not work.
+ */
+function api_libraries_loaded($watchdog = TRUE) {
+  static $loaded = NULL;
+  if (!is_null($loaded)) {
+    return $loaded;
+  }
+
+  // The Drupal 7 version of this module depends on Libraries API. As Backdrop
+  // does not yet have a Libraries API and the chances of conflicts of this
+  // library are low (shared only between API and Coder), the library is
+  // included directly.
+  if (!class_exists('PGPParser')) {
+    $path = backdrop_get_path('module', 'api');
+    include_once BACKDROP_ROOT . '/' . $path . '/grammar_parser/parser.inc';
+    include_once BACKDROP_ROOT . '/' . $path . '/grammar_parser/editor.inc';
+    include_once BACKDROP_ROOT . '/' . $path . '/grammar_parser/list.inc';
+    include_once BACKDROP_ROOT . '/' . $path . '/grammar_parser/object.inc';
+    include_once BACKDROP_ROOT . '/' . $path . '/grammar_parser/reader.inc';
+    include_once BACKDROP_ROOT . '/' . $path . '/grammar_parser/writer.inc';
+  }
+
+  if (!function_exists('mb_check_encoding')) {
+    if ($watchdog) {
+      watchdog('api', 'PHP multi-byte library is not installed.', array(), WATCHDOG_ERROR);
+    }
+    $loaded = FALSE;
+    return FALSE;
+  }
+
+  return TRUE;
+
+  $version = explode('.', PHP_VERSION);
+  if ($version[0] < 5 || $version[1] < 4) {
+    if ($watchdog) {
+      watchdog('api', 'This version of the API module requires PHP 5.4 or later for parsing', WATCHDOG_ERROR);
+    }
+    $loaded = FALSE;
+    return FALSE;
+  }
+
+  $loaded = TRUE;
+  return TRUE;
+}
+
+/**
+ * Performs AJAX autocomplete for projects.
+ */
+function api_project_autocomplete($string = '') {
+  $matches = array();
+  if ($string) {
+    $result = db_select('api_project', 'p')
+      ->fields('p', array('project_name'))
+      ->condition('project_name', db_like($string) . '%', 'LIKE')
+      ->orderBy('project_name')
+      ->range(0, 10)
+      ->execute()
+      ->fetchCol();
+    foreach ($result as $name) {
+      $matches[$name] = check_plain($name);
+    }
+  }
+
+  backdrop_json_output($matches);
+}
+
+/**
+ * Performs AJAX autocomplete for search.
+ */
+function api_search_autocomplete($branch_id, $string = '') {
+  $matches = array();
+  $string = trim($string);
+  if ($string) {
+    $result = db_select('api_documentation', 'ad')
+      ->fields('ad', array('title'))
+      ->condition('branch_id', $branch_id)
+      ->condition('title', '%' . db_like($string) . '%', 'LIKE')
+      ->orderBy('LENGTH(title)')
+      ->range(0, 20)
+      ->execute()
+      ->fetchCol();
+    foreach ($result as $name) {
+      $matches[$name] = check_plain($name);
+    }
+  }
+
+  backdrop_json_output($matches);
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function api_views_api() {
+  return array(
+    'api' => 3,
+    'path' => backdrop_get_path('module', 'api') . '/views',
+    'template path' => backdrop_get_path('module', 'api') . '/views/templates',
+  );
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function api_autoload_info() {
+  return array(
+    'api_views_handler_argument_partial_match' => 'views/handlers/api_views_handler_argument_partial_match.inc',
+    'api_views_handler_field_api_linkable' => 'views/handlers/api_views_handler_field_api_linkable.inc',
+    'api_views_handler_field_api_namespace' => 'views/handlers/api_views_handler_field_api_namespace.inc',
+    'api_views_handler_field_api_project' => 'views/handlers/api_views_handler_field_api_project.inc',
+    'api_views_handler_field_api_project_ops' => 'views/handlers/api_views_handler_field_api_project_ops.inc',
+    'api_views_handler_field_api_branch_ops' => 'views/handlers/api_views_handler_field_api_branch_ops.inc',
+    'api_views_handler_field_api_docs' => 'views/handlers/api_views_handler_field_api_docs.inc',
+    'api_views_handler_field_api_service_tags' => 'views/handlers/api_views_handler_field_api_service_tags.inc',
+    'api_views_handler_filter_project_name' => 'views/handlers/api_views_handler_filter_project_name.inc',
+    'api_views_handler_filter_service_tag' => 'views/handlers/api_views_handler_filter_service_tag.inc',
+    'api_views_handler_sort_title_length' => 'views/handlers/api_views_handler_sort_title_length.inc',
+    'api_views_plugin_style_dl_list' => 'views/plugins/api_views_plugin_style_dl_list.inc',
+    'api_views_join_extras' => 'views/api.views.inc',
+  );
+}
+
+/**
+ * Displays the output of a view, assumed to be a block display.
+ *
+ * @param $view_name
+ *   Machine name of the view.
+ * @param $display_name
+ *   Machine name of the display within the view.
+ * @param $args
+ *   (optional) Array of arguments for the view display.
+ *
+ * @return
+ *   String containing the view output. If the view was empty, an empty string.
+ */
+function api_display_view($view_name, $display_name, $args = array()) {
+  $output = '';
+
+  // Load the view.
+  $view = views_get_view($view_name, TRUE);
+
+  if ($view) {
+    // Override the URL so that exposed filters will work on blocks even without
+    // AJAX.
+    $view->override_url = current_path();
+    $output = $view->preview($display_name, $args);
+  }
+
+  // Check for no content.
+  if (!strlen(trim(strip_tags($output)))) {
+    $output = '';
+  }
+
+  return $output;
+}
+
+/**
+ * Figures out the full class name of a class, with namespaces.
+ *
+ * @param string $name
+ *   The name as it appears, which could include a namespace, and might or
+ *   might not start with a backslash if it does.
+ * @param string $namespace
+ *   The namespace for the file the name appears in.
+ * @param array $use_aliases
+ *   Associative array of alias name to full name for use statements in the
+ *   file the name appears in.
+ *
+ * @return string
+ *   Fully-qualified name of the class, starting with a backslash.
+ */
+function api_full_classname($name, $namespace = array(), $use_aliases = array()) {
+
+  // Break off the class name from the rest.
+  $classname = $name;
+  $suffix = '';
+
+  $pos = strpos($name, '::');
+  if ($pos === FALSE) {
+    $pos = strpos($name, '->');
+  }
+  if ($pos !== FALSE) {
+    $classname = substr($name, 0, $pos);
+    $suffix = substr($name, $pos);
+  }
+
+  if (in_array($classname, array('self', 'static', 'parent', 'this'))) {
+    // Skip these keywords.
+    return $name;
+  }
+
+  // See if there is an alias for this class name, or if we should prepend
+  // the file's namespace.
+  if (isset($use_aliases[$classname])) {
+    // This class was aliased.
+    $classname = $use_aliases[$classname];
+  }
+  elseif (strpos($classname, '\\') === FALSE) {
+    // There was no alias, and the classname did not have a namespace in it.
+    $classname = $namespace . '\\' . $classname;
+  }
+
+  // Make sure to start with a backslash, no matter what.
+  if (strpos($classname, '\\') !== 0) {
+    $classname = '\\' . $classname;
+  }
+
+  return $classname . $suffix;
+}
+
+/**
+ * Render a collapsible element.
+ *
+ * @param $title
+ *   The title of the collapsible.
+ * @param $content
+ *   The content of the collapsible.
+ *
+ * @return string
+ *   The rendered collaspible element as HTML.
+ */
+function api_collapsible($title, $content) {
+  // The Drupal 7 version of API module used a CTools collapsible. Until we have
+  // a core version of a collapsible or "details" element, use fieldsets.
+  $fieldset = array(
+      '#title' => $title,
+      '#type' => 'fieldset',
+      '#children' => $content,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#pre_render' => array('form_pre_render_fieldset'),
+      '#parents' => array(),
+    ) + element_info('fieldset');
+  $form_state = array();
+  backdrop_add_library('system', 'backdrop.collapse');
+  form_process_fieldset($fieldset, $form_state);
+  return backdrop_render($fieldset);
+}

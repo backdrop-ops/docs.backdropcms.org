@@ -1,0 +1,27 @@
+# Test file for Services.
+services:
+  # Tagged service linking to existing class.
+  cache_context.url:
+    class: CacheArray
+    arguments: ['@request']
+    tags:
+      - { name: cache.context}
+  # Abstract service.
+  container.trait:
+    abstract: true
+    calls:
+      - [setContainer, ['@service_container']]
+  # Service alias.
+  config.storage:
+    alias: config.storage.active
+  # Service that is aliased.
+  config.storage.active:
+    class: Drupal\Core\Config\DatabaseStorage
+    arguments: ['@database', 'config']
+  # Multiple tags.
+  route_enhancer.param_conversion:
+    class: Drupal\Core\Routing\Enhancer\ParamConversionEnhancer
+    arguments: ['@paramconverter_manager']
+    tags:
+      - { name: route_enhancer }
+      - { name: event_subscriber }

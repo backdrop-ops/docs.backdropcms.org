@@ -1,0 +1,347 @@
+<?php
+
+/**
+ * @file
+ * Tests comment functionality for the API module.
+ */
+
+module_load_include('php', 'api', 'tests/api_test_case');
+
+/**
+ * Tests comment functionality.
+ */
+class ApiCommentsTestCase extends ApiWebPagesBaseTest {
+  public static function getInfo() {
+    return array(
+      'name' => 'Comments',
+      'description' => 'Tests comment functionality.',
+      'group' => 'API module',
+    );
+  }
+
+  function setUp() {
+    $this->baseSetUp();
+
+    // Set up a new super-user.
+    $this->super_user = $this->backdropCreateUser(array(
+      'access API reference',
+      'administer API reference',
+      'access content',
+      'access administration pages',
+      'administer blocks',
+      'administer nodes',
+      'access site reports',
+      'access comments',
+      'post comments',
+      'skip comment approval',
+    ));
+
+    $this->backdropLogin($this->super_user);
+
+    // Set up comment settings initially as hidden.
+    $this->backdropPost('admin/structure/types/manage/api', array(
+      'comment_default' => 0,
+    ), t('Save comment settings'));
+
+    // Set up a regular files branch.
+    $this->branch_info = $this->setUpBranchUI();
+
+    // We don't need the PHP branch for this test, so for speed, remove it.
+    $this->removePHPBranch();
+
+    // Parse the code.
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+    $this->processApiParseQueue();
+  }
+
+  /**
+   * Tests that comments and comment settings are working.
+   */
+  function testComments() {
+    // Verify that with comments turned off, the comment form does not appear.
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
+    $this->assertNoText(t('Add new comment'), 'Comment form is not there');
+    $this->assertNoText(t('Comment'), 'Comment form is not there');
+    $this->assertNoText(t('Subject'), 'Comment form is not there');
+    $this->assertNoRaw(t('Save'), 'Comment form is not there');
+
+    // Turn comments on. Verify this did not affect old API pages.
+    $this->backdropPost('admin/structure/types/manage/api', array(
+      'comment_default' => 2,
+    ), t('Save comment settings'));
+    $this->assertText(t('Saved API comment settings'), 'Confirm message appears');
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
+    $this->assertNoText(t('Add new comment'), 'Comment form is not there');
+    $this->assertNoText(t('Comment'), 'Comment form is not there');
+    $this->assertNoText(t('Subject'), 'Comment form is not there');
+    $this->assertNoRaw(t('Save'), 'Comment form is not there');
+
+    // Apply the settings to old pages, and post a comment.
+    db_query("UPDATE {node} SET comment = 2 WHERE type = 'api'");
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
+    $this->backdropPost(NULL, array(
+      'subject' => 'Subject 1',
+      'comment_body[und][0][value]' => 'Comment 1 body',
+    ), t('Save'));
+    $this->assertText(t('Your comment has been posted'), 'Confirm message appears');
+    $this->assertLink('Subject 1', 0, 'Comment subject appears');
+    $this->assertText('Comment 1 body', 'Comment body appears');
+    $this->assertLink('reply', 0, 'Reply link appears');
+
+    // Reparse the branch, and verify the comment is still there.
+    $this->backdropGet('admin/config/development/api/branches');
+    $this->clickLink('reparse');
+    $this->assertText('reparse, starting at next cron run', 'Confirm message appears');
+    $this->updateBranches();
+    $count = $this->processApiParseQueue();
+    $this->assertTrue($count > 5, 'Files were reparsed');
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
+    $this->assertLink('Subject 1', 0, 'Comment subject appears');
+    $this->assertText('Comment 1 body', 'Comment body appears');
+    $this->assertLink('reply', 0, 'Reply link appears');
+
+    // Set to closed (apply to all) and verify the comment form disapppears.
+    $this->backdropPost('admin/structure/types/manage/api', array(
+      'comment_default' => 1,
+    ), t('Save comment settings'));
+    $this->assertText(t('Saved API comment settings'), 'Confirm message appears');
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
+    db_query("UPDATE {node} SET comment = 1 WHERE type = 'api'");
+    $this->assertLink('Subject 1', 0, 'Comment subject appears');
+    $this->assertText('Comment 1 body', 'Comment body appears');
+    $this->assertNoLink('reply', 0, 'Reply link disappears');
+    $this->assertNoText(t('Add new comment'), 'Comment form is not there');
+    $this->assertNoRaw(t('Save'), 'Comment form is not there');
+
+    // Set to hidden (apply to all) and verify comment disappears.
+    $this->backdropPost('admin/structure/types/manage/api', array(
+      'comment_default' => 0,
+    ), t('Save comment settings'));
+    $this->assertText(t('Saved API comment settings'), 'Confirm message appears');
+    db_query("UPDATE {node} SET comment = 0 WHERE type = 'api'");
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
+    $this->assertNoLink('Subject 1', 0, 'Comment subject disappears');
+    $this->assertNoText('Comment 1 body', 'Comment body disappears');
+    $this->assertNoLink('reply', 0, 'Reply link disappears');
+    $this->assertNoText(t('Add new comment'), 'Comment form is not there');
+    $this->assertNoText(t('Comment'), 'Comment form is not there');
+    $this->assertNoText(t('Subject'), 'Comment form is not there');
+    $this->assertNoRaw(t('Save'), 'Comment form is not there');
+  }
+}
+
+/**
+ * Tests the API text format in comments.
+ */
+class ApiTextFormatTestCase extends ApiWebPagesBaseTest {
+  // Branch info for Backdrop branch.
+  public $branch_info_core;
+  // Branch info for PHP brancn.
+  public $branch_info_php;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'API text format',
+      'description' => 'Tests API text format functionality in comments.',
+      'group' => 'API module',
+    );
+  }
+
+  function setUp() {
+    $this->baseSetUp();
+
+    // Set up a new super-user.
+    $this->super_user = $this->backdropCreateUser(array(
+      'access API reference',
+      'administer API reference',
+      'access content',
+      'access administration pages',
+      'administer blocks',
+      'administer nodes',
+      'access site reports',
+      'access comments',
+      'post comments',
+      'skip comment approval',
+      'administer filters',
+    ));
+
+    $this->backdropLogin($this->super_user);
+
+    // Set up comment settings so comments are allowed.
+    $this->backdropPost('admin/structure/types/manage/api', array(
+        'comment_default' => COMMENT_NODE_OPEN,
+      ), t('Save comment settings'));
+
+    // Remove the PHP branch.
+    $this->removePHPBranch();
+
+    // Create a "php" branch with the sample PHP function list, from the admin
+    // interface.
+    $this->php_branch_info = $this->createPHPBranchUI();
+
+    // Set up a branch for the Backdrop core files.
+    $this->branch_info_core = $this->setUpBranchUI('', TRUE, array(
+      'project' => 'backdrop',
+      'project_title' => 'Backdrop',
+      'project_type' => 'core',
+      'branch_name' => '1.x',
+      'title' => 'Backdrop 1.x',
+      'core_compatibility' => '1.x',
+      'directory' => backdrop_get_path('module', 'api') . '/tests/sample_backdrop',
+      'excluded' => '',
+    ));
+
+    // Set up a files branch for the namespaces files.
+    $this->branch_info = $this->setUpBranchUI('', TRUE, array('directory' => backdrop_get_path('module', 'api') . '/tests/sample_namespace', 'excluded' => ''));
+
+    // Set up the Filtered HTML text format to have the API format as part of
+    // it.
+    $this->backdropPost('admin/config/content/formats/filtered_html', array(
+        'filters[api_filter][status]' => 1,
+      ), t('Save configuration'));
+
+    // Parse the code.
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+    $this->processApiParseQueue();
+  }
+
+  /**
+   * Tests the API text format in comments
+   */
+  function testApiTextFormat() {
+
+    // Go to a namespaced class and make a comment. Verify that links are
+    // created and go to the right places.
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/ClassA.php/class/ClassA');
+    $this->backdropPost(NULL, array(
+      'subject' => 'test',
+      'comment_body[und][0][value]' => 'This is a test of links to things like MyClassB::bMethod(), another_function(), InterfaceD::dMethod(), foo_function(), and backdrop_alter().',
+      ), t('Save'));
+
+    $this->assertLinkURLSubstring('MyClassB::bMethod', 'ClassB.php/function/ClassB', 'Link to aliased class method is created', 'Link to aliased class method goes to right place');
+    $this->assertLinkURLSubstring('another_function', 'no_namespace.php/function/another_function', 'Link to function is created', 'Link to function goes to right place');
+    $this->assertLinkURLSubstring('InterfaceD::dMethod', 'InterfaceD.php/function/InterfaceD', 'Link to interface method is created', 'Link to interface method goes to right namespace');
+    $this->assertLinkURLSubstring('foo_function', 'example.com/function/foo_function', 'Link to fake PHP function is created', 'Link to fake PHP function goes to right place');
+    $this->assertLinkURLSubstring('backdrop_alter', 'drupal.php/function/backdrop_alter', 'Link to core function is created', 'Link to core function goes to right place');
+
+  }
+}
+
+/**
+ * Tests the API text format in comments without a regular branch.
+ */
+class ApiTextFormatNoBranchTestCase extends ApiWebPagesBaseTest {
+  // Branch info for API reference branch.
+  public $branch_info_api;
+  // Branch info for PHP brancn.
+  public $branch_info_php;
+  // Node for commenting.
+  public $node;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'API text format references',
+      'description' => 'Tests API text format functionality without a regular branch.',
+      'group' => 'API module',
+    );
+  }
+
+  function setUp() {
+    $this->baseSetUp();
+
+    // Set up a new super-user.
+    $this->super_user = $this->backdropCreateUser(array(
+      'access API reference',
+      'administer API reference',
+      'access content',
+      'access administration pages',
+      'administer blocks',
+      'administer nodes',
+      'access site reports',
+      'access comments',
+      'post comments',
+      'skip comment approval',
+      'administer filters',
+      'administer users',
+      'administer permissions',
+    ));
+
+    $this->backdropLogin($this->super_user);
+
+    // Remove the PHP branch.
+    $this->removePHPBranch();
+
+    // Create a "php" branch with the sample PHP function list, from the admin
+    // interface.
+    $this->php_branch_info = $this->createPHPBranchUI();
+
+    // Temporarily set up a regular files branch and parse it.
+    $temp_branch_info = $this->setUpBranchUI();
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+    $this->processApiParseQueue();
+
+    // Create an "api" branch that points to the temporary branch, and parse
+    // it. For this, anonymous users must have permission to view API pages.
+    $url = url('api/' . $temp_branch_info['project'] . '/full_list', array('absolute' => TRUE));
+    $this->api_branch_info = $this->createAPIBranchUI(array('data[url]' => $url, 'data[page_limit]' => 10));
+
+    $this->backdropPost('admin/people/permissions', array(
+        '1[access API reference]' => TRUE,
+      ), t('Save permissions'));
+
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+    $this->processApiParseQueue();
+
+    $this->backdropGet('admin/reports/dblog');
+
+    // Remove the files branch.
+    $this->backdropPost('admin/config/development/api/branches/1/delete', array(), t('Delete'));
+    $this->resetBranchesAndCache();
+
+    // Verify things are set up right.
+    $this->verifyCounts(array(
+        'api_branch' => 0,
+        'api_documentation' => 0,
+        'api_php_branch' => 2,
+        'api_external_documentation' => 67,
+        'api_php_documentation' => 2,
+      ), 0, 'Branches set up');
+
+
+    // Set the core compatibility to 1.x.
+    $this->backdropPost('admin/config/development/api', array(
+        'api_default_core_compatibility' => '1.x',
+      ), t('Save configuration'));
+
+    // Set up the Filtered HTML text format to have the API format as part of
+    // it.
+    $this->backdropPost('admin/config/content/formats/filtered_html', array(
+        'filters[api_filter][status]' => 1,
+      ), t('Save configuration'));
+
+    // Make a node.
+    $this->node = $this->backdropCreateNode(array('comment' => COMMENT_NODE_OPEN));
+  }
+
+  /**
+   * Tests the API text format in comments
+   */
+  function testApiTextFormat() {
+    // Go to the node page and make a comment. Verify that links are
+    // created and go to the right places.
+    $this->backdropGet('node/' . $this->node->nid);
+    $this->backdropPost(NULL, array(
+      'subject' => 'test',
+      'comment_body[und][0][value]' => 'This is a test of links to things like foo_function() and sample_function() and SubSample and SubSample::bar().',
+      ), t('Save'));
+
+    $this->assertLinkURLSubstring('foo_function', 'example.com/function/foo_function', 'Link to fake PHP function is created', 'Link to fake PHP function goes to right place');
+    $this->assertLinkURLSubstring('sample_function', 'sample.php/function/sample_function', 'Link to fake API reference function is created', 'Link to API reference function goes to right place');
+    $this->assertLinkURLSubstring('SubSample', 'classes.php/class/SubSample', 'Link to fake API reference class is created', 'Link to API reference class goes to right place');
+    $this->assertLinkURLSubstring('SubSample::bar', 'classes.php/function/SubSample', 'Link to fake API reference method is created', 'Link to API reference method goes to right place');
+  }
+}

@@ -1,0 +1,387 @@
+<?php
+/**
+ * @file
+ * Tests multiple-branch functionality of the API module.
+ */
+
+module_load_include('php', 'api', 'tests/api_test_case');
+
+/**
+ * Tests multiple-branch functionality within a single project.
+ */
+class ApiMultipleBranchesTest extends ApiWebPagesBaseTest {
+
+  /**
+   * Array of information about the second sample branch.
+   */
+  protected $branch_info_2;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Multiple branches functionality',
+      'description' => 'Tests that the multiple-branch setup works correctly',
+      'group' => 'API module',
+    );
+  }
+
+  public function setUp() {
+    $this->baseSetUp();
+
+    // Create a "file" branch with the sample code, from the admin interface.
+    $this->branch_info = $this->setUpBranchUI('', TRUE, array(
+      'branch_name' => 'long_6',
+      'project_title' => 'Project Test',
+    ));
+
+    // Create a second "file" branch in a different branch on the same project.
+    // Exclude the "maybe_exclude" directory so that this branch
+    // only has functions and not constants and classes.
+    $this->branch_info_2 = $this->setUpBranchUI('', FALSE, array(
+      'branch_name' => 'long_7',
+      'project_title' => 'Project Test',
+      'title' => 'Testing 7',
+      'directory' => backdrop_get_path('module', 'api') . '/tests/sample2',
+      'excluded' => 'none',
+    ));
+
+    // Remove PHP branch.
+    $this->removePHPBranch();
+
+    // Parse the code.
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+    $this->processApiParseQueue();
+  }
+
+  /**
+   * Runs all tests in this section, to avoid multiple calls to setUp().
+   */
+  function testAll() {
+    $this->_testBranchesCallingFunctions();
+    $this->_testBranchLinks();
+    $this->_testApiS();
+  }
+
+  /**
+   * Tests that the list of functions calling this function is branch-specific.
+   */
+  function _testBranchesCallingFunctions() {
+    // Visit the sample.php function sample_function().
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/sample.php/function/sample_function');
+
+    // Verify that there is only one function calling this function.
+    $this->assertRaw('10 calls to sample_function()', 0, 'Ten calling functions');
+    // Verify links to the calling functions.
+    $this->assertLink('sample_in_code_links', 0, 'Calling function link is present');
+    $this->assertNoLink('second_sample_function', 'Calling function from other branch link is not present');
+
+    // Visit the other branch's function sample_function().
+    $this->backdropGet('api/' . $this->branch_info_2['project'] . '/sample2.php/function/sample_function/' . $this->branch_info_2['branch_name']);
+
+    // Verify that there is only one function calling this function.
+    $this->assertRaw('1 call to sample_function()', 'Only one calling function');
+    // Verify links to the calling functions.
+    $this->assertLink('second_sample_function', 0, 'Calling function link is present');
+    $this->assertNoLink('sample_in_code_links', 'Calling function from other branch link is not present');
+  }
+
+  /**
+   * Tests that the links between branches on pages are working.
+   */
+  function _testBranchLinks() {
+    // Verify function-style linking.
+    $this->backdropGet('api/' . $this->branch_info_2['project'] . '/sample2.php/function/sample_function/' . $this->branch_info_2['branch_name']);
+    $this->assertRaw($this->branch_info['branch_name'] . ' sample.php', 'Other branch name and file name are shown');
+    $this->assertRaw('$complex_parameter', 'Other sample parameter is shown');
+
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/sample.php/function/sample_function');
+    $this->assertRaw($this->branch_info_2['branch_name'] . ' sample2.php', 'Other sample file and branch are shown');
+    $this->assertLink('sample_function', 0, 'Other sample link is there');
+
+    // Test constant-style linking.
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/sample.php/constant/DUPLICATE_CONSTANT');
+    $this->assertRaw($this->branch_info['branch_name'] . ' duplicates.php', 'Other file in same branch is shown');
+    $this->assertRaw($this->branch_info_2['branch_name'] . ' maybe_exclude/extras.php', 'Other sample file and branch name are shown');
+
+    // Test class and method linking.
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
+    $this->assertRaw($this->branch_info['branch_name'] . ' classes.php', 'This file name and branch are shown');
+    $this->assertRaw($this->branch_info_2['branch_name'] . ' maybe_exclude/extras.php', 'Other sample file and branch name are shown');
+
+    // Now visit the method page.
+    $this->clickLink('Sample::foo');
+    $this->assertRaw($this->branch_info['branch_name'] . ' classes.php', 'This file name and branch are shown');
+    $this->assertRaw($this->branch_info_2['branch_name'] . ' extras.php', 'Other sample file and branch name are shown');
+    $this->assertRaw('2 calls to Sample::foo()', 'Calling functions text is there');
+
+    // Make sure the links go to the right place.
+    $this->assertLinkURLSubstring('foo', 'extras.php/function/Sample', 'foo link exists', 'foo link went to the right place');
+    // Note that there is also one Sample link in the breadcrumb.
+    $this->assertLinkURLSubstring('Sample', 'classes.php/class/Sample', 'First Sample link exists', 'First Sample link went to the right place', 1);
+    $this->assertLinkURLSubstring('Sample', 'extras.php/class/Sample', 'Second Sample link exists', 'Second Sample link went to the right place', 2);
+    // Verify the calling functions are linked.
+    $this->assertLink('Sample::baz', 0, 'Link to first calling function is there');
+    $this->assertLink('SubSample::bar', 0, 'Link to second calling function is there');
+
+    // Now visit the class page in the other branch. Click through to the
+    // method and verify that it doesn't show the DifferentClassName::foo()
+    // method on that page at all, and vice versa.
+    $this->backdropGet('api/' . $this->branch_info_2['project'] . '/maybe_exclude!extras.php/class/Sample/' . $this->branch_info_2['branch_name']);
+    $this->clickLink('Sample::foo');
+    $this->assertRaw($this->branch_info['branch_name'] . ' classes.php', 'This file name and branch are shown');
+    $this->assertRaw($this->branch_info_2['branch_name'] . ' extras.php', 'Other sample file and branch name are shown');
+    $this->assertNoRaw('DifferentClassName', 'Other class is not shown');
+
+    $this->backdropGet('api/' . $this->branch_info_2['project'] . '/maybe_exclude!extras.php/class/DifferentClassName/' . $this->branch_info_2['branch_name']);
+    $this->assertNoRaw('classes.php', 'Name of other project file is not shown');
+    $this->clickLink('DifferentClassName::foo');
+    $this->assertNoRaw($this->branch_info['branch_name'] . ' classes.php', 'This file name and branch are shown');
+    $this->assertRaw($this->branch_info_2['branch_name'] . ' extras.php', 'Other sample file and branch name are shown');
+    $this->assertNoRaw('Sample::foo', 'Sample method name is not shown');
+
+    // Test on a search page.
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/' . $this->branch_info['branch_name'] . '/search/samp');
+    $this->assertLink('Sample', 0, 'Sample class is found');
+    $this->assertLink('sample.php', 0, 'Sample file is found');
+    $this->assertLink('sample_function', 0, 'Sample function is found');
+    $this->assertNoLink('another_sample_function', 'Another sample function is not found');
+    $this->assertNoLink(t('Other projects'), 'Link to other projects is not present since there are no others');
+
+    // Go to the other branch via link.
+    $this->clickLink('Search ' . $this->branch_info_2['title'] . ' for samp');
+    $this->assertNoLink('another_function', 'Another function is not found');
+    $this->assertLink('second_sample_function', 0, 'Second sample function is found');
+    $this->assertLink('Search ' . $this->branch_info['title'] . ' for samp', 0, 'Link to other search is found');
+    $this->assertNoLink(t('Other projects'), 'Link to other projects is not present since there are no others');
+  }
+
+  /**
+   * Tests that the apis path works.
+   */
+  function _testApiS() {
+    // This should go to the sample_function in the first project.
+    $this->backdropGet('apis/sample_function');
+    $this->assertURLContains('api/' . $this->branch_info['project'] . '/sample.php/function/sample_function', 'First sample_function is found by apis');
+
+    // This should go to a search for sample in the first project.
+    $this->backdropGet('apis/sample');
+    $this->assertURLContains('api/' . $this->branch_info['project'] . '/' . $this->branch_info['branch_name'] . '/search/sample', 'Partial-match search works in apis');
+
+    // This should go to the second_sample_function in the second project.
+    $this->backdropGet('apis/second_sample_function');
+    $this->assertURLContains('api/' . $this->branch_info_2['project'] . '/sample2.php/function/second_sample_function', 'second_sample_function is found by apis');
+
+    // This should not find anything.
+    $this->backdropGet('apis/pizza');
+    $this->assertText('Sorry', 'Start of message is there');
+    $this->assertText('cannot be found', 'End of message is there');
+    $this->assertText('pizza', 'Search term is displayed');
+  }
+}
+
+/**
+ * Tests multiple-branch functionality with multiple projects.
+ */
+class ApiMultipleProjectsTest extends ApiWebPagesBaseTest {
+
+  /**
+   * Array of information about the second sample branch.
+   */
+  protected $branch_info_2;
+
+  /**
+   * Array of information about the sample core branch.
+   */
+  protected $branch_info_core;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Multiple projects functionality',
+      'description' => 'Tests that the multiple-project setup works correctly',
+      'group' => 'API module',
+    );
+  }
+
+  public function setUp() {
+    $this->baseSetUp();
+
+    // Create file branches with the two samples, each in its own project.
+    $this->branch_info = $this->setUpBranchUI('', TRUE, array(
+      'project' => 'sample',
+      'project_title' => 'Sample',
+      'branch_name' => '1.x-1.x',
+      'title' => 'Sample 1.x-1.x',
+      'core_compatibility' => '1.x',
+    ));
+
+    $this->branch_info_2 = $this->setUpBranchUI('', TRUE, array(
+      'project' => 'test',
+      'project_title' => 'Test',
+      'branch_name' => '1.x-2.x',
+      'title' => 'Test 1.x-2.x',
+      'core_compatibility' => '1.x',
+      'directory' => backdrop_get_path('module', 'api') . '/tests/sample2',
+      'excluded' => 'none',
+    ));
+
+    // Create a file branch to act as core.
+    $this->branch_info_core = $this->setUpBranchUI('', TRUE, array(
+      'project' => 'backdrop',
+      'project_title' => 'Backdrop',
+      'project_type' => 'core',
+      'branch_name' => '1.x',
+      'title' => 'Backdrop 1.x',
+      'core_compatibility' => '1.x',
+      'directory' => backdrop_get_path('module', 'api') . '/tests/sample_backdrop',
+      'excluded' => '',
+    ));
+
+    // Remove PHP branch.
+    $this->removePHPBranch();
+
+    // Parse the code.
+    $this->resetBranchesAndCache();
+    $this->updateBranches();
+    $count = $this->processApiParseQueue();
+    $this->assertEqual($count, 15, "15 files were parsed ($count)");
+
+    // Turn on the navigation block.
+    $this->backdropPost('admin/structure/block/list', array(
+        'blocks[api_navigation][region]' => 'sidebar_first',
+      ),
+      t('Save blocks')
+    );
+  }
+
+  /**
+   * Runs all tests in this section, to avoid multiple calls to setUp().
+   */
+  function testAll() {
+    $this->_testPages();
+    $this->_testBranchesCallingFunctions();
+    $this->_testBranchLinks();
+    $this->_testApiS();
+  }
+
+  /**
+   * Tests that various pages are working correctly.
+   */
+  function _testPages() {
+    // Test the Projects page.
+    $this->backdropGet('api/projects');
+    $this->assertLink('Backdrop', 0, 'Backdrop project link exists');
+    $this->assertLink('Sample', 0, 'Sample project link exists');
+    $this->assertLink('Test', 0, 'Test project link exists');
+    // Verify a link on the Project page.
+    $this->clickLink('Test');
+    $this->assertRaw($this->branch_info_2['title'], 'Branch title is on branch page');
+    $this->assertURLContains($this->branch_info_2['project'], 'Project is in URL');
+    $this->assertTitleContains($this->branch_info_2['title'], 'Branch title is in page title');
+
+    $this->backdropGet('api');
+    $this->assertRaw($this->branch_info_core['project_title'], 'Default project is correct');
+
+    $this->backdropGet('api/' . $this->branch_info_core['project'] . '/drupal.php/function/theme');
+    $this->assertResponse(200, 'Function page without branch suffix redirected correctly in core branch');
+    $this->assertText('Generates themed output.', 'Description appears on page');
+  }
+
+  /**
+   * Tests that the list of functions calling this function is branch-specific.
+   */
+  function _testBranchesCallingFunctions() {
+    // Visit the sample.php function sample_function().
+    // Note that you need to have the branch name in URLs unless it matches the
+    // default project's default branch name!
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/sample.php/function/sample_function/' . $this->branch_info['branch_name']);
+
+    // Verify that there is only one function calling this function.
+    $this->assertRaw('10 calls to sample_function()', 'Ten calling functions');
+    // Verify links to the calling functions.
+    $this->assertLink('sample_in_code_links', 0, 'Calling function link is present');
+    $this->assertNoLink('second_sample_function', 'Calling function from other branch link is not present');
+
+    // Visit the other branch's function sample_function().
+    $this->backdropGet('api/' . $this->branch_info_2['project'] . '/sample2.php/function/sample_function/' . $this->branch_info_2['branch_name']);
+
+    // Verify that there is only one function calling this function.
+    $this->assertRaw('1 call to sample_function()', 'Only one calling function');
+    // Verify links to the calling functions.
+    $this->assertLink('second_sample_function', 0, 'Calling function link is present');
+    $this->assertNoLink('sample_in_code_links', 'Calling function from other branch link is not present');
+  }
+
+  /**
+   * Tests that the in-code links between projects are working correctly.
+   */
+  function _testBranchLinks() {
+
+    // Note that you need to have the branch name in URLs unless it matches the
+    // default project's default branch name!
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/sample.php/function/sample_in_code_links/' . $this->branch_info['branch_name']);
+
+    // Make sure the sample_function link stays in this branch.
+    $this->assertLinkURLSubstring('sample_function', $this->branch_info['project'] . '/sample.php/function/sample_function', 'sample_function link exists', 'sample_function link went to the right place');
+
+    // Make sure the link to the other non-core branch is made.
+    $this->assertLinkURLSubstring('second_sample_function', $this->branch_info_2['project'] . '/sample2.php/function/second_sample_function', 'second_sample_function link exists', 'second_sample_function link went to the right place');
+
+    // Make sure the core links are made.
+    $this->assertLinkURLSubstring('theme', $this->branch_info_core['project'] . '/drupal.php/function/theme', 'theme link exists', 'theme link went to the right place');
+    $this->assertLinkURLSubstring('module_invoke', $this->branch_info_core['project'] . '/drupal.php/function/module_invoke', 'module_invoke link exists', 'module_invoke link went to the right place');
+
+    $this->backdropGet('api/' . $this->branch_info_2['project'] . '/sample2.php/function/second_sample_function/' . $this->branch_info_2['branch_name']);
+
+    // Make sure the sample_function link stays in this branch.
+    $this->assertLinkURLSubstring('sample_function', $this->branch_info_2['project'] . '/sample2.php/function/sample_function', 'sample_function link exists', 'sample_function link went to the right place');
+
+    // Make sure the other links go to the other project/branch.
+    $this->assertLinkURLSubstring('sample_class_function', $this->branch_info['project'] . '/sample.php/function/sample_class_function', 'sample_class_function link exists', 'sample_class_function link went to the right place');
+    // @todo: Global links do not work. Un-comment this when they do. See issue
+    // http://drupal.org/node/1788456
+    //    $this->assertLinkURLSubstring('$sample_global', $this->branch_info['project'] . '/sample.php/global/sample_global', 'sample_global link exists', 'sample_global link went to the right place');
+    $this->assertLinkURLSubstring('SAMPLE_CONSTANT', $this->branch_info['project'] . '/sample.php/constant/SAMPLE_CONSTANT', 'SAMPLE_CONSTANT link exists', 'SAMPLE_CONSTANT link went to the right place');
+
+    $this->backdropGet('api/' . $this->branch_info_core['project'] . '/drupal.php/function/module_invoke_all/' . $this->branch_info_core['branch_name']);
+
+    // Check on links that should and should not be made.
+    $this->assertLinkURLSubstring('theme', $this->branch_info_core['project'] . '/drupal.php/function/theme', 'theme link exists', 'theme link went to the right place');
+    $this->assertText('sample_function', 'sample_function is there');
+    $this->assertNoLink('sample_function', 'sample_function is not a link');
+
+    // Check on the class inheritance across branches.
+    $this->backdropGet('api/' . $this->branch_info_2['project'] . '/inheritance.php/class/OtherBranchExtension/' . $this->branch_info_2['branch_name']);
+    $this->assertLink('Sample2::baz', 0, 'Link to inherited function is present');
+    $this->assertText('Implement this API', 'Description of inherited function is present');
+    $this->assertLink('SampleInterface::foo', 0, 'Link to overridden function exists');
+    $this->assertLink('Sample2', 0, 'Link to base class exists');
+    $this->assertLink('SampleInterface', 0, 'Link to interface exists');
+  }
+
+  /**
+   * Tests that the apis path works.
+   */
+  function _testApiS() {
+    // This should go to the sample_function in the first project.
+    $this->backdropGet('apis/sample_function');
+    $this->assertURLContains('api/' . $this->branch_info['project'] . '/sample.php/function/sample_function', 'First sample_function is found by apis');
+
+    // This should go to a search for sample in the first project.
+    $this->backdropGet('apis/sample');
+    $this->assertURLContains('api/' . $this->branch_info['project'] . '/' . $this->branch_info['branch_name'] . '/search/sample', 'Partial-match search works in apis');
+
+    // This should go to the second_sample_function in the second project.
+    $this->backdropGet('apis/second_sample_function');
+    $this->assertURLContains('api/' . $this->branch_info_2['project'] . '/sample2.php/function/second_sample_function', 'second_sample_function is found by apis');
+
+    // This should go to the backdrop_alter in the core project.
+    $this->backdropGet('apis/module_invoke_all');
+    $this->assertURLContains('api/' . $this->branch_info_core['project'] . '/drupal.php/function/module_invoke_all', 'module_invoke_all is found by apis');
+
+    // This should not find anything.
+    $this->backdropGet('apis/pizza');
+    $this->assertText('Sorry', 'Start of message is there');
+    $this->assertText('cannot be found', 'End of message is there');
+    $this->assertText('pizza', 'Search term is displayed');
+  }
+}
