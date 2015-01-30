@@ -191,7 +191,6 @@ table table {
 }
 table tr th {
   background: #757575;
-  background: rgba(0, 0, 0, 0.51);
   border-bottom-style: none;
 }
 table tr th,
@@ -1493,30 +1492,55 @@ div.vertical-tabs .vertical-tabs-panes fieldset.vertical-tabs-pane {
 
 /* --------------- Search Form ---------------- */
 
-.block-search-form {
-  padding-bottom: 7px;
+/* Block search. Twitter typeahead added. */
+.block-search-form .form-item {
+  margin: 0;
 }
 .block-search-form .content {
   margin-top: 0;
 }
+.block-search-form .twitter-typeahead,
+.block-search-form .form-search {
+  width: 100%;
+}
 .block-search-form .form-actions {
+  display: none;
+}
+.block-search-form pre {
+  height: 0;
+  display: block;
   padding: 0;
 }
-#search-form input#edit-keys,
-.block-search-form .form-item-search-block-form input {
+.tt-dropdown-menu {
+  background: white;
+  border: 1px solid #CCC;
+}
+.tt-suggestion {
+  padding: 3px 6px;
+}
+.tt-suggestion p {
+  margin: 0;
+  padding: 0;
+}
+/* Hover/selected state for typeahead suggestions. */
+.tt-cursor {
+  background: #DEDEDE;
+}
+
+/* Full search form. */
+.search-form input#edit-keys {
   float: left; /* LTR */
   font-size: 1em;
-  width: 9em;
+  width: 16em;
+  max-width: 100%;
   margin-right: 5px; /* LTR */
 }
-[dir="rtl"] #search-form input#edit-keys,
-[dir="rtl"] .block-search-form .form-item-search-block-form input {
+[dir="rtl"] .search-form input#edit-keys {
   float: right;
   margin-left: 5px;
   margin-right: 0;
 }
-#search-block-form input.form-submit,
-#search-form input.form-submit {
+.search-form input.form-submit {
   margin-left: 0;
   margin-right: 0;
   height: 25px;
@@ -1528,13 +1552,11 @@ div.vertical-tabs .vertical-tabs-panes fieldset.vertical-tabs-pane {
   background: url(../images/search-button.png) no-repeat center top;
   overflow: hidden;
 }
-#search-block-form input.form-submit:hover,
-#search-block-form input.form-submit:focus,
-#search-form input.form-submit:hover,
-#search-form input.form-submit:focus {
+.search-form input.form-submit:hover,
+.search-form input.form-submit:focus {
   background-position: center bottom;
 }
-#search-form .form-item-keys label {
+.search-form .form-item-keys label {
   display: block;
 }
 
@@ -1633,4 +1655,44 @@ div.admin-panel .description {
   td.priority-low {
     display: none;
   }
+}
+
+/**
+ * FormAPI table.
+ * https://api.backdropcms.org/node/41642
+ */
+table.form-api {
+  width: auto;
+}
+table.form-api tr td {
+  text-align: center;
+}
+table.form-api thead tr th,
+.sticky-rotated thead tr th {
+  background: white;
+  color: #333;
+  border-bottom: 1px solid #333 !important;
+  vertical-align: bottom;
+}
+table.form-api tbody th {
+  background: white;
+  color: #333;
+}
+table.form-api tbody td,
+table.form-api tbody th {
+  border: 1px solid white;
+  outline-right: 1px solid #333;
+}
+table.form-api tr th a,
+.sticky-rotated tr th a {
+  color: #333;
+}
+table.form-api thead tr th,
+.sticky-rotated thead tr th {
+  border: none;
+}
+table.form-api .rotate2,
+.sticky-rotated .rotate2 {
+  background: white;
+  border-bottom: 1px solid #333;
 }

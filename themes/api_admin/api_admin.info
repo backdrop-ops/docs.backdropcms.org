@@ -1,0 +1,6 @@
+name = Backdrop API Admin
+description = Sub-theme of Seven for API modifications.
+backdrop = 1.x
+base theme = seven
+
+stylesheets[all][] = css/api-admin.css

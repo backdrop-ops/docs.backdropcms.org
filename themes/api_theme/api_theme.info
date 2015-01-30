@@ -4,3 +4,6 @@ backdrop = 1.x
 
 stylesheets[all][] = css/style.css
 stylesheets[all][] = css/colors.css
+
+scripts[] = js/typeahead.jquery.min.js
+scripts[] = js/api-theme.js

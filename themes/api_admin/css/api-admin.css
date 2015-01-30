@@ -1,0 +1,6 @@
+/**
+ * CSS loaded for the API admin site, in addition to Seven CSS.
+ */
+.form-textarea {
+  font-family: Monaco, "Lucida Console", monospace;
+}
