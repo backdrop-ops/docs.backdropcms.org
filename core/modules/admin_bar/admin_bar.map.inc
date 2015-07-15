@@ -9,6 +9,28 @@
  */
 
 /**
+ * Implements hook_admin_bar_map() on behalf of Layout module.
+ */
+function layout_admin_bar_map() {
+  if (!user_access('administer layouts')) {
+    return;
+  }
+  $layouts = layout_get_all_configs('layout');
+  foreach ($layouts as $layout_name => $layout) {
+    if (isset($layout['disabled']) && $layout['disabled']) {
+      unset($layouts[$layout_name]);
+    }
+  }
+  $map['admin/structure/layouts/manage/%layout_tempstore'] = array(
+    'parent' => 'admin/structure/layouts',
+    'arguments' => array(
+      array('%layout_tempstore' => array_keys($layouts)),
+    ),
+  );
+  return $map;
+}
+
+/**
  * Implements hook_admin_bar_map() on behalf of Filter module.
  */
 function filter_admin_bar_map() {
@@ -47,10 +69,16 @@ function node_admin_bar_map() {
   if (!user_access('administer content types')) {
     return;
   }
+  $types = node_type_get_types();
+  foreach ($types as $type_name => $type) {
+    if ($type->disabled) {
+      unset($types[$type_name]);
+    }
+  }
   $map['admin/structure/types/manage/%node_type'] = array(
     'parent' => 'admin/structure/types',
     'arguments' => array(
-      array('%node_type' => array_keys(node_type_get_types())),
+      array('%node_type' => array_keys($types)),
     ),
   );
   return $map;
@@ -114,10 +142,10 @@ function taxonomy_admin_bar_map() {
   if (!user_access('administer taxonomy')) {
     return;
   }
-  $map['admin/structure/taxonomy/%taxonomy_vocabulary_machine_name'] = array(
+  $map['admin/structure/taxonomy/%taxonomy_vocabulary'] = array(
     'parent' => 'admin/structure/taxonomy',
     'arguments' => array(
-      array('%taxonomy_vocabulary_machine_name' => array_keys(taxonomy_vocabulary_get_names())),
+      array('%taxonomy_vocabulary' => array_keys(taxonomy_vocabulary_load_multiple(FALSE))),
     ),
   );
   return $map;

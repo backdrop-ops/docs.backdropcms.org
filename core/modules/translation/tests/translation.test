@@ -33,7 +33,7 @@ class TranslationTestCase extends BackdropWebTestCase {
     // translation.
     $this->backdropGet('admin/structure/types/manage/page');
     $edit = array();
-    $edit['node_type_language'] = TRANSLATION_ENABLED;
+    $edit['language'] = TRANSLATION_ENABLED;
     $this->backdropPost('admin/structure/types/manage/page', $edit, t('Save content type'));
     $this->assertRaw(t('The content type %type has been updated.', array('%type' => 'Basic page')), 'Basic page content type has been updated.');
 
@@ -225,7 +225,7 @@ class TranslationTestCase extends BackdropWebTestCase {
     // Disable translation support to check that the language switcher is left
     // untouched only for new nodes.
     $this->backdropLogin($this->admin_user);
-    $edit = array('node_type_language' => 0);
+    $edit = array('language' => 0);
     $this->backdropPost('admin/structure/types/manage/page', $edit, t('Save content type'));
     $this->backdropLogin($this->translator);
 
@@ -421,8 +421,10 @@ class TranslationTestCase extends BackdropWebTestCase {
 
     $result = TRUE;
     $languages = language_list();
-    $page_language = $languages[$node->langcode];
-    $translation_language = $languages[$translation->langcode];
+    $node_langcode = $node->langcode === LANGUAGE_NONE ? config_get('system.core', 'language_default') : $node->langcode;
+    $translation_langcode = $translation->langcode === LANGUAGE_NONE ? config_get('system.core', 'language_default') : $translation->langcode;
+    $page_language = $languages[$node_langcode];
+    $translation_language = $languages[$translation_langcode];
     $url = url("node/$translation->nid", array('language' => $translation_language));
 
     $this->backdropGet("node/$node->nid", array('language' => $page_language));

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Administrative interface for custom field type creation.
@@ -570,9 +569,21 @@ function field_ui_field_overview_form($form, &$form_state, $entity_type, $bundle
     $js_fields[$field_name] = array('label' => $info['label'], 'type' => $info['type'], 'widget' => $info['widget_type']);
   }
 
+  $field_info = array();
+  foreach ($field_types as $machine => $type) {
+    $field_info[$machine]['label'] = $type['label'];
+    $field_info[$machine]['defaultWidget'] = $type['default_widget'];
+    $field_info[$machine]['defaultFormatter'] = $type['default_formatter'];
+    $field_info[$machine]['module'] = $type['module'];
+  }
+
   $form['#attached']['js'][] = array(
     'type' => 'setting',
-    'data' => array('fields' => $js_fields, 'fieldWidgetTypes' => field_ui_widget_type_options()),
+    'data' => array(
+      'fields' => $js_fields,
+      'fieldWidgetTypes' => field_ui_widget_type_options(),
+      'fieldInfo' => $field_info,
+    ),
   );
 
   // Add tabledrag behavior.
@@ -1022,10 +1033,15 @@ function field_ui_display_overview_form($form, &$form_state, $entity_type, $bund
           '#cell_attributes' => array('class' => array('field-formatter-summary-cell')),
         );
         $table[$name]['settings_edit'] = $base_button + array(
-          '#type' => 'image_button',
+          '#type' => 'submit',
           '#name' => $name . '_formatter_settings_edit',
-          '#src' => 'core/misc/configure.png',
-          '#attributes' => array('class' => array('field-formatter-settings-edit'), 'alt' => t('Edit')),
+          '#value' => t('Configure'),
+          '#attributes' => array(
+            'class' => array(
+              'field-formatter-settings-edit',
+              'button-secondary',
+            ),
+          ),
           '#op' => 'edit',
           // Do not check errors for the 'Edit' button, but make sure we get
           // the value of the 'formatter type' select.
@@ -1401,6 +1417,7 @@ function field_ui_widget_type_options($field_type = NULL, $by_label = FALSE) {
           $options[$widget_field_type][$name] = $widget_type['label'];
         }
       }
+      asort($options[$widget_field_type]);
     }
   }
 
@@ -1796,8 +1813,16 @@ function field_ui_field_edit_form($form, &$form_state, $instance) {
     '#title' => t('Help text'),
     '#default_value' => !empty($instance['description']) ? $instance['description'] : '',
     '#rows' => 5,
-    '#description' => t('Instructions to present to the user below this field on the editing form.<br />Allowed HTML tags: @tags', array('@tags' => _field_filter_xss_display_allowed_tags())),
+    '#description' => t('Instructions to present to the user below this field on the editing form.<br />Allowed HTML tags: @tags <br />This field supports tokens.', array('@tags' => _field_filter_xss_display_allowed_tags())),
     '#weight' => -10,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array(),
+  );
+
+  $form['instance']['settings']['token_tree'] = array(
+    '#theme' => 'token_tree_link',
+    '#token_types' => array(),
+    '#weight' => -9,
   );
 
   $form['instance']['required'] = array(
@@ -2063,6 +2088,10 @@ function field_ui_next_destination($entity_type, $bundle) {
   $destinations = !empty($_REQUEST['destinations']) ? $_REQUEST['destinations'] : array();
   if (!empty($destinations)) {
     unset($_REQUEST['destinations']);
+  }
+  // Remove any external URLs.
+  $destinations = array_diff($destinations, array_filter($destinations, 'url_is_external'));
+  if ($destinations) {
     return field_ui_get_destinations($destinations);
   }
   $admin_path = _field_ui_bundle_admin_path($entity_type, $bundle);

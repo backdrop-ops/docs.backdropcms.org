@@ -536,6 +536,9 @@ function system_modules($form, $form_state = array()) {
     $extra = array();
     $extra['enabled'] = (bool) $module->status;
     $extra['disabled'] = (array_key_exists('disabled', $module->info)) ? $module->info['disabled'] : FALSE;
+    if ($extra['disabled'] && !empty($module->info['explanation']) ) {
+      $extra['required_by'][] = $module->info['explanation'];
+    }
 
     // Check to see if this is a core module.
     if (strstr($module->uri, 'core/modules')) {
@@ -571,7 +574,7 @@ function system_modules($form, $form_state = array()) {
         }
 
         // Disable this module if the dependency is incompatible with this version of Backdrop core.
-        elseif ($files[$requires]->info['backdrop'] != BACKDROP_CORE_COMPATIBILITY) {
+        elseif (isset($files[$requires]->info['backdrop']) && $files[$requires]->info['backdrop'] != BACKDROP_CORE_COMPATIBILITY) {
           $extra['requires'][$requires] = t('@module (<span class="admin-missing">incompatible with</span> this version of Backdrop core)', array(
             '@module' => $requires_name,
           ));
@@ -710,8 +713,14 @@ function _system_modules_build_row($info, $extra) {
   $status_short = '';
   $status_long = '';
 
+  // Check if this module was once a contributed module but is now in core.
+  if (isset($info['merged_into_core'])) {
+    $compatible = FALSE;
+    $status_short .= t('No longer needed.') . ' ';
+    $status_long .= t('This module is now built-into Backdrop CMS core and is no longer necessary.') . ' ';
+  }
   // Check the core compatibility.
-  if (!isset($info['backdrop']) || $info['backdrop'] != BACKDROP_CORE_COMPATIBILITY) {
+  elseif (!isset($info['backdrop']) || $info['backdrop'] != BACKDROP_CORE_COMPATIBILITY) {
     $compatible = FALSE;
     $status_short .= t('Incompatible with this version of Backdrop CMS.') . ' ';
     $status_long .= t('This version is not compatible with Backdrop CMS !core_version and should be replaced.', array('!core_version' => BACKDROP_CORE_COMPATIBILITY)) . ' ';
@@ -808,6 +817,8 @@ function system_modules_confirm_form($modules, $storage) {
       t('Would you like to continue with the above?'),
       t('Continue'),
       t('Cancel'));
+    // Removing the button-danger class so that button-primary will be added automatically for us.
+    unset($form['actions']['submit']['#attributes']['class']);
     return $form;
   }
 }
@@ -1467,7 +1478,7 @@ function system_cron_settings($form, &$form_state) {
   );
 
   $form['cron_url'] = array(
-    '#markup' => '<p>' . t('To run cron from outside the site, go to <a href="!cron">!cron</a>', array('!cron' => url($base_url . '/cron.php', array('external' => TRUE, 'query' => array('cron_key' => state_get('cron_key', 'backdrop')))))) . '</p>',
+    '#markup' => '<p>' . t('To run cron from outside the site, go to <a href="!cron">!cron</a>', array('!cron' => url($base_url . '/core/cron.php', array('external' => TRUE, 'query' => array('cron_key' => state_get('cron_key', 'backdrop')))))) . '</p>',
   );
 
   $form['cron'] = array(
@@ -1834,20 +1845,20 @@ function system_image_toolkit_settings_submit($form, &$form_state) {
  */
 function system_rss_feeds_settings() {
   $rss_config = config('system.core');
-  $form['feed_description'] = array(
+  $form['rss_description'] = array(
     '#type' => 'textarea',
     '#title' => t('Feed description'),
     '#default_value' => $rss_config->get('rss_description'),
     '#description' => t('Description of your site, included in each feed.')
   );
-  $form['feed_default_items'] = array(
+  $form['rss_limit'] = array(
     '#type' => 'select',
     '#title' => t('Number of items in each feed'),
     '#default_value' => $rss_config->get('rss_limit'),
     '#options' => backdrop_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30)),
     '#description' => t('Default number of items to include in each feed.')
   );
-  $form['feed_item_length'] = array(
+  $form['rss_viewmode'] = array(
     '#type' => 'select',
     '#title' => t('Feed content'),
     '#default_value' => $rss_config->get('rss_viewmode'),
@@ -1873,9 +1884,9 @@ function system_rss_feeds_settings() {
  */
 function system_rss_feeds_settings_submit($form, &$form_state) {
   $config = config('system.core');
-  $config->set('feed_description', $form_state['values']['feed_description']);
-  $config->set('feed_default_items', $form_state['values']['feed_default_items']);
-  $config->set('feed_item_length', $form_state['values']['feed_item_length']);
+  $config->set('rss_description', $form_state['values']['rss_description']);
+  $config->set('rss_limit', $form_state['values']['rss_limit']);
+  $config->set('rss_viewmode', $form_state['values']['rss_viewmode']);
   $config->save();
   backdrop_set_message(t('The configuration options have been saved.'));
 }
@@ -2041,7 +2052,7 @@ function system_site_maintenance_mode_submit($form, &$form_state) {
  *
  * @ingroup forms
  */
-function system_clean_url_settings($form, &$form_state) {
+function system_urls_settings($form, &$form_state) {
   $available = FALSE;
   $conflict = FALSE;
 
@@ -2051,7 +2062,7 @@ function system_clean_url_settings($form, &$form_state) {
     $available = TRUE;
   }
   else {
-    $request = backdrop_http_request($GLOBALS['base_url'] . '/admin/config/search/clean-urls/check');
+    $request = backdrop_http_request($GLOBALS['base_url'] . '/admin/config/search/urls/check');
     // If the request returns HTTP 200, clean URLs are available.
     if (isset($request->code) && $request->code == 200) {
       $available = TRUE;
@@ -2117,22 +2128,33 @@ function system_clean_url_settings($form, &$form_state) {
     $form['actions']['clean_url_test'] = array(
       '#type' => 'submit',
       '#value' => t('Run the clean URL test'),
+      '#submit' => array(),
     );
     $form['clean_url_test_execute'] = array(
       '#type' => 'hidden',
       '#value' => 1,
     );
   }
+  
+  $form['canonical_secure'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use HTTPS for canonical URLs'),
+    '#default_value' => config_get('system.core', 'canonical_secure'),
+    '#description' => t('This option makes Backdrop use HTTPS protocol for generated canonical URLs. Please note: to get it working in mixed-mode (both secure and insecure) sessions, the variable "https" should be set to TRUE in your file <code>settings.php</code>' ),
+  );
 
   return $form;
 }
 
 /**
- * Submit handler for system_clean_url_settings().
+ * Submit handler for system_urls_settings().
  */
-function system_clean_url_settings_submit($form, $form_state) {
+function system_urls_settings_submit($form, $form_state) {
+  $config = config('system.core');
+  $config->set('clean_url', $form_state['values']['clean_url']);
+  $config->set('canonical_secure', $form_state['values']['canonical_secure']);
+  $config->save();
   backdrop_set_message(t('The configuration options have been saved.'));
-  config_set('system.core', 'clean_url', $form_state['values']['clean_url']);
 }
 
 /**
@@ -2234,6 +2256,7 @@ function system_date_delete_format_form($form, &$form_state, $format) {
 function system_date_delete_format_form_submit($form, &$form_state) {
   $format = $form_state['format'];
   system_date_format_delete($format['name']);
+  token_cache_clear();
   backdrop_set_message(t('Removed date format %format.', array('%format' => $format['label'])));
   $form_state['redirect'] = 'admin/config/regional/date-time/formats';
 }
@@ -2369,6 +2392,7 @@ function system_configure_date_formats_form_submit($form, &$form_state) {
   $format = (array) $form_state['format'];
   $format = array_merge($format, $form_state['values']);
   system_date_format_save($format);
+  token_cache_clear();
   if (!empty($form_state['values']['name'])) {
     backdrop_set_message(t('Date format updated.'));
   }

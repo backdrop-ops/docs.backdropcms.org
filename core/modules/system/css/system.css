@@ -192,7 +192,7 @@ table.sticky-header {
 }
 .progress .filled {
   background-color: #000;
-  height: 1.5em;
+  height: 2.5em;
   width: 5px;
 }
 .progress .percentage {
@@ -274,6 +274,7 @@ tr .ajax-progress-throbber .throbber {
   clip: rect(1px, 1px, 1px, 1px);
   overflow: hidden;
   height: 1px;
+  width: 1px;
 }
 
 /**

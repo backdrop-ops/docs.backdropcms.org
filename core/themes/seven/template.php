@@ -1,20 +1,29 @@
 <?php
+/**
+ * @file
+ * Preprocess functions and theme function overrides for the Seven theme.
+ */
 
 /**
  * Prepares variables for layout templates.
  */
 function seven_preprocess_layout(&$variables) {
-  // Move the page title and tabs into the "header" area, to fit with Seven's
-  // markup requirements.
-  if ($variables['title']) {
-    $title = '<h1 class="title" id="page-title">' . $variables['title'] . '</h1>';
-    $variables['content']['header'] .= $title;
-    $variables['title'] = NULL;
-  }
-  if ($variables['tabs']) {
-    $tabs = '<div class="tabs">' . $variables['tabs'] . '</div>';
-    $variables['content']['header'] .= $tabs;
-    $variables['tabs'] = NULL;
+  // Don't modify layouts that are being edited.
+  if (!$variables['admin']) {
+    // Move the page title and tabs into the "header" area, to fit with Seven's
+    // markup requirements.
+    if (isset($variables['content']['header'])) {
+      if ($variables['title']) {
+        $title = '<h1 class="title" id="page-title">' . $variables['title'] . '</h1>';
+        $variables['content']['header'] .= $title;
+        $variables['title'] = NULL;
+      }
+      if ($variables['tabs']) {
+        $tabs = '<div class="tabs">' . $variables['tabs'] . '</div>';
+        $variables['content']['header'] .= $tabs;
+        $variables['tabs'] = NULL;
+      }
+    }
   }
 }
 
@@ -87,12 +96,43 @@ function seven_tablesort_indicator($variables) {
 function seven_css_alter(&$css) {
   // Use Seven's vertical tabs style instead of the default one.
   if (isset($css['core/misc/vertical-tabs.css'])) {
-    $css['core/misc/vertical-tabs.css']['data'] = backdrop_get_path('theme', 'seven') . '/vertical-tabs.css';
+    $css['core/misc/vertical-tabs.css']['data'] = backdrop_get_path('theme', 'seven') . '/css/vertical-tabs.css';
     $css['core/misc/vertical-tabs.css']['type'] = 'file';
   }
   // Use Seven's jQuery UI theme style instead of the default one.
   if (isset($css['core/misc/ui/jquery.ui.theme.css'])) {
-    $css['core/misc/ui/jquery.ui.theme.css']['data'] = backdrop_get_path('theme', 'seven') . '/jquery.ui.theme.css';
+    $css['core/misc/ui/jquery.ui.theme.css']['data'] = backdrop_get_path('theme', 'seven') . '/css/jquery.ui.theme.css';
     $css['core/misc/ui/jquery.ui.theme.css']['type'] = 'file';
   }
+}
+
+/**
+ * Override theme function for breadcrumb trail
+ */
+function seven_breadcrumb($variables) {
+  $breadcrumb = $variables['breadcrumb'];
+  $output = '';
+  if (!empty($breadcrumb)) {
+    $output .= '<nav role="navigation" class="breadcrumb">';
+    // Provide a navigational heading to give context for breadcrumb links to
+    // screen-reader users. Make the heading invisible with .element-invisible.
+    $output .= '<h2 class="element-invisible">' . t('You are here') . '</h2>';
+    $output .= '<ol>';
+    // IE8 does not support :first-child and :last-child selectors, so we need
+    // to add classes.
+    foreach ($breadcrumb as $n => $item) {
+      $classes = array();
+      if ($n === 0) {
+        $classes[] = 'first';
+      }
+      if ($n === count($breadcrumb) - 1) {
+        $classes[] = 'last';
+      }
+      $class_attribute = $classes ? ' class="' . implode(' ', $classes) . '"' : '';
+      $output .= "<li$class_attribute>$item</li>";
+    }
+    $output .= '</ol>';
+    $output .= '</nav>';
+  }
+  return $output;
 }

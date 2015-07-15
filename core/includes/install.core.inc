@@ -361,7 +361,8 @@ function install_run_tasks(&$install_state) {
  * Runs an individual installation task.
  *
  * @param $task
- *   An array of information about the task to be run.
+ *   An array of information about the task to be run as returned by
+ *   hook_install_tasks(). 
  * @param $install_state
  *   An array of information about the current installation state. This is
  *   passed in by reference so that it can be modified by the task.
@@ -481,11 +482,15 @@ function install_run_task($task, &$install_state) {
  * the page request evolves (for example, if an installation profile hasn't
  * been selected yet, we don't yet know which profile tasks need to be run).
  *
+ * You can override this using hook_install_tasks() or
+ * hook_install_tasks_alter().
+ *
  * @param $install_state
  *   An array of information about the current installation state.
  *
  * @return
- *   A list of tasks to be performed, with associated metadata.
+ *   A list of tasks to be performed, with associated metadata as returned by
+ *   hook_install_tasks().
  */
 function install_tasks_to_perform($install_state) {
   // Start with a list of all currently available tasks.
@@ -524,6 +529,14 @@ function install_tasks($install_state) {
   // Determine whether translation import tasks will need to be performed.
   $needs_translations = count($install_state['translations']) > 1 && !empty($install_state['parameters']['langcode']) && $install_state['parameters']['langcode'] != 'en';
 
+  // Display profile task only when there is more than one non-hidden profile.
+  $hidden_profile_count = 0;
+  foreach ($install_state['profiles'] as $profile) {
+    $profile_info = install_profile_info($profile->name);
+    $hidden_profile_count += empty($profile_info['hidden']);
+  }
+  $display_select_profile = $hidden_profile_count > 1 && count($install_state['profiles']) != 1;
+
   // Start with the core installation tasks that run before handing control
   // to the installation profile.
   $tasks = array(
@@ -533,7 +546,7 @@ function install_tasks($install_state) {
     ),
     'install_select_profile' => array(
       'display_name' => st('Choose profile'),
-      'display' => count($install_state['profiles']) != 1,
+      'display' => $display_select_profile,
       'run' => INSTALL_TASK_RUN_IF_REACHED,
     ),
     'install_load_profile' => array(

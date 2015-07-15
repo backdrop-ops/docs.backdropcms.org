@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Provides the interface and base class for Views Wizard plugins.
@@ -102,7 +101,7 @@ class ViewsUiBaseViewsWizard implements ViewsWizardInterface {
     // can be hidden en masse when the "Create a page" checkbox is unchecked.
     $form['displays']['page']['options'] = array(
       '#type' => 'container',
-      '#attributes' => array('class' => array('options-set'),),
+      '#attributes' => array('class' => array('options-set', 'form-wrapper'),),
       '#states' => array(
         'visible' => array(
           ':input[name="page[create]"]' => array('checked' => TRUE),
@@ -143,10 +142,11 @@ class ViewsUiBaseViewsWizard implements ViewsWizardInterface {
     $this->build_form_style($form, $form_state, 'page');
     $form['displays']['page']['options']['items_per_page'] = array(
       '#title' => t('Items to display'),
-      '#type' => 'textfield',
+      '#type' => 'number',
       '#default_value' => '10',
       '#size' => 5,
-      '#element_validate' => array('views_element_validate_integer'),
+      '#min' => 0,
+      '#step' => 1,
     );
     $form['displays']['page']['options']['pagerz'] = array(
       '#title' => t('Use a pager'),
@@ -183,6 +183,10 @@ class ViewsUiBaseViewsWizard implements ViewsWizardInterface {
       '#type' => 'select',
       '#options' => $menu_options,
     );
+    // If the primary navigation menu exists, set it as default.
+    if (array_key_exists('main-menu', $menu_options)) {
+      $form['displays']['page']['options']['link_properties']['menu_name']['#default_value'] = array('main-menu');
+    }
     $form['displays']['page']['options']['link_properties']['title'] = array(
       '#title' => t('Link text'),
       '#type' => 'textfield',
@@ -242,7 +246,7 @@ class ViewsUiBaseViewsWizard implements ViewsWizardInterface {
     // can be hidden en masse when the "Create a block" checkbox is unchecked.
     $form['displays']['block']['options'] = array(
       '#type' => 'container',
-      '#attributes' => array('class' => array('options-set'),),
+      '#attributes' => array('class' => array('options-set', 'form-wrapper'),),
       '#states' => array(
         'visible' => array(
           ':input[name="block[create]"]' => array('checked' => TRUE),
@@ -277,11 +281,12 @@ class ViewsUiBaseViewsWizard implements ViewsWizardInterface {
 
     $this->build_form_style($form, $form_state, 'block');
     $form['displays']['block']['options']['items_per_page'] = array(
-      '#title' => t('Items per page'),
-      '#type' => 'textfield',
+      '#title' => t('Items to display'),
+      '#type' => 'number',
       '#default_value' => '5',
       '#size' => 5,
-      '#element_validate' => array('views_element_validate_integer'),
+      '#min' => 0,
+      '#step' => 1,
     );
     $form['displays']['block']['options']['pager'] = array(
       '#title' => t('Use a pager'),
