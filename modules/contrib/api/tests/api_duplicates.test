@@ -11,14 +11,6 @@ module_load_include('php', 'api', 'tests/api_test_case');
  * Tests that duplicate classes, interfaces, and groups work.
  */
 class ApiDuplicatesTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Duplicates',
-      'description' => 'Tests that duplicate classes, interfaces, and groups work.',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     $this->baseSetUp();
 
@@ -74,9 +66,13 @@ class ApiDuplicatesTestCase extends ApiWebPagesBaseTest {
     $this->assertLink('non_duplicate_name', 0, 'Function from duplicate group is on topic page');
 
     // Verify that the watchdog message about duplicate group definitions was
-    // logged.
+    // logged, and that both files were marked for reparse.
     $this->backdropGet('admin/reports/dblog');
     $this->assertRaw('Duplicate @defgroup in', 'Duplicate defgroup message is in log');
+    $results = db_query('SELECT f.basename FROM {api_file} f WHERE f.modified < 100')->fetchCol();
+    $this->assertTrue(in_array('sample.php', $results), 'sample.php has been marked for parsing');
+    $this->assertTrue(in_array('excluded.php', $results), 'excluded.php has been marked for parsing');
+    $this->assertEqual(count($results), 2, '2 files have been marked for parsing');
 
     // Verify that the other group gets created.
     $this->backdropGet('api/' . $this->branch_info['project'] . '/groups');

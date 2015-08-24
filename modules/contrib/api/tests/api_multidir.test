@@ -11,14 +11,6 @@ module_load_include('php', 'api', 'tests/api_test_case');
  * Tests that a multi-directory setup works.
  */
 class ApiMultiDirectoryTestCase extends ApiTestCase {
-  public static function getInfo() {
-    return array(
-      'name' => 'Multiple directories',
-      'description' => 'Tests that the API module can parse files located in multiple directories in one branch',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     $this->baseSetUp();
 
@@ -79,14 +71,6 @@ class ApiMultiDirectoryTestCase extends ApiTestCase {
  * Tests that a multi-directory setup with excluded regular expression works.
  */
 class ApiRegularExpressionExclusionTestCase extends ApiTestCase {
-  public static function getInfo() {
-    return array(
-      'name' => 'Regular expression exclusion',
-      'description' => 'Tests that the API module excludes directories and files by regular expression',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     $this->baseSetUp();
 

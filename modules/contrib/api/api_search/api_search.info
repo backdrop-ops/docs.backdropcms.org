@@ -4,3 +4,8 @@ package = Development
 backdrop = 1.x
 configure = admin/config/development/api/search
 dependencies[] = api
+
+; Added by Backdrop CMS packaging script on 2015-08-24
+project = api
+version = 1.x-1.10-beta2
+timestamp = 1440453775

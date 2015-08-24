@@ -11,14 +11,6 @@ module_load_include('inc', 'api', 'api.formatting');
  * Tests the api_link_code() function.
  */
 class ApiLinkCodeTest extends ApiTestCase {
-  public static function getInfo() {
-    return array(
-      'name' => 'Code linking',
-      'description' => 'Test the api_link_code() function.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Overrides ApiTestCase::setUp() so we do have the PHP branch.
    */

@@ -2853,7 +2853,7 @@ class PGPOperand extends PGPExpression {
   /**
    * Returns an operand with comment and whitespace items removed.
    *
-   * Example: drupal_set_title(/* smoke screen *\/ 'check_plain' . ($node->title/* smoke screen *\/));
+   * Example: backdrop_set_title(/* smoke screen *\/ 'check_plain' . ($node->title/* smoke screen *\/));
    * The whitespace (or lack therof) and comment at the end are part of an operand.
    * The same items at the beginning are part of an expression.
    *

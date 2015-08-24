@@ -17,14 +17,6 @@ module_load_include('php', 'api', 'tests/api_test_case');
  * are not included, and that other nodes are included.
  */
 class ApiNodeAccessTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Node access',
-      'description' => 'Tests node access functionality.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Tests node access functionality.
    */

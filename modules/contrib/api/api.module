@@ -139,7 +139,7 @@ function api_help($path, $arg) {
     case 'admin/config/development/api/php_branches':
       return '<h3>' . t('Definitions:') . '</h3><ul>' .
         '<li>' . t('PHP reference branch: Queries an external PHP web site, such as php.net, for its function list, in order to make links to these functions.') . '</li>' .
-        '<li>' . t('API reference branch: Queries an external web site running the API module, such as api.drupal.org, in order to make links to Backdrop API classes, functions, etc.') . '</li>' .
+        '<li>' . t('API reference branch: Queries an external web site running the API module, such as api.backdropcms.org, in order to make links to Backdrop API classes, functions, etc.') . '</li>' .
         '<li>' . t('Update: Force a scan of the selected branch. This normally happens during cron runs after a minimum time (set on branch edit page) has passed.') . '</li>' .
         '</ul>';
   }
@@ -1756,11 +1756,11 @@ function api_block_info() {
       'info' => t('API search'),
       // This needs to be non-cached as it's a form with a form
       // token in it, and they can't be stale.
-      'cache' => DRUPAL_NO_CACHE,
+      'cache' => BACKDROP_NO_CACHE,
     ),
     'navigation' => array(
       'info' => t('API navigation'),
-      'cache' => DRUPAL_CACHE_PER_PAGE,
+      'cache' => BACKDROP_NO_CACHE,
     ),
   );
 }
@@ -2837,6 +2837,7 @@ function api_search_form($form, $form_state, $branch) {
 
   $form['search'] = array(
     '#title' => t('Function, file, or topic'),
+    '#description' => t('Partial match search is supported'),
     '#type' => 'textfield',
     '#default_value' => '',
     '#required' => TRUE,
@@ -2857,6 +2858,9 @@ function api_search_form($form, $form_state, $branch) {
 function api_search_form_submit($form, &$form_state) {
   $branch = $form['#branch'];
   $form_state['redirect'] = 'api/' . $branch->project . '/' . $branch->branch_name . '/search/' . $form_state['values']['search'];
+  unset($_GET['destination']);
+  backdrop_static_reset('backdrop_get_destination');
+  backdrop_get_destination();
 }
 
 /**
@@ -3132,6 +3136,20 @@ function api_libraries_loaded($watchdog = TRUE) {
     return $loaded;
   }
 
+  // Temporary fix to allow the parser to run on PHP 5.3.
+  if (!defined('T_TRAIT')) {
+    define('T_TRAIT', 357);
+  }
+  if (!defined('T_CALLABLE')) {
+    define('T_CALLABLE', 365);
+  }
+  if (!defined('T_TRAIT_C')) {
+    define('T_TRAIT_C', 367);
+  }
+  if (!defined('T_INSTEADOF')) {
+    define('T_INSTEADOF', 343);
+  }
+
   // The Drupal 7 version of this module depends on Libraries API. As Backdrop
   // does not yet have a Libraries API and the chances of conflicts of this
   // library are low (shared only between API and Coder), the library is
@@ -3211,7 +3229,6 @@ function api_search_autocomplete($branch_id, $string = '') {
   }
 
   backdrop_json_output($matches);
-  backdrop_exit();
 }
 
 /**
@@ -3361,4 +3378,40 @@ function api_collapsible($title, $content) {
   backdrop_add_library('system', 'backdrop.collapse');
   form_process_fieldset($fieldset, $form_state);
   return backdrop_render($fieldset);
+}
+
+/**
+ * Adds the configured line break character to text.
+ *
+ * @param string $text
+ *   Text to add line breaks to, presumably a class member name or something
+ *   similar that is too long.
+ *
+ * @return string
+ *   Text with line break characters added.
+ */
+function api_add_breaks($text) {
+  static $breaks_where, $breaks_tag;
+  if (!isset($breaks_where)) {
+    $config = config('api.settings');
+    $breaks_where = $config->get('breaks_where');
+    $breaks_tag = $config->get('breaks_tag');
+  }
+
+  $where = array_filter(explode(' ', $breaks_where));
+  if (!count($where)) {
+    return $text;
+  }
+
+  if (!strlen($breaks_tag)) {
+    return $text;
+  }
+
+  $replace = array();
+  foreach ($where as $string) {
+    $replace[] = $string . $breaks_tag;
+  }
+
+  $text = str_replace($where, $replace, $text);
+  return $text;
 }

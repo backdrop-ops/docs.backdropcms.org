@@ -108,7 +108,7 @@ class api_views_handler_field_api_linkable extends views_handler_field {
             break;
 
           case 'file_base':
-            return $prefix . str_replace('/', '/<wbr>', dirname($obj->file_name)) . '/<wbr>' . l(basename($obj->file_name), api_url($obj, TRUE)) . $suffix;
+            return $prefix . api_add_breaks(dirname($obj->file_name) . '/') . l(basename($obj->file_name), api_url($obj, TRUE)) . $suffix;
         }
       }
       else {
@@ -116,6 +116,7 @@ class api_views_handler_field_api_linkable extends views_handler_field {
       }
     }
 
+    $data = api_add_breaks($data);
     return $data;
   }
 

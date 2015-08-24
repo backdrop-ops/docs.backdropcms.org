@@ -17,15 +17,6 @@ module_load_include('php', 'api', 'tests/api_test_case');
  * name could be supported.
  */
 class ApiURLPatternsTest extends ApiTestCase {
-
-  static function getInfo() {
-    return array(
-      'name' => 'URL functioning',
-      'description' => 'Test URLs specified in api_menu(), both old and current.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Ensures that valid and invalid URL patterns are successful.
    *

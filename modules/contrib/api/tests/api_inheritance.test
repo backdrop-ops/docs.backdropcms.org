@@ -11,14 +11,6 @@ module_load_include('php', 'api', 'tests/api_test_case');
  * Tests that inheritance for classes and interfaces is working.
  */
 class ApiInheritanceTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Inheritance',
-      'description' => 'Tests that inheritance for classes and interfaces is working.',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     $this->baseSetUp();
 

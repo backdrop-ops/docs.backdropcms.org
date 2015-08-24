@@ -12,14 +12,6 @@ module_load_include('inc', 'api', 'api.formatting');
  * Tests the api_link_documentation() function.
  */
 class ApiLinkDocumentationTest extends ApiTestCase {
-  public static function getInfo() {
-    return array(
-      'name' => 'Documentation linking',
-      'description' => 'Test the api_link_documentation() function.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Tests the api_link_documentation() function.
    */

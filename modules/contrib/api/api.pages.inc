@@ -649,7 +649,7 @@ function api_page_function($function) {
   // Make the signatures section, which lists all the other function signatures
   // (branches and duplicate function names) that we can find. Limit this to
   // the current project.
-  $last_signature = '';
+  $signature_info = array();
   $signatures = array();
   $n = 0;
   $query = db_select('api_documentation', 'd')
@@ -740,7 +740,6 @@ function api_page_function($function) {
         $start = $start || ($depth == 1 && $token == ',');
       }
     }
-    $last_signature = $signature->signature;
     $n++;
   }
 

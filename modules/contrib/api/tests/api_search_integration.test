@@ -16,14 +16,6 @@ class ApiSearchIntegrationTestCase extends ApiWebPagesBaseTest {
    */
   protected $restricted_user;
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Search integration',
-      'description' => 'Tests integration of the API module with Core Search',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     BackdropWebTestCase::setUp('api', 'views', 'node', 'search', 'dblog', 'api_search');
 

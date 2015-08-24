@@ -15,18 +15,11 @@ class ApiEnableTestCase extends ApiWebPagesBaseTest {
   public $php_message = 'Updated PHP branch PHP functions';
   public $cron_message = 'Cron run completed';
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Module enable and cron',
-      'description' => 'Tests module enable and cron functionality.',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     // Start with only the support modules enabled.
     BackdropWebTestCase::setUp('node', 'dblog', 'views', 'comment');
 
+    config_set('api.settings', 'breaks_tag', '');
     $this->super_user = $this->backdropCreateUser(array(
       'access content',
       'access administration pages',
@@ -125,6 +118,7 @@ class ApiEnableTestCase extends ApiWebPagesBaseTest {
     $this->super_user = $this->backdropCreateUser(array(
       'access API reference',
       'administer API reference',
+      'administer content types',
       'access content',
       'access administration pages',
       'access site reports',
@@ -136,7 +130,7 @@ class ApiEnableTestCase extends ApiWebPagesBaseTest {
 
     $this->backdropPost('admin/structure/types/manage/api', array(
       'comment_default' => 2,
-    ), t('Save comment settings'));
+    ), t('Save content type'));
     db_query("UPDATE {node} SET comment = 2 WHERE type = 'api'");
     $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
     $this->backdropPost(NULL, array(

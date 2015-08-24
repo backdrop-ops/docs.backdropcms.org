@@ -1,0 +1,190 @@
+[ApiCommentsTestCase]
+name = Comments
+description = Tests comment functionality.
+group = API module
+file = api_comments.test
+
+[ApiTextFormatTestCase]
+name = API text format
+description = Tests API text format functionality in comments.
+group = API module
+file = api_comments.test
+
+[ApiTextFormatNoBranchTestCase]
+name = API text format references
+description = Tests API text format functionality without a regular branch.
+group = API module
+file = api_comments.test
+
+[ApiCruftTestCase]
+name = Cruft removal
+description = Tests that data stored by the API module is removed when appropriate.
+group = API module
+file = api_cruft.test
+
+[ApiDotDotTestCase]
+name = Dot dot directories
+description = Tests that the API module can parse files in .. directories
+group = API module
+file = api_dotdot.test
+
+[ApiDuplicatesTestCase]
+name = Duplicates
+description = Tests that duplicate classes, interfaces, and groups work.
+group = API module
+file = api_duplicates.test
+
+[ApiEnableTestCase]
+name = Module enable and cron
+description = Tests module enable and cron functionality.
+group = API module
+file = api_enable.test
+
+[ApiInheritanceTestCase]
+name = Inheritance
+description = Tests that inheritance for classes and interfaces is working.
+group = API module
+file = api_inheritance.test
+
+[ApiLegacyTest]
+name = Legacy redirects
+description = Test legacy.inc redirect functions.
+group = API module
+file = api_legacy.test
+
+[ApiLinkCodeTest]
+name = Code linking
+description = Test the api_link_code() function.
+group = API module
+file = api_link_code.test
+
+[ApiLinkDocumentationTest]
+name = Documentation linking
+description = Test the api_link_documentation() function.
+group = API module
+file = api_link_documentation.test
+
+[ApiMultipleBranchesTest]
+name = Multiple branches functionality
+description = Tests that the multiple-branch setup works correctly
+group = API module
+file = api_multibranch.test
+
+[ApiMultipleProjectsTest]
+name = Multiple projects functionality
+description = Tests that the multiple-project setup works correctly
+group = API module
+file = api_multibranch.test
+
+[ApiMultiDirectoryTestCase]
+name = Multiple directories
+description = Tests that the API module can parse files located in multiple directories in one branch
+group = API module
+file = api_multidir.test
+
+[ApiRegularExpressionExclusionTestCase]
+name = Regular expression exclusion
+description = Tests that the API module excludes directories and files by regular expression
+group = API module
+file = api_multidir.test
+
+[ApiNamespacesTestCase]
+name = Namespaces
+description = Tests that namespaces and YAML work properly.
+group = API module
+file = api_namespaces.test
+
+[ApiNamespaceCruftTestCase]
+name = Namespace cruft removal
+description = Tests that data stored by the API module is removed when appropriate, with namespaces included.
+group = API module
+file = api_namespaces.test
+
+[ApiNodeAccessTestCase]
+name = Node access
+description = Tests node access functionality.
+group = API module
+file = api_node_access.test
+
+[ApiBranchCreation]
+name = Branch and object creation
+description = Test that the branches and API documentation objects are created correctly.
+group = API module
+file = api_objects.test
+
+[ApiQueuesTestCase]
+name = Parsing queue
+description = Tests that the API parsing queue is functioning properly
+group = API module
+file = api_queue.test
+
+[ApiSearchIntegrationTestCase]
+name = Search integration
+description = Tests integration of the API module with Core Search
+group = API module
+file = api_search_integration.test
+
+[ApiSpecialIssuesTestCase]
+name = Special files
+description = Tests that files containing two-byte Unicode characters and other special cases can be dealt with.
+group = API module
+file = api_special_files.test
+
+[ApiURLPatternsTest]
+name = URL functioning
+description = Test URLs specified in api_menu(), both old and current.
+group = API module
+file = api_url_patterns.test
+
+[ApiWebLinksTestCase]
+name = Web links
+description = Tests links on web pages for the API module.
+group = API module
+file = api_web_links.test
+
+[ApiListingPagesTestCase]
+name = Listing pages
+description = Tests listing pages for the API module.
+group = API module
+file = api_web_test.test
+
+[ApiSimpleItemPagesTestCase]
+name = Simple item pages
+description = Tests simple item pages (function, constant, etc.) for the API module.
+group = API module
+file = api_web_test.test
+
+[ApiComplexItemPagesTestCase]
+name = Complex item pages
+description = Tests complex item pages (class, topic, file) for the API module.
+group = API module
+file = api_web_test.test
+
+[ApiAdminPagesTestCase]
+name = Admin pages
+description = Tests admin pages for the API module.
+group = API module
+file = api_web_test.test
+
+[ApiEmptyPageLinksTestCase]
+name = Empty listing page links
+description = Tests that links to empty listing pages are not made. Also tests multiple projects setup.
+group = API module
+file = api_web_test.test
+
+[ApiSearchTestCase]
+name = Search
+description = Tests search functionality for the API module.
+group = API module
+file = api_web_test.test
+
+[ApiExcludeBackdropismTestCase]
+name = Backdropism exclusion
+description = Tests that excluding files from Backdropisms works
+group = API module
+file = api_web_test.test
+
+; Added by Backdrop CMS packaging script on 2015-08-24
+project = api
+version = 1.x-1.10-beta2
+timestamp = 1440453775

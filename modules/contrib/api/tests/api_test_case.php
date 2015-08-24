@@ -44,6 +44,9 @@ class ApiTestCase extends BackdropWebTestCase {
   function baseSetUp() {
     BackdropWebTestCase::setUp('api', 'node', 'comment', 'dblog', 'views');
 
+    // Set the line break tag to nothing for most tests.
+    config_set('api.settings', 'breaks_tag', '');
+
     // For debug purposes, visit the Recent Log Messages report page.
     $this->backdropGet('admin/reports/dblog');
 
@@ -70,6 +73,7 @@ class ApiTestCase extends BackdropWebTestCase {
       'access administration pages',
       'administer blocks',
       'administer nodes',
+      'administer content types',
       'access site reports',
       'administer site configuration',
     ));
@@ -117,8 +121,8 @@ class ApiTestCase extends BackdropWebTestCase {
     api_save_project($project);
     if ($default) {
       // Make this the default project/compatibility.
-      variable_set('api_default_project', $info['project']);
-      variable_set('api_default_core_compatibility', $info['core_compatibility']);
+      config_set('api.settings', 'default_project', $info['project']);
+      config_set('api.settings', 'default_core_compatibility', $info['core_compatibility']);
     }
 
     // Create the branch.
@@ -429,8 +433,8 @@ class ApiWebPagesBaseTest extends ApiTestCase {
       // setting if the branch doesn't exist yet, in an attempt to make sure
       // a branch exists.
       $this->backdropPost('admin/config/development/api', array(
-          'api_default_core_compatibility' => $info['core_compatibility'],
-          'api_default_project' => $info['project'],
+          'default_core_compatibility' => $info['core_compatibility'],
+          'default_project' => $info['project'],
         ), t('Save configuration'));
 
       $branches = api_get_branches(TRUE);

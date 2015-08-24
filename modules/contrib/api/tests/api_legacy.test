@@ -12,14 +12,6 @@ module_load_include('inc', 'api', 'legacy');
  * Tests that legacy redirects are correct.
  */
 class ApiLegacyTest extends ApiTestCase {
-  public static function getInfo() {
-    return array(
-      'name' => 'Legacy redirects',
-      'description' => 'Test legacy.inc redirect functions.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Tests that legacy URL redirects are correct.
    */

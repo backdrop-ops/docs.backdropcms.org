@@ -170,7 +170,7 @@ function _api_link_documentation($documentation, $branch, $file_did = NULL, $cla
 
     case 'code function':
       // Find function names in marked-up code.
-      $pattern = '!<span class="php-function-or-constant">(' . DRUPAL_PHP_FUNCTION_PATTERN . ')</span>!';
+      $pattern = '!<span class="php-function-or-constant">(' . BACKDROP_PHP_FUNCTION_PATTERN . ')</span>!';
       $prepend = '<span class="php-function-or-constant">';
       $append = '</span>';
       $type = 'function_or_constant';
@@ -181,7 +181,7 @@ function _api_link_documentation($documentation, $branch, $file_did = NULL, $cla
     case 'code function declared':
       // Find function names in marked-up code, but this is a declaration,
       // so skip checking built-in PHP functions.
-      $pattern = '!<span class="php-function-or-constant-declared">(' . DRUPAL_PHP_FUNCTION_PATTERN . ')</span>!';
+      $pattern = '!<span class="php-function-or-constant-declared">(' . BACKDROP_PHP_FUNCTION_PATTERN . ')</span>!';
       $prepend = '<span class="php-function-or-constant">';
       $append = '</span>';
       $type = 'function_or_constant';
@@ -208,7 +208,7 @@ function _api_link_documentation($documentation, $branch, $file_did = NULL, $cla
 
     case 'code global':
       // Find global variable names in marked-up code.
-      $pattern = '!<span class="php-keyword">global</span> <span class="php-variable">\$(' . DRUPAL_PHP_FUNCTION_PATTERN . ')</span>!';
+      $pattern = '!<span class="php-keyword">global</span> <span class="php-variable">\$(' . BACKDROP_PHP_FUNCTION_PATTERN . ')</span>!';
       $prepend = '<span class="php-keyword">global</span> <span class="php-variable">$';
       $append = '</span>';
       $type = 'global';
@@ -219,7 +219,7 @@ function _api_link_documentation($documentation, $branch, $file_did = NULL, $cla
       // These are all strings that are legal function names, where the function
       // name is put into something like a hook_menu() page callback as a
       // string.
-      $pattern = '!<span class="php-string">\'(' . DRUPAL_PHP_FUNCTION_PATTERN . ')\'</span>!';
+      $pattern = '!<span class="php-string">\'(' . BACKDROP_PHP_FUNCTION_PATTERN . ')\'</span>!';
       $prepend = '<span class="php-function-or-constant">\'';
       $append = '\'</span>';
       $prepend_if_not_found = '<span class="php-string">\'';
@@ -231,7 +231,7 @@ function _api_link_documentation($documentation, $branch, $file_did = NULL, $cla
       // Find potential theme hook names as strings in marked-up code.
       // Works like 'code string', but looks for theme hook names and links
       // to the theme template or function.
-      $pattern = '!<span class="php-string">\'(' . DRUPAL_PHP_FUNCTION_PATTERN . ')\'</span>!';
+      $pattern = '!<span class="php-string">\'(' . BACKDROP_PHP_FUNCTION_PATTERN . ')\'</span>!';
       $prepend = '<span class="php-function-or-constant">\'';
       $append = '\'</span>';
       $prepend_if_not_found = '<span class="php-string">\'';
@@ -310,7 +310,7 @@ function _api_link_documentation($documentation, $branch, $file_did = NULL, $cla
 
     case 'code theme hook name':
       // Works like 'code hook name' above, but for theme hooks.
-      $pattern = '!<span class="php-string potential-theme">\'(' . DRUPAL_PHP_FUNCTION_PATTERN . ')\'</span>!';
+      $pattern = '!<span class="php-string potential-theme">\'(' . BACKDROP_PHP_FUNCTION_PATTERN . ')\'</span>!';
       $prepend = '<span class="php-function-or-constant">\'';
       $append = '\'</span>';
       $prepend_if_not_found = '<span class="php-string">\'';
@@ -320,7 +320,7 @@ function _api_link_documentation($documentation, $branch, $file_did = NULL, $cla
     case 'code member':
       // Works like 'code hook name' above, but for class members.
       $callback_match = 'api_link_member_name';
-      $pattern = '!(<span class="(?:php-function-or-constant|php-function-or-constant-declared|php-variable) [^"]+ member-of-[^"]+">\$*' . DRUPAL_PHP_FUNCTION_PATTERN . '</span>)!';
+      $pattern = '!(<span class="(?:php-function-or-constant|php-function-or-constant-declared|php-variable) [^"]+ member-of-[^"]+">\$*' . BACKDROP_PHP_FUNCTION_PATTERN . '</span>)!';
       break;
 
     case 'file':
@@ -1067,7 +1067,7 @@ function api_link_member_name($text, $branch, $prepend = '', $append = '', $file
   // The pattern matched to get here contains the entire span with all of its
   // classes. Parse it out.
   $matches = array();
-  preg_match('!<span class="(?:php-function-or-constant|php-function-or-constant-declared|php-variable) ([^"]+) member-of-([^"]+)">(\$*' . DRUPAL_PHP_FUNCTION_PATTERN . ')</span>!', $text, $matches);
+  preg_match('!<span class="(?:php-function-or-constant|php-function-or-constant-declared|php-variable) ([^"]+) member-of-([^"]+)">(\$*' . BACKDROP_PHP_FUNCTION_PATTERN . ')</span>!', $text, $matches);
   $name = $matches[3];
   $member_type = $matches[2];
   $object_type = $matches[1];

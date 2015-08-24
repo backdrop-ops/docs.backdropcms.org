@@ -11,14 +11,6 @@ module_load_include('php', 'api', 'tests/api_test_case');
  * Tests that files containing special issues can be dealt with.
  */
 class ApiSpecialIssuesTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Special files',
-      'description' => 'Tests that files containing two-byte Unicode characters and other special cases can be dealt with.',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     $this->baseSetUp();
 
@@ -75,9 +67,10 @@ class ApiSpecialIssuesTestCase extends ApiWebPagesBaseTest {
    */
   function testBadFileHeader() {
     // This file is in the special_files directory. Check that it triggered
-    // a log message when it was parsed.
+    // two log messages when it was parsed.
     $this->backdropGet('admin/reports/dblog');
     $this->assertRaw('@file docblock containing @defgroup', 'Warning message is present for bad file');
+    $this->assertRaw('Item docblock containing @defgroup', 'Warning message is present for bad class');
 
     // Verify that the file is listed and the file's page can be visited.
     $this->backdropGet('api/' . $this->branch_info['project'] . '/files');
@@ -85,6 +78,10 @@ class ApiSpecialIssuesTestCase extends ApiWebPagesBaseTest {
     $this->clickLink('badheader.php');
     $this->assertLink('badheader_fun', 0, 'Function link is present on file page');
     $this->assertTitleContains('badheader.php', 'Page title has file name');
+
+    // Verify that the class is listed on this page, and not the method.
+    $this->assertLink('ClassWithDefgroupDocBlock', 0, 'Class with defgroup docblock appears on file page');
+    $this->assertNoLink('ClassWithDefgroupDocBlock::foo', 'Method in class with defgroup docblock does not appear on file page');
   }
 
   /**

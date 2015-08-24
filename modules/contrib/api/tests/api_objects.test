@@ -11,14 +11,6 @@ module_load_include('php', 'api', 'tests/api_test_case');
  * Tests branch and object creation.
  */
 class ApiBranchCreation extends ApiTestCase {
-  public static function getInfo() {
-    return array(
-      'name' => 'Branch and object creation',
-      'description' => 'Test that the branches and API documentation objects are created correctly.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Tests that branch and API objects are created correctly.
    */

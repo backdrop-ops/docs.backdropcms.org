@@ -14,14 +14,6 @@ class ApiQueuesTestCase extends ApiTestCase {
 
   public $branch_info;
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Parsing queue',
-      'description' => 'Tests that the API parsing queue is functioning properly',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     // This test takes longer than most to run, and times out on some machines.
     $this->timeLimit *= 2;

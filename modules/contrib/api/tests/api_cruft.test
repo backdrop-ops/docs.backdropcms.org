@@ -11,14 +11,6 @@ module_load_include('php', 'api', 'tests/api_test_case');
  * Tests that "cruft" in the API module is removed appropriately.
  */
 class ApiCruftTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Cruft removal',
-      'description' => 'Tests that data stored by the API module is removed when appropriate.',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     $this->baseSetUp();
 
@@ -30,6 +22,7 @@ class ApiCruftTestCase extends ApiWebPagesBaseTest {
       'access administration pages',
       'administer blocks',
       'administer nodes',
+      'administer content types',
       'access site reports',
       'access comments',
       'post comments',
@@ -41,7 +34,7 @@ class ApiCruftTestCase extends ApiWebPagesBaseTest {
     // Set up comment settings.
     $this->backdropPost('admin/structure/types/manage/api', array(
       'comment_default' => 2,
-    ), t('Save comment settings'));
+    ), t('Save content type'));
 
     // We don't need the PHP branch for this test, so for speed, remove it.
     $this->removePHPBranch();

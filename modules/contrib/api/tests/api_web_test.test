@@ -10,14 +10,6 @@ module_load_include('php', 'api', 'tests/api_test_case');
  * Tests the API module listing pages (functions, classes, etc.).
  */
 class ApiListingPagesTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Listing pages',
-      'description' => 'Tests listing pages for the API module.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Tests that listing pages have the right information.
    */
@@ -163,14 +155,6 @@ class ApiListingPagesTestCase extends ApiWebPagesBaseTest {
  * Tests the API module simple individual item pages (function, constant, etc.).
  */
 class ApiSimpleItemPagesTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Simple item pages',
-      'description' => 'Tests simple item pages (function, constant, etc.) for the API module.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Overrides ApiWebPagesBaseTest::setUp() so we have the PHP branch.
    */
@@ -475,14 +459,6 @@ class ApiSimpleItemPagesTestCase extends ApiWebPagesBaseTest {
  * Tests the API module complex individual item pages (class, topic, etc.).
  */
 class ApiComplexItemPagesTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Complex item pages',
-      'description' => 'Tests complex item pages (class, topic, file) for the API module.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Runs all the tests in this set, to avoid multiple setUp() calls.
    */
@@ -794,14 +770,6 @@ class ApiComplexItemPagesTestCase extends ApiWebPagesBaseTest {
  * Tests the API module administrative pages.
  */
 class ApiAdminPagesTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Admin pages',
-      'description' => 'Tests admin pages for the API module.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Tests that admin pages work correctly.
    *
@@ -923,14 +891,6 @@ class ApiEmptyPageLinksTestCase extends ApiWebPagesBaseTest {
    */
   protected $branch_info_2;
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Empty listing page links',
-      'description' => 'Tests that links to empty listing pages are not made. Also tests multiple projects setup.',
-      'group' => 'API module',
-    );
-  }
-
   public function setUp() {
     $this->baseSetUp();
 
@@ -1003,12 +963,9 @@ class ApiEmptyPageLinksTestCase extends ApiWebPagesBaseTest {
     // Turn on the API navigation block. Visit a function page in both
     // projects, and verify the right links are showing in the API
     // navigation block.
-
-    $this->backdropPost('admin/structure/block/list', array(
-        'blocks[api_navigation][region]' => 'sidebar_first',
-      ),
-      t('Save blocks')
-    );
+    $layout = layout_load('default');
+    $layout->addBlock('api', 'navigation', 'sidebar');
+    $layout->save();
 
     // Project/branch with all possible types of items.
     $this->backdropGet('api/' . $this->branch_info['project'] . '/sample.php/function/sample_function');
@@ -1038,15 +995,6 @@ class ApiEmptyPageLinksTestCase extends ApiWebPagesBaseTest {
  * Tests the API module search functionality.
  */
 class ApiSearchTestCase extends ApiWebPagesBaseTest {
-
-  public static function getInfo() {
-    return array(
-      'name' => 'Search',
-      'description' => 'Tests search functionality for the API module.',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Tests search functionality.
    */
@@ -1076,6 +1024,19 @@ class ApiSearchTestCase extends ApiWebPagesBaseTest {
     $this->assertLink('Sample::foo', 0, 'Sample::foo is listed');
     $this->assertLink('SampleInSubDir::foo', 0, 'SampleInSubDir::foo is listed');
     $this->assertLink('SampleInSubDir::$foo', 0, 'SampleInSubDir::$foo is listed');
+
+    // Turn on the API search block and Visit a invalid path then
+    // Search through the block to see if it redirects to the result.
+    $layout = layout_load('default');
+    $layout->addBlock('api', 'api-search', 'sidebar');
+    $layout->save();
+
+    $this->backdropGet('api/' . $this->branch_info['project'] . '/sample.php/function/foobar');
+    $this->backdropPost(NULL, array(
+        'search' => 'sample_function',
+      ),
+      t('Search'));
+    $this->assertURLContains('api/' . $this->branch_info['project'] . '/sample.php/function/sample_function', 'Search went directly to sample_function page from a invalid path');
   }
 }
 
@@ -1083,14 +1044,6 @@ class ApiSearchTestCase extends ApiWebPagesBaseTest {
  * Tests the exclude from Backdropism functionality.
  */
 class ApiExcludeBackdropismTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Backdropism exclusion',
-      'description' => 'Tests that excluding files from Backdropisms works',
-      'group' => 'API module',
-    );
-  }
-
   /**
    * Overrides ApiWebPagesBaseTest::setUp() so we have the excluded directory.
    */

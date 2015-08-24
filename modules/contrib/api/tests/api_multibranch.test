@@ -16,14 +16,6 @@ class ApiMultipleBranchesTest extends ApiWebPagesBaseTest {
    */
   protected $branch_info_2;
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Multiple branches functionality',
-      'description' => 'Tests that the multiple-branch setup works correctly',
-      'group' => 'API module',
-    );
-  }
-
   public function setUp() {
     $this->baseSetUp();
 
@@ -194,14 +186,6 @@ class ApiMultipleProjectsTest extends ApiWebPagesBaseTest {
    */
   protected $branch_info_core;
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Multiple projects functionality',
-      'description' => 'Tests that the multiple-project setup works correctly',
-      'group' => 'API module',
-    );
-  }
-
   public function setUp() {
     $this->baseSetUp();
 
@@ -246,11 +230,9 @@ class ApiMultipleProjectsTest extends ApiWebPagesBaseTest {
     $this->assertEqual($count, 15, "15 files were parsed ($count)");
 
     // Turn on the navigation block.
-    $this->backdropPost('admin/structure/block/list', array(
-        'blocks[api_navigation][region]' => 'sidebar_first',
-      ),
-      t('Save blocks')
-    );
+    $layout = layout_load('default');
+    $layout->addBlock('api', 'navigation', 'sidebar');
+    $layout->save();
   }
 
   /**
@@ -281,7 +263,7 @@ class ApiMultipleProjectsTest extends ApiWebPagesBaseTest {
     $this->backdropGet('api');
     $this->assertRaw($this->branch_info_core['project_title'], 'Default project is correct');
 
-    $this->backdropGet('api/' . $this->branch_info_core['project'] . '/drupal.php/function/theme');
+    $this->backdropGet('api/' . $this->branch_info_core['project'] . '/backdrop.php/function/theme');
     $this->assertResponse(200, 'Function page without branch suffix redirected correctly in core branch');
     $this->assertText('Generates themed output.', 'Description appears on page');
   }
@@ -327,8 +309,8 @@ class ApiMultipleProjectsTest extends ApiWebPagesBaseTest {
     $this->assertLinkURLSubstring('second_sample_function', $this->branch_info_2['project'] . '/sample2.php/function/second_sample_function', 'second_sample_function link exists', 'second_sample_function link went to the right place');
 
     // Make sure the core links are made.
-    $this->assertLinkURLSubstring('theme', $this->branch_info_core['project'] . '/drupal.php/function/theme', 'theme link exists', 'theme link went to the right place');
-    $this->assertLinkURLSubstring('module_invoke', $this->branch_info_core['project'] . '/drupal.php/function/module_invoke', 'module_invoke link exists', 'module_invoke link went to the right place');
+    $this->assertLinkURLSubstring('theme', $this->branch_info_core['project'] . '/backdrop.php/function/theme', 'theme link exists', 'theme link went to the right place');
+    $this->assertLinkURLSubstring('module_invoke', $this->branch_info_core['project'] . '/backdrop.php/function/module_invoke', 'module_invoke link exists', 'module_invoke link went to the right place');
 
     $this->backdropGet('api/' . $this->branch_info_2['project'] . '/sample2.php/function/second_sample_function/' . $this->branch_info_2['branch_name']);
 
@@ -342,10 +324,10 @@ class ApiMultipleProjectsTest extends ApiWebPagesBaseTest {
     //    $this->assertLinkURLSubstring('$sample_global', $this->branch_info['project'] . '/sample.php/global/sample_global', 'sample_global link exists', 'sample_global link went to the right place');
     $this->assertLinkURLSubstring('SAMPLE_CONSTANT', $this->branch_info['project'] . '/sample.php/constant/SAMPLE_CONSTANT', 'SAMPLE_CONSTANT link exists', 'SAMPLE_CONSTANT link went to the right place');
 
-    $this->backdropGet('api/' . $this->branch_info_core['project'] . '/drupal.php/function/module_invoke_all/' . $this->branch_info_core['branch_name']);
+    $this->backdropGet('api/' . $this->branch_info_core['project'] . '/backdrop.php/function/module_invoke_all/' . $this->branch_info_core['branch_name']);
 
     // Check on links that should and should not be made.
-    $this->assertLinkURLSubstring('theme', $this->branch_info_core['project'] . '/drupal.php/function/theme', 'theme link exists', 'theme link went to the right place');
+    $this->assertLinkURLSubstring('theme', $this->branch_info_core['project'] . '/backdrop.php/function/theme', 'theme link exists', 'theme link went to the right place');
     $this->assertText('sample_function', 'sample_function is there');
     $this->assertNoLink('sample_function', 'sample_function is not a link');
 
@@ -376,7 +358,7 @@ class ApiMultipleProjectsTest extends ApiWebPagesBaseTest {
 
     // This should go to the backdrop_alter in the core project.
     $this->backdropGet('apis/module_invoke_all');
-    $this->assertURLContains('api/' . $this->branch_info_core['project'] . '/drupal.php/function/module_invoke_all', 'module_invoke_all is found by apis');
+    $this->assertURLContains('api/' . $this->branch_info_core['project'] . '/backdrop.php/function/module_invoke_all', 'module_invoke_all is found by apis');
 
     // This should not find anything.
     $this->backdropGet('apis/pizza');

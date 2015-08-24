@@ -11,14 +11,6 @@ module_load_include('php', 'api', 'tests/api_test_case');
  * Tests comment functionality.
  */
 class ApiCommentsTestCase extends ApiWebPagesBaseTest {
-  public static function getInfo() {
-    return array(
-      'name' => 'Comments',
-      'description' => 'Tests comment functionality.',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     $this->baseSetUp();
 
@@ -30,6 +22,7 @@ class ApiCommentsTestCase extends ApiWebPagesBaseTest {
       'access administration pages',
       'administer blocks',
       'administer nodes',
+      'administer content types',
       'access site reports',
       'access comments',
       'post comments',
@@ -41,7 +34,7 @@ class ApiCommentsTestCase extends ApiWebPagesBaseTest {
     // Set up comment settings initially as hidden.
     $this->backdropPost('admin/structure/types/manage/api', array(
       'comment_default' => 0,
-    ), t('Save comment settings'));
+    ), t('Save content type'));
 
     // Set up a regular files branch.
     $this->branch_info = $this->setUpBranchUI();
@@ -69,8 +62,8 @@ class ApiCommentsTestCase extends ApiWebPagesBaseTest {
     // Turn comments on. Verify this did not affect old API pages.
     $this->backdropPost('admin/structure/types/manage/api', array(
       'comment_default' => 2,
-    ), t('Save comment settings'));
-    $this->assertText(t('Saved API comment settings'), 'Confirm message appears');
+    ), t('Save content type'));
+    $this->assertText(t('The content type API has been updated.'), 'Confirm message appears');
     $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
     $this->assertNoText(t('Add new comment'), 'Comment form is not there');
     $this->assertNoText(t('Comment'), 'Comment form is not there');
@@ -104,8 +97,8 @@ class ApiCommentsTestCase extends ApiWebPagesBaseTest {
     // Set to closed (apply to all) and verify the comment form disapppears.
     $this->backdropPost('admin/structure/types/manage/api', array(
       'comment_default' => 1,
-    ), t('Save comment settings'));
-    $this->assertText(t('Saved API comment settings'), 'Confirm message appears');
+    ), t('Save content type'));
+    $this->assertText(t('The content type API has been updated.'), 'Confirm message appears');
     $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
     db_query("UPDATE {node} SET comment = 1 WHERE type = 'api'");
     $this->assertLink('Subject 1', 0, 'Comment subject appears');
@@ -117,8 +110,8 @@ class ApiCommentsTestCase extends ApiWebPagesBaseTest {
     // Set to hidden (apply to all) and verify comment disappears.
     $this->backdropPost('admin/structure/types/manage/api', array(
       'comment_default' => 0,
-    ), t('Save comment settings'));
-    $this->assertText(t('Saved API comment settings'), 'Confirm message appears');
+    ), t('Save content type'));
+    $this->assertText(t('The content type API has been updated.'), 'Confirm message appears');
     db_query("UPDATE {node} SET comment = 0 WHERE type = 'api'");
     $this->backdropGet('api/' . $this->branch_info['project'] . '/classes.php/class/Sample');
     $this->assertNoLink('Subject 1', 0, 'Comment subject disappears');
@@ -140,14 +133,6 @@ class ApiTextFormatTestCase extends ApiWebPagesBaseTest {
   // Branch info for PHP brancn.
   public $branch_info_php;
 
-  public static function getInfo() {
-    return array(
-      'name' => 'API text format',
-      'description' => 'Tests API text format functionality in comments.',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     $this->baseSetUp();
 
@@ -159,6 +144,7 @@ class ApiTextFormatTestCase extends ApiWebPagesBaseTest {
       'access administration pages',
       'administer blocks',
       'administer nodes',
+      'administer content types',
       'access site reports',
       'access comments',
       'post comments',
@@ -171,7 +157,7 @@ class ApiTextFormatTestCase extends ApiWebPagesBaseTest {
     // Set up comment settings so comments are allowed.
     $this->backdropPost('admin/structure/types/manage/api', array(
         'comment_default' => COMMENT_NODE_OPEN,
-      ), t('Save comment settings'));
+      ), t('Save content type'));
 
     // Remove the PHP branch.
     $this->removePHPBranch();
@@ -224,7 +210,7 @@ class ApiTextFormatTestCase extends ApiWebPagesBaseTest {
     $this->assertLinkURLSubstring('another_function', 'no_namespace.php/function/another_function', 'Link to function is created', 'Link to function goes to right place');
     $this->assertLinkURLSubstring('InterfaceD::dMethod', 'InterfaceD.php/function/InterfaceD', 'Link to interface method is created', 'Link to interface method goes to right namespace');
     $this->assertLinkURLSubstring('foo_function', 'example.com/function/foo_function', 'Link to fake PHP function is created', 'Link to fake PHP function goes to right place');
-    $this->assertLinkURLSubstring('backdrop_alter', 'drupal.php/function/backdrop_alter', 'Link to core function is created', 'Link to core function goes to right place');
+    $this->assertLinkURLSubstring('backdrop_alter', 'backdrop.php/function/backdrop_alter', 'Link to core function is created', 'Link to core function goes to right place');
 
   }
 }
@@ -240,14 +226,6 @@ class ApiTextFormatNoBranchTestCase extends ApiWebPagesBaseTest {
   // Node for commenting.
   public $node;
 
-  public static function getInfo() {
-    return array(
-      'name' => 'API text format references',
-      'description' => 'Tests API text format functionality without a regular branch.',
-      'group' => 'API module',
-    );
-  }
-
   function setUp() {
     $this->baseSetUp();
 
@@ -259,6 +237,7 @@ class ApiTextFormatNoBranchTestCase extends ApiWebPagesBaseTest {
       'access administration pages',
       'administer blocks',
       'administer nodes',
+      'administer content types',
       'access site reports',
       'access comments',
       'post comments',

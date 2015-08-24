@@ -51,6 +51,7 @@ function api_parse_file($callback, $file_path, $branch, $file_name) {
     'namespaced_name' => '',
     'modifiers' => '',
     'is_backdrop' => $is_backdrop,
+    'code' => '',
   );
 
   $callback($docblock);
@@ -168,7 +169,10 @@ function api_parse_php_file($docblock) {
   backdrop_set_time_limit(600);
   $editor = PGPEditor::getInstance();
   $reader = $editor->getReader();
+  // Set up the reader to preserve the spacing of the original code.
   $reader->setPreserveWhitespace(FALSE);
+  $reader->setPreserveNewline(TRUE);
+  $reader->setPreserveArrayNewline(TRUE);
   $reader->setSnippet($docblock['source']);
   $reader->buildGrammar();
 
@@ -210,6 +214,7 @@ function api_parse_php_file($docblock) {
     'namespaced_name' => '',
     'modifiers' => '',
     'is_backdrop' => $docblock['is_backdrop'],
+    'code' => '',
   );
 
   $found_references = api_documentation_loop($statements, $default_block, $docblocks);
@@ -680,7 +685,8 @@ function api_save_documentation($docblocks) {
   $function_insert_query = NULL;
   $functions_to_delete = array();
 
-  // Look for @file block first so $docblocks[0] gets filled in before it is processed.
+  // Look for @file block first so $docblocks[0] gets filled in before it
+  // is processed.
   foreach ($docblocks as $docblock) {
     if (preg_match('/' . API_RE_TAG_START . 'file/', $docblock['content'])) {
       $content = $docblock['content'];
@@ -706,6 +712,30 @@ function api_save_documentation($docblocks) {
     }
   }
 
+  // Take care of the (bad, but possible) case where the doc block for one
+  // of the items in the file (class, function, etc.) has a @defgroup or
+  // @mainpage in it, by separating the doc block from the item.
+  $old_blocks = $docblocks;
+  $docblocks = array();
+  foreach ($old_blocks as $docblock) {
+    if ($docblock['code'] && $docblock['content'] &&
+      (preg_match('/' . API_RE_TAG_START . 'mainpage/', $docblock['content']) ||
+       preg_match('/' . API_RE_TAG_START . 'defgroup/', $docblock['content']))) {
+      $new_block = $docblock;
+      // Make one block have just the code and the other, just the docs.
+      $new_block['code'] = '';
+      $docblock['content'] = '';
+      $docblocks[] = $new_block;
+      $docblocks[] = $docblock;
+      watchdog('api', 'Item docblock containing @defgroup or @mainpage in %file at line %line. Separated into two blocks.', array('%file' => $docblocks[0]['file_name'], '%line' => $docblock['start_line']), WATCHDOG_WARNING);
+
+    }
+    else {
+      $docblocks[] = $docblock;
+    }
+  }
+
+  $need_to_reparse = FALSE;
   foreach ($docblocks as $docblock) {
     // Keep track of the namespace and add it to all docblocks for this file.
     if (isset($docblock['references']['namespace']) && !empty($docblock['references']['namespace'])) {
@@ -727,6 +757,12 @@ function api_save_documentation($docblocks) {
         $docblock['content'] = str_replace($annotation_matches[0], "\n@ingroup annotation\n", $docblock['content']);
       }
       $docblock['annotation_class'] = TRUE;
+    }
+
+    // Change @Event to @ingroup events.
+    $event_matches = array();
+    if (preg_match('/' . API_RE_TAG_START . 'Event' . API_RE_WORD_BOUNDARY_END . '/', $docblock['content'], $event_matches)) {
+      $docblock['content'] = str_replace($event_matches[0], "\n@ingroup events\n", $docblock['content']);
     }
 
     // Deal with @mainpage.
@@ -754,7 +790,11 @@ function api_save_documentation($docblocks) {
         if ($did > 0) {
           $docblock['content'] = str_replace('defgroup', 'addtogroup', $docblock['content']);
           watchdog('api', 'Duplicate @defgroup in %file at line %line treated as @addtogroup.', array('%file' => $docblocks[0]['file_name'], '%line' => $docblock['start_line']), WATCHDOG_WARNING);
-
+          // This is commonly because the defgroup was moved from one file
+          // to another. So requeue both the found ID and the current file
+          // we are working on.
+          api_requeue_after_run($did);
+          $need_to_reparse = TRUE;
         }
         else {
           $docblock['object_name'] = $group_name;
@@ -1022,6 +1062,12 @@ function api_save_documentation($docblocks) {
     }
 
     $dids[] = $docblock['did'];
+  }
+
+  if ($need_to_reparse && count($dids)) {
+    // Mark any DID found as the one to requeue -- they should all be from
+    // the same file.
+    api_requeue_after_run($dids[0]);
   }
 
   // Run the queued-up queries on the api_function table.
@@ -1778,7 +1824,7 @@ function api_format_php($code, &$references, $number = FALSE, $track_references 
             }
           }
           if ($track_references) {
-            if (preg_match("|^'" . DRUPAL_PHP_FUNCTION_PATTERN . "'$|", $value)) {
+            if (preg_match("|^'" . BACKDROP_PHP_FUNCTION_PATTERN . "'$|", $value)) {
               $newname = str_replace("'", '', $value);
               $references['potential callback'][$newname] = $newname;
             }
@@ -1909,7 +1955,7 @@ function api_format_php($code, &$references, $number = FALSE, $track_references 
               $invoke_type = 'hook';
               $target_paren_count = $paren_count + 1;
             }
-            elseif (in_array($value, array('backdrop_alter', 'alter'))) {
+            elseif (in_array($value, array('backdrop_alter', 'alter', 'alterInfo'))) {
               $invoke_type = 'alter';
               $target_paren_count = $paren_count + 1;
             }
@@ -2265,12 +2311,35 @@ function api_touched($class_did = 0) {
 }
 
 /**
+ * Keeps track of files that need to be requeued after this cron run.
+ *
+ * @param int $did
+ *   (optional) Documentation ID of a documentation item whose file needs
+ *   to be requeued after the run.
+ *
+ * @return array
+ *   Array of all documentation IDs that need to be requeued.
+ */
+function api_requeue_after_run($did = NULL) {
+  static $dids = array();
+
+  if ($did) {
+    $dids[$did] = $did;
+  }
+
+  return $dids;
+}
+
+/**
  * Cleans up at the end of the cron job.
  *
  * Figures out class parents, class member lists, class member overrides, and
  * class member references.
  */
 function api_shutdown() {
+  // Requeue items that were marked for requeue.
+  api_mark_items_for_reparse(api_requeue_after_run());
+
   // Figure out which classes and interfaces we need to update.
   $classes_touched = api_touched();
 
