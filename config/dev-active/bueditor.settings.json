@@ -1,0 +1,28 @@
+{
+    "_config_name": "bueditor.settings",
+    "bueditor_user1": 1,
+    "bueditor_user1_alt": 0,
+    "bueditor_roles": {
+        "3": {
+            "weight": "-1",
+            "editor": "1",
+            "alt": "0"
+        },
+        "4": {
+            "weight": "0",
+            "editor": "1",
+            "alt": "0"
+        },
+        "authenticated": {
+            "editor": "0",
+            "alt": "0",
+            "weight": 11
+        },
+        "anonymous": {
+            "editor": "0",
+            "alt": "0",
+            "weight": 12
+        }
+    },
+    "bueditor_sprites_dir": "bueditor-sprites"
+}

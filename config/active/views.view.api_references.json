@@ -1,0 +1,305 @@
+{
+    "_config_name": "views.view.api_references",
+    "name": "api_references",
+    "description": "Blocks for listing references in the API module. Used directly by the API module. Do not delete or disable.",
+    "module": "api",
+    "storage": 4,
+    "tag": "api",
+    "disabled": false,
+    "base_table": "api_reference_storage",
+    "human_name": "API References",
+    "core": 1,
+    "display": {
+        "default": {
+            "display_title": "Master",
+            "display_plugin": "default",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "use_ajax": true,
+                "use_more_always": false,
+                "access": {
+                    "type": "perm",
+                    "perm": "access API reference"
+                },
+                "cache": {
+                    "type": "none"
+                },
+                "exposed_form": {
+                    "type": "basic"
+                },
+                "pager": {
+                    "type": "none"
+                },
+                "style_plugin": "table",
+                "style_options": {
+                    "columns": {
+                        "title": "title",
+                        "deprecated": "title",
+                        "file_name": "file_name",
+                        "summary": "summary"
+                    },
+                    "default": "title",
+                    "info": {
+                        "title": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": " ",
+                            "empty_column": 0
+                        },
+                        "deprecated": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "file_name": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "summary": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        }
+                    }
+                },
+                "relationships": {
+                    "from_did": {
+                        "id": "from_did",
+                        "table": "api_reference_storage",
+                        "field": "from_did",
+                        "label": "Referencing object",
+                        "required": true
+                    }
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "relationship": "from_did",
+                        "label": "Name",
+                        "link_to_docs": "object"
+                    },
+                    "deprecated": {
+                        "id": "deprecated",
+                        "table": "api_documentation",
+                        "field": "deprecated",
+                        "relationship": "from_did",
+                        "label": "",
+                        "alter": {
+                            "alter_text": true,
+                            "text": "Deprecated"
+                        },
+                        "element_label_colon": false,
+                        "hide_empty": true
+                    },
+                    "file_name": {
+                        "id": "file_name",
+                        "table": "api_documentation",
+                        "field": "file_name",
+                        "relationship": "from_did",
+                        "label": "Location",
+                        "link_to_docs": "file_base"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "relationship": "from_did",
+                        "label": "Description"
+                    }
+                },
+                "arguments": {
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_reference_storage",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    },
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_reference_storage",
+                        "field": "object_name",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        },
+                        "limit": "0"
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "relationship": "from_did",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        },
+                        "limit": "0"
+                    }
+                },
+                "filters": {
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_reference_storage",
+                        "field": "object_type",
+                        "value": "group"
+                    }
+                }
+            }
+        },
+        "block_items_in_group": {
+            "display_title": "Items in Topic List Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "All items in a particular group/topic",
+                "defaults": {
+                    "hide_admin_links": false
+                }
+            }
+        },
+        "block_related_topics": {
+            "display_title": "Related Topics Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "defaults": {
+                    "title": false,
+                    "hide_admin_links": false,
+                    "style_plugin": false,
+                    "style_options": false,
+                    "row_plugin": false,
+                    "row_options": false,
+                    "relationships": false,
+                    "fields": false,
+                    "sorts": false,
+                    "arguments": false
+                },
+                "display_description": "Topics (groups) related to a documentation item",
+                "style_plugin": "api_dl_list",
+                "style_options": {
+                    "default_row_class": false,
+                    "row_class_special": false,
+                    "class": "api-related-topics",
+                    "wrapper_class": ""
+                },
+                "row_plugin": "fields",
+                "relationships": {
+                    "related_topic": {
+                        "id": "related_topic",
+                        "table": "api_reference_storage",
+                        "field": "related_topic",
+                        "required": true
+                    }
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "relationship": "related_topic",
+                        "label": "",
+                        "exclude": true,
+                        "alter": {
+                            "text": "[title]"
+                        },
+                        "element_type": "0",
+                        "element_label_colon": false,
+                        "element_wrapper_type": "0",
+                        "element_default_classes": false,
+                        "link_to_docs": "object"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "relationship": "related_topic",
+                        "label": "",
+                        "exclude": true,
+                        "alter": {
+                            "text": "[summary]"
+                        },
+                        "element_type": "0",
+                        "element_label_colon": false,
+                        "element_wrapper_type": "0",
+                        "element_default_classes": false
+                    },
+                    "nothing": {
+                        "id": "nothing",
+                        "table": "views",
+                        "field": "nothing",
+                        "ui_name": "DT/DL element",
+                        "label": "",
+                        "alter": {
+                            "text": "[title]\n[summary]\n"
+                        },
+                        "element_type": "0",
+                        "element_label_colon": false,
+                        "element_wrapper_type": "0",
+                        "element_default_classes": false
+                    }
+                },
+                "sorts": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "relationship": "related_topic"
+                    }
+                },
+                "arguments": {
+                    "from_did": {
+                        "id": "from_did",
+                        "table": "api_reference_storage",
+                        "field": "from_did",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,43 @@
+{
+    "_config_name": "field.instance.node.changenotice.field_introduced_in_branch",
+    "field_name": "field_introduced_in_branch",
+    "entity_type": "node",
+    "bundle": "changenotice",
+    "deleted": "0",
+    "default_value": [
+        {
+            "value": "1.0.x"
+        }
+    ],
+    "description": "Enter the branch this change was first applied in. Examples: 1.0.x, or 1.1.x-1.2.x",
+    "display": {
+        "default": {
+            "label": "inline",
+            "type": "text_default",
+            "weight": "1",
+            "settings": [],
+            "module": "text"
+        },
+        "teaser": {
+            "label": "above",
+            "settings": [],
+            "type": "hidden",
+            "weight": 0
+        }
+    },
+    "label": "Introduced in branch",
+    "required": 0,
+    "settings": {
+        "text_processing": "0",
+        "user_register_form": false
+    },
+    "widget": {
+        "weight": "2",
+        "type": "text_textfield",
+        "module": "text",
+        "active": 1,
+        "settings": {
+            "size": "60"
+        }
+    }
+}

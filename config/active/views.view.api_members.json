@@ -1,0 +1,280 @@
+{
+    "_config_name": "views.view.api_members",
+    "name": "api_members",
+    "description": "Blocks for listing API class members. Used directly by the API module. Do not delete or disable.",
+    "module": "api",
+    "storage": 4,
+    "tag": "api",
+    "disabled": false,
+    "base_table": "api_members",
+    "human_name": "API Members",
+    "core": 1,
+    "display": {
+        "default": {
+            "display_title": "Master",
+            "display_plugin": "default",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": {
+                        "distinct": true
+                    }
+                },
+                "use_ajax": true,
+                "use_more_always": false,
+                "access": {
+                    "type": "perm",
+                    "perm": "access API reference"
+                },
+                "cache": {
+                    "type": "none"
+                },
+                "exposed_form": {
+                    "type": "basic"
+                },
+                "pager": {
+                    "type": "none"
+                },
+                "style_plugin": "table",
+                "style_options": {
+                    "columns": {
+                        "title": "title",
+                        "deprecated": "title",
+                        "modifiers": "modifiers",
+                        "object_type": "object_type",
+                        "summary": "summary",
+                        "title_1": "summary",
+                        "member_alias": "summary"
+                    },
+                    "default": "title",
+                    "info": {
+                        "title": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": " ",
+                            "empty_column": 0
+                        },
+                        "deprecated": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "modifiers": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "object_type": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "summary": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": " ",
+                            "empty_column": 0
+                        },
+                        "title_1": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        }
+                    }
+                },
+                "relationships": {
+                    "did": {
+                        "id": "did",
+                        "table": "api_members",
+                        "field": "did",
+                        "label": "Item",
+                        "required": true
+                    },
+                    "override_did": {
+                        "id": "override_did",
+                        "table": "api_documentation",
+                        "field": "override_did",
+                        "relationship": "did",
+                        "label": "Overrides"
+                    },
+                    "overrides_did": {
+                        "id": "overrides_did",
+                        "table": "api_overrides",
+                        "field": "overrides_did",
+                        "relationship": "override_did",
+                        "label": "Overridden item"
+                    }
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "relationship": "did",
+                        "label": "Name",
+                        "link_to_docs": "object"
+                    },
+                    "deprecated": {
+                        "id": "deprecated",
+                        "table": "api_documentation",
+                        "field": "deprecated",
+                        "relationship": "did",
+                        "label": "",
+                        "alter": {
+                            "alter_text": true,
+                            "text": "Deprecated"
+                        },
+                        "element_label_colon": false,
+                        "hide_empty": true
+                    },
+                    "modifiers": {
+                        "id": "modifiers",
+                        "table": "api_documentation",
+                        "field": "modifiers",
+                        "relationship": "did"
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "relationship": "did",
+                        "label": "Type"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "relationship": "did",
+                        "label": "Description"
+                    },
+                    "title_1": {
+                        "id": "title_1",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "relationship": "overrides_did",
+                        "label": "",
+                        "element_type": "0",
+                        "element_label_colon": false,
+                        "element_default_classes": false,
+                        "link_to_docs": "object",
+                        "prefix": "Overrides ",
+                        "suffix": ""
+                    },
+                    "member_alias": {
+                        "id": "member_alias",
+                        "table": "api_members",
+                        "field": "member_alias",
+                        "label": "",
+                        "alter": {
+                            "alter_text": true,
+                            "text": "Aliased as: [member_alias]"
+                        },
+                        "element_label_colon": false,
+                        "hide_empty": true
+                    }
+                },
+                "arguments": {
+                    "class_did": {
+                        "id": "class_did",
+                        "table": "api_members",
+                        "field": "class_did",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                },
+                "filters": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "relationship": "did",
+                        "operator": "contains",
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "title_op",
+                            "label": "Name contains",
+                            "description": "Contains filters are case sensitive",
+                            "operator": "title_op",
+                            "identifier": "title",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    },
+                    "title_1": {
+                        "id": "title_1",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "relationship": "did",
+                        "operator": "not",
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "title_1_op",
+                            "label": "Name does not contain",
+                            "operator": "title_1_op",
+                            "identifier": "title_1",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "relationship": "did",
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "object_type_op",
+                            "label": "Type",
+                            "operator": "object_type_op",
+                            "identifier": "object_type",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "block_member_list": {
+            "display_title": "Member List Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "defaults": {
+                    "hide_admin_links": false
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,41 @@
+{
+    "_config_name": "field.instance.node.changenotice.field_file_attachments",
+    "field_name": "field_file_attachments",
+    "entity_type": "node",
+    "bundle": "changenotice",
+    "deleted": "0",
+    "description": "",
+    "display": {
+        "default": {
+            "label": "above",
+            "type": "file_default",
+            "weight": "5",
+            "settings": [],
+            "module": "file"
+        },
+        "teaser": {
+            "label": "above",
+            "settings": [],
+            "type": "hidden",
+            "weight": 0
+        }
+    },
+    "label": "File Attachments",
+    "required": 0,
+    "settings": {
+        "description_field": 0,
+        "file_directory": "changenotice",
+        "file_extensions": "jpg jpeg gif png txt xls pdf ppt pps odt ods odp gz tgz pat ch diff zip test info po pot psd",
+        "max_filesize": "1MB",
+        "user_register_form": false
+    },
+    "widget": {
+        "active": 1,
+        "module": "file",
+        "settings": {
+            "progress_indicator": "bar"
+        },
+        "type": "file_generic",
+        "weight": "7"
+    }
+}

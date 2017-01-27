@@ -1,0 +1,1164 @@
+{
+    "_config_name": "views.view.api_listings",
+    "name": "api_listings",
+    "description": "Blocks for listing API documentation items. Used directly by the API module. Do not delete or disable.",
+    "module": "api",
+    "storage": 2,
+    "tag": "api",
+    "disabled": false,
+    "base_table": "api_documentation",
+    "human_name": "API Listings",
+    "core": 1,
+    "display": {
+        "default": {
+            "display_title": "Master",
+            "display_plugin": "default",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": {
+                        "disable_sql_rewrite": 0,
+                        "distinct": 0,
+                        "pure_distinct": 0,
+                        "slave": 0,
+                        "query_comment": "",
+                        "query_tags": []
+                    }
+                },
+                "use_ajax": true,
+                "use_more_always": false,
+                "access": {
+                    "type": "perm",
+                    "perm": "access API reference"
+                },
+                "cache": {
+                    "type": "none"
+                },
+                "exposed_form": {
+                    "type": "basic",
+                    "options": {
+                        "submit_button": "Apply",
+                        "reset_button": 0,
+                        "reset_button_label": "Reset",
+                        "exposed_sorts_label": "Sort by",
+                        "expose_sort_order": 1,
+                        "sort_asc_label": "Asc",
+                        "sort_desc_label": "Desc",
+                        "autosubmit": 0,
+                        "autosubmit_hide": 1
+                    }
+                },
+                "pager": {
+                    "type": "full",
+                    "options": {
+                        "items_per_page": "50",
+                        "offset": "0",
+                        "id": "0",
+                        "quantity": "9"
+                    }
+                },
+                "style_plugin": "table",
+                "style_options": {
+                    "columns": {
+                        "title": "title",
+                        "deprecated": "title",
+                        "file_name": "file_name",
+                        "summary": "summary"
+                    },
+                    "default": "title",
+                    "info": {
+                        "title": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": " ",
+                            "empty_column": 0
+                        },
+                        "deprecated": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "file_name": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "summary": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        }
+                    }
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "label": "Name",
+                        "link_to_docs": "object"
+                    },
+                    "deprecated": {
+                        "id": "deprecated",
+                        "table": "api_documentation",
+                        "field": "deprecated",
+                        "label": "",
+                        "alter": {
+                            "alter_text": true,
+                            "text": "Deprecated"
+                        },
+                        "element_label_colon": false,
+                        "hide_empty": true
+                    },
+                    "file_name": {
+                        "id": "file_name",
+                        "table": "api_documentation",
+                        "field": "file_name",
+                        "label": "Location",
+                        "link_to_docs": "file_base"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "label": "Description"
+                    }
+                },
+                "sorts": {
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_documentation",
+                        "field": "object_name"
+                    }
+                },
+                "arguments": {
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        },
+                        "limit": "0"
+                    },
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_documentation",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                }
+            }
+        },
+        "block_listing": {
+            "display_title": "Default List Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "Block for listing functions, constants, etc.",
+                "defaults": {
+                    "hide_admin_links": false,
+                    "filter_groups": false,
+                    "filters": false
+                },
+                "filters": {
+                    "class_did": {
+                        "id": "class_did",
+                        "table": "api_documentation",
+                        "field": "class_did",
+                        "value": {
+                            "value": "0"
+                        }
+                    },
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_documentation",
+                        "field": "object_name",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "operator": "contains",
+                        "value": "",
+                        "group": "1",
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "object_name_op",
+                            "label": "Name contains",
+                            "description": "",
+                            "use_operator": 0,
+                            "operator": "object_name_op",
+                            "identifier": "object_name",
+                            "required": 0,
+                            "remember": 0,
+                            "multiple": false,
+                            "remember_roles": {
+                                "authenticated": "authenticated",
+                                "anonymous": 0,
+                                "4": 0,
+                                "3": 0
+                            }
+                        },
+                        "is_grouped": false,
+                        "group_info": {
+                            "label": "",
+                            "description": "",
+                            "identifier": "",
+                            "optional": true,
+                            "widget": "select",
+                            "multiple": false,
+                            "remember": 0,
+                            "default_group": "All",
+                            "default_group_multiple": [],
+                            "group_items": []
+                        }
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "operator": "contains",
+                        "value": "",
+                        "group": "1",
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "summary_op",
+                            "label": "Description contains",
+                            "description": "",
+                            "use_operator": 0,
+                            "operator": "summary_op",
+                            "identifier": "summary",
+                            "required": 0,
+                            "remember": 0,
+                            "multiple": false,
+                            "remember_roles": {
+                                "authenticated": "authenticated",
+                                "anonymous": 0,
+                                "4": 0,
+                                "3": 0
+                            }
+                        },
+                        "is_grouped": false,
+                        "group_info": {
+                            "label": "",
+                            "description": "",
+                            "identifier": "",
+                            "optional": true,
+                            "widget": "select",
+                            "multiple": false,
+                            "remember": 0,
+                            "default_group": "All",
+                            "default_group_multiple": [],
+                            "group_items": []
+                        }
+                    }
+                }
+            }
+        },
+        "block_files": {
+            "display_title": "File List Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "Block for listing files",
+                "defaults": {
+                    "hide_admin_links": false,
+                    "style_plugin": false,
+                    "style_options": false,
+                    "row_plugin": false,
+                    "row_options": false,
+                    "relationships": false,
+                    "fields": false,
+                    "arguments": false,
+                    "filter_groups": false,
+                    "filters": false
+                },
+                "style_plugin": "table",
+                "style_options": {
+                    "columns": {
+                        "title": "title",
+                        "deprecated": "title",
+                        "object_name": "object_name",
+                        "namespace": "namespace",
+                        "summary": "summary"
+                    },
+                    "default": "title",
+                    "info": {
+                        "title": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": " ",
+                            "empty_column": 0
+                        },
+                        "deprecated": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "object_name": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "namespace": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "summary": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        }
+                    }
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "label": "File name"
+                    },
+                    "deprecated": {
+                        "id": "deprecated",
+                        "table": "api_documentation",
+                        "field": "deprecated",
+                        "label": "",
+                        "alter": {
+                            "alter_text": true,
+                            "text": "Deprecated"
+                        },
+                        "element_label_colon": false,
+                        "hide_empty": true
+                    },
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_documentation",
+                        "field": "object_name",
+                        "label": "Location",
+                        "link_to_docs": "object"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "label": "Description"
+                    }
+                },
+                "arguments": {
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_documentation",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                },
+                "filters": {
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "value": "file",
+                        "group": 1
+                    },
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_documentation",
+                        "field": "object_name",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "operator": "contains",
+                        "value": "",
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "object_name_op",
+                            "label": "Location contains",
+                            "description": "",
+                            "use_operator": 0,
+                            "operator": "object_name_op",
+                            "identifier": "object_name",
+                            "required": 0,
+                            "remember": 0,
+                            "multiple": false,
+                            "remember_roles": {
+                                "authenticated": "authenticated",
+                                "anonymous": 0,
+                                "4": 0,
+                                "3": 0
+                            }
+                        },
+                        "is_grouped": false,
+                        "group_info": {
+                            "label": "",
+                            "description": "",
+                            "identifier": "",
+                            "optional": true,
+                            "widget": "select",
+                            "multiple": false,
+                            "remember": 0,
+                            "default_group": "All",
+                            "default_group_multiple": [],
+                            "group_items": []
+                        }
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "operator": "contains",
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "summary_op",
+                            "label": "Description contains",
+                            "operator": "summary_op",
+                            "identifier": "summary",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "block_class": {
+            "display_title": "Class List Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "Block for listing classes and interfaces",
+                "defaults": {
+                    "hide_admin_links": false,
+                    "style_plugin": false,
+                    "style_options": false,
+                    "row_plugin": false,
+                    "row_options": false,
+                    "relationships": false,
+                    "fields": false,
+                    "arguments": false,
+                    "filter_groups": false,
+                    "filters": false
+                },
+                "style_plugin": "table",
+                "style_options": {
+                    "columns": {
+                        "object_name": "object_name",
+                        "deprecated": "object_name",
+                        "modifiers": "modifiers",
+                        "object_type": "object_type",
+                        "namespace": "namespace",
+                        "file_name": "file_name",
+                        "summary": "summary"
+                    },
+                    "default": "object_name",
+                    "info": {
+                        "object_name": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": " ",
+                            "empty_column": 0
+                        },
+                        "deprecated": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "modifiers": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "object_type": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "namespace": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "file_name": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "summary": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        }
+                    }
+                },
+                "fields": {
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_documentation",
+                        "field": "object_name",
+                        "label": "Name",
+                        "link_to_docs": "object"
+                    },
+                    "deprecated": {
+                        "id": "deprecated",
+                        "table": "api_documentation",
+                        "field": "deprecated",
+                        "label": "",
+                        "alter": {
+                            "alter_text": true,
+                            "text": "Deprecated"
+                        },
+                        "element_label_colon": false,
+                        "hide_empty": true
+                    },
+                    "modifiers": {
+                        "id": "modifiers",
+                        "table": "api_documentation",
+                        "field": "modifiers",
+                        "label": "",
+                        "exclude": true,
+                        "element_label_colon": false
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "label": "Type",
+                        "alter": {
+                            "alter_text": true,
+                            "text": "[modifiers] [object_type]"
+                        },
+                        "hide_alter_empty": false
+                    },
+                    "namespace": {
+                        "id": "namespace",
+                        "table": "api_documentation",
+                        "field": "namespace"
+                    },
+                    "file_name": {
+                        "id": "file_name",
+                        "table": "api_documentation",
+                        "field": "file_name",
+                        "label": "Location",
+                        "link_to_docs": "file_base"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "label": "Description"
+                    }
+                },
+                "arguments": {
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_documentation",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                },
+                "filter_groups": {
+                    "groups": {
+                        "1": "AND",
+                        "2": "OR"
+                    }
+                },
+                "filters": {
+                    "class_did": {
+                        "id": "class_did",
+                        "table": "api_documentation",
+                        "field": "class_did",
+                        "value": {
+                            "value": "0"
+                        },
+                        "group": 1
+                    },
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_documentation",
+                        "field": "object_name",
+                        "operator": "contains",
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "object_name_op",
+                            "label": "Name contains",
+                            "description": "Contains filters are case sensitive",
+                            "operator": "object_name_op",
+                            "identifier": "object_name",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    },
+                    "namespace": {
+                        "id": "namespace",
+                        "table": "api_documentation",
+                        "field": "namespace",
+                        "operator": "contains",
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "namespace_op",
+                            "label": "Namespace contains",
+                            "operator": "namespace_op",
+                            "identifier": "namespace",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "operator": "contains",
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "summary_op",
+                            "label": "Description contains",
+                            "operator": "summary_op",
+                            "identifier": "summary",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "value": "class",
+                        "group": 2
+                    },
+                    "object_type_1": {
+                        "id": "object_type_1",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "value": "interface",
+                        "group": 2
+                    },
+                    "object_type_2": {
+                        "id": "object_type_2",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "value": "trait",
+                        "group": 2
+                    }
+                }
+            }
+        },
+        "block_groups": {
+            "display_title": "Topic List Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "Block for listing groups/topics",
+                "defaults": {
+                    "hide_admin_links": false,
+                    "style_plugin": false,
+                    "style_options": false,
+                    "row_plugin": false,
+                    "row_options": false,
+                    "fields": false,
+                    "arguments": false,
+                    "filter_groups": false,
+                    "filters": false
+                },
+                "style_plugin": "table",
+                "style_options": {
+                    "columns": {
+                        "title": "title",
+                        "summary": "summary"
+                    },
+                    "default": "title",
+                    "info": {
+                        "title": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "summary": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        }
+                    }
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "label": "Name",
+                        "link_to_docs": "object"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "label": "Description"
+                    }
+                },
+                "arguments": {
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_documentation",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                },
+                "filters": {
+                    "class_did": {
+                        "id": "class_did",
+                        "table": "api_documentation",
+                        "field": "class_did",
+                        "value": {
+                            "value": "0"
+                        }
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "value": "group"
+                    },
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_documentation",
+                        "field": "object_name",
+                        "operator": "contains",
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "object_name_op",
+                            "label": "Name contains",
+                            "description": "",
+                            "operator": "object_name_op",
+                            "identifier": "object_name",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "operator": "contains",
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "summary_op",
+                            "label": "Description contains",
+                            "operator": "summary_op",
+                            "identifier": "summary",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "block_items_file": {
+            "display_title": "Items in File List Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "Block for listing functions, constants, etc. in a particular file",
+                "defaults": {
+                    "hide_admin_links": false,
+                    "pager": false,
+                    "fields": false,
+                    "arguments": false,
+                    "filter_groups": false,
+                    "filters": false
+                },
+                "pager": {
+                    "type": "none",
+                    "options": {
+                        "offset": "0"
+                    }
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "label": "Name",
+                        "link_to_docs": "object"
+                    },
+                    "deprecated": {
+                        "id": "deprecated",
+                        "table": "api_documentation",
+                        "field": "deprecated",
+                        "label": "",
+                        "alter": {
+                            "alter_text": true,
+                            "text": "Deprecated"
+                        },
+                        "element_label_colon": false,
+                        "hide_empty": true
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "label": "Description"
+                    }
+                },
+                "arguments": {
+                    "file_name": {
+                        "id": "file_name",
+                        "table": "api_documentation",
+                        "field": "file_name",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        },
+                        "limit": "0"
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        },
+                        "limit": "0"
+                    },
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_documentation",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                },
+                "filters": {
+                    "class_did": {
+                        "id": "class_did",
+                        "table": "api_documentation",
+                        "field": "class_did",
+                        "value": {
+                            "value": "0"
+                        }
+                    }
+                }
+            }
+        },
+        "block_deprecated": {
+            "display_title": "Deprecated Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "defaults": {
+                    "fields": false,
+                    "arguments": false,
+                    "filter_groups": false,
+                    "filters": false
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "label": "Name",
+                        "link_to_docs": "object"
+                    },
+                    "file_name": {
+                        "id": "file_name",
+                        "table": "api_documentation",
+                        "field": "file_name",
+                        "label": "Location",
+                        "link_to_docs": "file_base"
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "label": "Type"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "label": "Description"
+                    }
+                },
+                "arguments": {
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_documentation",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                },
+                "filters": {
+                    "deprecated": {
+                        "id": "deprecated",
+                        "table": "api_documentation",
+                        "field": "deprecated",
+                        "value": "1"
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "object_type_op",
+                            "label": "Type",
+                            "operator": "object_type_op",
+                            "identifier": "type",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "block_services": {
+            "display_title": "Services Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "Block for listing services",
+                "defaults": {
+                    "hide_admin_links": false,
+                    "relationships": false,
+                    "fields": false,
+                    "arguments": false,
+                    "filter_groups": false,
+                    "filters": false
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "label": "Name",
+                        "link_to_docs": "object"
+                    },
+                    "file_name": {
+                        "id": "file_name",
+                        "table": "api_documentation",
+                        "field": "file_name",
+                        "label": "File",
+                        "link_to_docs": "file_base"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "label": "Class"
+                    },
+                    "all_service_tags_1": {
+                        "id": "all_service_tags_1",
+                        "table": "api_documentation",
+                        "field": "all_service_tags",
+                        "label": "Tags"
+                    }
+                },
+                "arguments": {
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_documentation",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                },
+                "filters": {
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_documentation",
+                        "field": "object_name",
+                        "operator": "contains",
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "object_name_op",
+                            "label": "Name contains",
+                            "description": "Contains filters are case sensitive",
+                            "operator": "object_name_op",
+                            "identifier": "object_name",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "value": "service"
+                    },
+                    "all_service_tags": {
+                        "id": "all_service_tags",
+                        "table": "api_documentation",
+                        "field": "all_service_tags",
+                        "operator": "contains",
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "all_service_tags_op",
+                            "label": "Tag contains",
+                            "operator": "all_service_tags_op",
+                            "identifier": "tag",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

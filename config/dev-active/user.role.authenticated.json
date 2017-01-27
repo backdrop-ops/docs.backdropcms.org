@@ -1,0 +1,19 @@
+{
+    "_config_name": "user.role.authenticated",
+    "name": "authenticated",
+    "label": "Authenticated",
+    "weight": "1",
+    "permissions": [
+        "access content",
+        "access user profiles",
+        "cancel account",
+        "change own username",
+        "create changenotice content",
+        "delete own changenotice content",
+        "edit own changenotice content",
+        "search content",
+        "use text format fix_html",
+        "view own unpublished content",
+        "access API reference"
+    ]
+}

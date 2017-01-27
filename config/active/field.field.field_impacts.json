@@ -1,0 +1,26 @@
+{
+    "_config_name": "field.field.field_impacts",
+    "field_name": "field_impacts",
+    "type": "list_text",
+    "module": "list",
+    "active": 1,
+    "locked": "0",
+    "cardinality": "-1",
+    "translatable": "0",
+    "deleted": "0",
+    "entity_types": [],
+    "settings": {
+        "allowed_values": {
+            "Site builders, administrators, editors": "Site builders, administrators, editors",
+            "Module developers": "Module developers",
+            "Themers": "Theme developers"
+        },
+        "allowed_values_function": ""
+    },
+    "storage": {
+        "type": "field_sql_storage",
+        "module": "field_sql_storage",
+        "active": 1,
+        "settings": []
+    }
+}

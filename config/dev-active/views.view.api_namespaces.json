@@ -1,0 +1,257 @@
+{
+    "_config_name": "views.view.api_namespaces",
+    "name": "api_namespaces",
+    "description": "Blocks for listing API namespaces. Used directly by the API module. Do not delete or disable.",
+    "module": "api",
+    "storage": 4,
+    "tag": "api",
+    "disabled": false,
+    "base_table": "api_documentation",
+    "human_name": "API Namespaces",
+    "core": 1,
+    "display": {
+        "default": {
+            "display_title": "Master",
+            "display_plugin": "default",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": {
+                        "distinct": true,
+                        "pure_distinct": true
+                    }
+                },
+                "use_ajax": true,
+                "use_more_always": false,
+                "access": {
+                    "type": "perm",
+                    "perm": "access API reference"
+                },
+                "cache": {
+                    "type": "none"
+                },
+                "exposed_form": {
+                    "type": "basic"
+                },
+                "pager": {
+                    "type": "full",
+                    "options": {
+                        "items_per_page": "50",
+                        "offset": "0",
+                        "id": "0",
+                        "quantity": "9"
+                    }
+                },
+                "style_plugin": "table",
+                "style_options": {
+                    "columns": {
+                        "object_name": "object_name",
+                        "file_name": "file_name"
+                    },
+                    "default": "object_name",
+                    "info": {
+                        "object_name": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "file_name": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        }
+                    }
+                },
+                "fields": {
+                    "namespace": {
+                        "id": "namespace",
+                        "table": "api_documentation",
+                        "field": "namespace",
+                        "link_to_namespace": "object"
+                    }
+                },
+                "sorts": {
+                    "namespace": {
+                        "id": "namespace",
+                        "table": "api_documentation",
+                        "field": "namespace"
+                    }
+                },
+                "arguments": {
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_documentation",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    }
+                },
+                "filters": {
+                    "namespace": {
+                        "id": "namespace",
+                        "table": "api_documentation",
+                        "field": "namespace",
+                        "operator": "longerthan",
+                        "value": "2"
+                    },
+                    "namespace_1": {
+                        "id": "namespace_1",
+                        "table": "api_documentation",
+                        "field": "namespace",
+                        "operator": "contains",
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "namespace_1_op",
+                            "label": "Namespace contains",
+                            "description": "Contains filters are case sensitive",
+                            "operator": "namespace_1_op",
+                            "identifier": "namespace_1",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "block_namespace_list": {
+            "display_title": "Namespace List Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "defaults": {
+                    "hide_admin_links": false
+                },
+                "block_description": ""
+            }
+        },
+        "block_items_namespace": {
+            "display_title": "Items in Namespace List Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "defaults": {
+                    "hide_admin_links": false,
+                    "pager": false,
+                    "fields": false,
+                    "sorts": false,
+                    "arguments": false,
+                    "filter_groups": false,
+                    "filters": false
+                },
+                "pager": {
+                    "type": "none",
+                    "options": {
+                        "offset": "0"
+                    }
+                },
+                "fields": {
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_documentation",
+                        "field": "object_name",
+                        "label": "Class",
+                        "link_to_docs": "object"
+                    },
+                    "file_name": {
+                        "id": "file_name",
+                        "table": "api_documentation",
+                        "field": "file_name",
+                        "label": "Location"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "label": "Description"
+                    }
+                },
+                "sorts": {
+                    "object_name": {
+                        "id": "object_name",
+                        "table": "api_documentation",
+                        "field": "object_name"
+                    }
+                },
+                "arguments": {
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_documentation",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    },
+                    "namespace": {
+                        "id": "namespace",
+                        "table": "api_documentation",
+                        "field": "namespace",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        },
+                        "limit": "0"
+                    }
+                },
+                "filter_groups": {
+                    "groups": {
+                        "1": "OR"
+                    }
+                },
+                "filters": {
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "value": "class",
+                        "group": 1
+                    },
+                    "object_type_1": {
+                        "id": "object_type_1",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "value": "interface",
+                        "group": 1
+                    },
+                    "object_type_2": {
+                        "id": "object_type_2",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "value": "trait",
+                        "group": 1
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "_config_name": "node.type.changenotice",
+    "type": "changenotice",
+    "name": "Change Notice",
+    "base": "node_content",
+    "module": "node",
+    "description": "Reverse-engineered from https://www.drupal.org/node/add/changenotice\r\n\r\n",
+    "help": "",
+    "has_title": true,
+    "title_label": "Title",
+    "modified": true,
+    "disabled": false,
+    "orig_type": "changenotice",
+    "settings": {
+        "status_default": true,
+        "sticky_enabled": true,
+        "sticky_default": false,
+        "promote_enabled": true,
+        "promote_default": false,
+        "revision_enabled": true,
+        "revision_default": true,
+        "node_preview": "1",
+        "node_submitted": 0,
+        "node_user_picture": true,
+        "node_type_language": null,
+        "menu_options": [],
+        "menu_parent": "main-menu:0",
+        "node_permissions": true
+    }
+}

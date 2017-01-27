@@ -1,0 +1,226 @@
+{
+    "_config_name": "views.view.api_search",
+    "name": "api_search",
+    "description": "Blocks for searching API documentation. Used directly by the API module. Do not delete or disable.",
+    "module": "api",
+    "storage": 4,
+    "tag": "api",
+    "disabled": false,
+    "base_table": "api_documentation",
+    "human_name": "API Search",
+    "core": 1,
+    "display": {
+        "default": {
+            "display_title": "Master",
+            "display_plugin": "default",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "use_ajax": true,
+                "use_more_always": false,
+                "access": {
+                    "type": "perm",
+                    "perm": "access API reference"
+                },
+                "cache": {
+                    "type": "none"
+                },
+                "exposed_form": {
+                    "type": "basic"
+                },
+                "pager": {
+                    "type": "full",
+                    "options": {
+                        "items_per_page": "50",
+                        "offset": "0",
+                        "id": "0",
+                        "quantity": "9"
+                    }
+                },
+                "style_plugin": "table",
+                "style_options": {
+                    "columns": {
+                        "title": "title",
+                        "object_type": "object_type",
+                        "file_name": "file_name",
+                        "summary": "summary"
+                    },
+                    "default": "-1",
+                    "info": {
+                        "title": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "object_type": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "file_name": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "summary": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        }
+                    }
+                },
+                "empty": {
+                    "area_text_custom": {
+                        "id": "area_text_custom",
+                        "table": "views",
+                        "field": "area_text_custom",
+                        "label": "No matches",
+                        "empty": true,
+                        "content": "No search results found."
+                    }
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "label": "Name",
+                        "link_to_docs": "object"
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "label": "Type"
+                    },
+                    "file_name": {
+                        "id": "file_name",
+                        "table": "api_documentation",
+                        "field": "file_name",
+                        "label": "Location",
+                        "link_to_docs": "file_base"
+                    },
+                    "summary": {
+                        "id": "summary",
+                        "table": "api_documentation",
+                        "field": "summary",
+                        "label": "Description"
+                    }
+                },
+                "sorts": {
+                    "title_length": {
+                        "id": "title_length",
+                        "table": "api_documentation",
+                        "field": "title_length",
+                        "exposed": true,
+                        "expose": {
+                            "label": "Length of Name"
+                        }
+                    },
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "exposed": true,
+                        "expose": {
+                            "label": "Name"
+                        }
+                    },
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "exposed": true,
+                        "expose": {
+                            "label": "Type"
+                        }
+                    },
+                    "file_name": {
+                        "id": "file_name",
+                        "table": "api_documentation",
+                        "field": "file_name",
+                        "exposed": true,
+                        "expose": {
+                            "label": "Location"
+                        }
+                    }
+                },
+                "arguments": {
+                    "branch_id": {
+                        "id": "branch_id",
+                        "table": "api_documentation",
+                        "field": "branch_id",
+                        "default_action": "not found",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        }
+                    },
+                    "title": {
+                        "id": "title",
+                        "table": "api_documentation",
+                        "field": "title",
+                        "default_action": "default",
+                        "default_argument_type": "fixed",
+                        "summary": {
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "summary_options": {
+                            "items_per_page": "25"
+                        },
+                        "limit": "0",
+                        "partial_match": true
+                    }
+                },
+                "filters": {
+                    "object_type": {
+                        "id": "object_type",
+                        "table": "api_documentation",
+                        "field": "object_type",
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "object_type_op",
+                            "label": "Filter by Type",
+                            "operator": "object_type_op",
+                            "identifier": "object_type",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "block_search_results": {
+            "display_title": "Search Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "Block for search results",
+                "defaults": {
+                    "hide_admin_links": false
+                }
+            }
+        }
+    }
+}

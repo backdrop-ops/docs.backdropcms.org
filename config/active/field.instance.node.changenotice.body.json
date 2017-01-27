@@ -1,0 +1,44 @@
+{
+    "_config_name": "field.instance.node.changenotice.body",
+    "field_name": "body",
+    "entity_type": "node",
+    "bundle": "changenotice",
+    "deleted": "0",
+    "default_value": null,
+    "description": "Describe the change, and its impact on site users, site builders, themers, and module developers. If appropriate, give before/after code samples. Good examples: 6/7 module update guide section, 6/7 theme update guide section (though it is not necessary to link to the issue).",
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "text_default",
+            "weight": "0",
+            "settings": [],
+            "module": "text"
+        },
+        "teaser": {
+            "label": "hidden",
+            "module": "text",
+            "settings": {
+                "trim_length": 600
+            },
+            "type": "text_summary_or_trimmed",
+            "weight": 0
+        }
+    },
+    "label": "Description",
+    "required": 0,
+    "settings": {
+        "text_processing": "1",
+        "display_summary": 0,
+        "user_register_form": false
+    },
+    "widget": {
+        "weight": "6",
+        "type": "text_textarea_with_summary",
+        "module": "text",
+        "active": 1,
+        "settings": {
+            "rows": "20",
+            "summary_rows": 5
+        }
+    }
+}

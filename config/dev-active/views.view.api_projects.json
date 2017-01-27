@@ -1,0 +1,234 @@
+{
+    "_config_name": "views.view.api_projects",
+    "name": "api_projects",
+    "description": "Blocks for listing projects in the API module. Used directly by the API module. Do not delete or disable.",
+    "module": "api",
+    "storage": 4,
+    "tag": "api",
+    "disabled": false,
+    "base_table": "api_project",
+    "human_name": "API Projects",
+    "core": 1,
+    "display": {
+        "default": {
+            "display_title": "Master",
+            "display_plugin": "default",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "use_ajax": true,
+                "use_more_always": false,
+                "access": {
+                    "type": "perm",
+                    "perm": "access API reference"
+                },
+                "cache": {
+                    "type": "none"
+                },
+                "exposed_form": {
+                    "type": "basic"
+                },
+                "pager": {
+                    "type": "full",
+                    "options": {
+                        "items_per_page": "50",
+                        "offset": "0",
+                        "id": "0",
+                        "total_pages": "",
+                        "quantity": "9",
+                        "tags": {
+                            "first": "« first",
+                            "previous": "‹ previous",
+                            "next": "next ›",
+                            "last": "last »"
+                        },
+                        "expose": {
+                            "items_per_page": 0,
+                            "items_per_page_label": "Items per page",
+                            "items_per_page_options": "5, 10, 20, 40, 60",
+                            "items_per_page_options_all": 0,
+                            "items_per_page_options_all_label": "- All -",
+                            "offset": 0,
+                            "offset_label": "Offset"
+                        }
+                    }
+                },
+                "style_plugin": "list",
+                "row_plugin": "fields",
+                "fields": {
+                    "project_title": {
+                        "id": "project_title",
+                        "table": "api_project",
+                        "field": "project_title",
+                        "label": "",
+                        "element_label_colon": false,
+                        "link_to_project": "project"
+                    }
+                },
+                "sorts": {
+                    "project_title": {
+                        "id": "project_title",
+                        "table": "api_project",
+                        "field": "project_title"
+                    }
+                }
+            }
+        },
+        "block_project_list": {
+            "display_title": "Project List Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "defaults": {
+                    "hide_admin_links": false,
+                    "style_plugin": false,
+                    "style_options": false,
+                    "row_plugin": false,
+                    "row_options": false
+                },
+                "style_plugin": "list",
+                "style_options": {
+                    "wrapper_class": "api-project-links"
+                },
+                "row_plugin": "fields"
+            }
+        },
+        "block_project_admin": {
+            "display_title": "Project Admin Block",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "defaults": {
+                    "hide_admin_links": false,
+                    "access": false,
+                    "style_plugin": false,
+                    "style_options": false,
+                    "row_plugin": false,
+                    "row_options": false,
+                    "empty": false,
+                    "fields": false,
+                    "sorts": false,
+                    "filter_groups": false,
+                    "filters": false
+                },
+                "access": {
+                    "type": "perm",
+                    "perm": "administer API reference"
+                },
+                "style_plugin": "table",
+                "style_options": {
+                    "columns": {
+                        "project_name": "project_name",
+                        "project_title": "project_title",
+                        "project_type": "project_type"
+                    },
+                    "default": "project_name",
+                    "info": {
+                        "project_name": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "project_title": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
+                        "project_type": {
+                            "sortable": 1,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        }
+                    }
+                },
+                "empty": {
+                    "area_text_custom": {
+                        "id": "area_text_custom",
+                        "table": "views",
+                        "field": "area_text_custom",
+                        "label": "No matches",
+                        "empty": true,
+                        "content": "No projects match your filters."
+                    }
+                },
+                "fields": {
+                    "project_name": {
+                        "id": "project_name",
+                        "table": "api_project",
+                        "field": "project_name",
+                        "label": "Project identifier"
+                    },
+                    "project_title": {
+                        "id": "project_title",
+                        "table": "api_project",
+                        "field": "project_title",
+                        "label": "Title",
+                        "element_label_colon": false
+                    },
+                    "project_type": {
+                        "id": "project_type",
+                        "table": "api_project",
+                        "field": "project_type",
+                        "label": "Type"
+                    },
+                    "project_ops": {
+                        "id": "project_ops",
+                        "table": "api_project",
+                        "field": "project_ops",
+                        "label": "Operations"
+                    }
+                },
+                "sorts": {
+                    "project_title": {
+                        "id": "project_title",
+                        "table": "api_project",
+                        "field": "project_title"
+                    }
+                },
+                "filters": {
+                    "project_type": {
+                        "id": "project_type",
+                        "table": "api_project",
+                        "field": "project_type",
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "project_type_op",
+                            "label": "Filter by project type",
+                            "operator": "project_type_op",
+                            "identifier": "project_type",
+                            "remember_roles": {
+                                "2": "2",
+                                "1": 0,
+                                "3": 0
+                            }
+                        },
+                        "group_info": {
+                            "label": "Project type",
+                            "identifier": "project_type",
+                            "remember": false,
+                            "group_items": {
+                                "1": [],
+                                "2": [],
+                                "3": []
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

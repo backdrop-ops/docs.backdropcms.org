@@ -1,0 +1,30 @@
+{
+    "_config_name": "field.bundle.node.changenotice",
+    "entity_type": "node",
+    "bundle": "changenotice",
+    "view_modes": {
+        "teaser": {
+            "custom_settings": false
+        },
+        "full": {
+            "custom_settings": false
+        },
+        "rss": {
+            "custom_settings": false
+        },
+        "search_index": {
+            "custom_settings": false
+        },
+        "search_result": {
+            "custom_settings": false
+        }
+    },
+    "extra_fields": {
+        "form": {
+            "title": {
+                "weight": "0"
+            }
+        },
+        "display": []
+    }
+}

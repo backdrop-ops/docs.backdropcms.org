@@ -1,0 +1,32 @@
+{
+    "_config_name": "user.role.4",
+    "name": "4",
+    "label": "Editor",
+    "weight": "2",
+    "permissions": [
+        "access administration menu",
+        "access administration pages",
+        "access all views",
+        "access content overview",
+        "add content to books",
+        "administer book outlines",
+        "administer menu",
+        "administer nodes",
+        "create book content",
+        "create url aliases",
+        "delete any book content",
+        "delete any changenotice content",
+        "delete own book content",
+        "delete revisions",
+        "edit any book content",
+        "edit any changenotice content",
+        "edit own book content",
+        "revert revisions",
+        "use advanced search",
+        "view revisions",
+        "access administration bar",
+        "flush caches",
+        "access contextual links",
+        "use text format code"
+    ]
+}

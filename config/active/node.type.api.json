@@ -1,0 +1,33 @@
+{
+    "_config_name": "node.type.api",
+    "type": "api",
+    "name": "API",
+    "description": "A hidden node type that is only created automatically by API module.",
+    "settings": {
+        "status_default": true,
+        "promote_enabled": false,
+        "promote_default": false,
+        "sticky_enabled": false,
+        "sticky_default": false,
+        "revision_enabled": false,
+        "revision_default": false,
+        "show_submitted_info": false,
+        "comment_default": "COMMENT_NODE_CLOSED",
+        "menu_options": [
+            "main-menu"
+        ],
+        "menu_parent": "main-menu:0",
+        "node_submitted": true,
+        "node_user_picture": true,
+        "node_permissions": true,
+        "language": 0
+    },
+    "base": "api",
+    "module": "api",
+    "help": "",
+    "modified": false,
+    "disabled": false,
+    "has_title": true,
+    "title_label": "Title",
+    "orig_type": "api"
+}
