@@ -25,7 +25,7 @@ class TaxonomyWebTestCase extends BackdropWebTestCase {
   }
 
   /**
-   * Returns a new term with random properties in vocabulary $vid.
+   * Returns a new term with random properties in the given vocabulary.
    */
   function createTerm($vocabulary) {
     $term = entity_create('taxonomy_term', array(
@@ -53,7 +53,7 @@ class TaxonomyVocabularyFunctionalTest extends TaxonomyWebTestCase {
   }
 
   /**
-   * Create, edit and delete a vocabulary via the user interface.
+   * Create, configure and delete a vocabulary via the user interface.
    */
   function testVocabularyInterface() {
     // Visit the main taxonomy administration page.
@@ -69,10 +69,10 @@ class TaxonomyVocabularyFunctionalTest extends TaxonomyWebTestCase {
     $this->backdropPost(NULL, $edit, t('Save'));
     $this->assertRaw(t('Created new vocabulary %name.', array('%name' => $edit['name'])), 'Vocabulary created successfully.');
 
-    // Edit the vocabulary.
+    // Configure the vocabulary.
     $this->backdropGet('admin/structure/taxonomy');
     $this->assertText($edit['name'], 'Vocabulary found in the vocabulary overview listing.');
-    $this->clickLink(t('Edit vocabulary'));
+    $this->clickLink(t('Configure'));
     $edit = array();
     $edit['name'] = $this->randomName();
     $this->backdropPost(NULL, $edit, t('Save'));
@@ -100,6 +100,61 @@ class TaxonomyVocabularyFunctionalTest extends TaxonomyWebTestCase {
     $this->backdropGet('admin/structure/taxonomy/don_t_panic');
     $this->assertTitle(t('Don\'t Panic | @site-name', array('@site-name' => $site_name)));
     $this->assertNoTitle(t('Don&#039;t Panic | @site-name', array('@site-name' => $site_name)));
+  }
+
+  /**
+   * Tests that node types permissions are correctly set from the Node Type UI.
+   */
+  function testVocabularyPermissions() {
+    // Create admin user.
+    $admin_user = $this->backdropCreateUser(array('administer taxonomy', 'administer permissions', 'administer users', 'access user profiles'));
+    $this->backdropLogin($admin_user);
+
+    // Create new role
+    $role_name = $this->backdropCreateRole(array('access content'));
+    $web_user = $this->backdropCreateUser();
+
+    // Assign the role to a user.
+    $this->backdropPost('user/' . $web_user->uid . '/edit', array("roles[$role_name]" => $role_name), t('Save'));
+
+    // Check that the new role appears on the Vocabulary edit page.
+    $this->backdropGet('admin/structure/taxonomy/tags/configure');
+    $this->assertText($role_name, "$role_name is found on vocabulary form.");
+
+    // Check that the new role does not have a permission which wasn't granted.
+    $this->assertFieldByName($role_name . '[edit terms in tags]', 'edit terms in tags', "Role $role_name does not have edit terms in tags permission.");
+
+    // On the Vocabulary page: change permissions.
+    $edit = array(
+      $role_name . '[edit terms in tags]' => TRUE,
+    );
+    $this->backdropPost('admin/structure/taxonomy/tags/configure', $edit, t('Save'));
+
+    // Check that the permission changes are saved on the permissions page.
+    $this->backdropGet('admin/config/people/permissions');
+    $this->assertFieldByName($role_name . '[edit terms in tags]', 'edit terms in tags', "Role $role_name has edit terms in tags permission.");
+
+    // Check that the new role does not have a permission which wasn't granted.
+    $this->assertFieldByName($role_name . '[delete terms in tags]', 'delete terms in tags', "Role $role_name does not have delete terms in tags permission.");
+
+    // On the Permissions page: change permissions for the "tags" vocabulary.
+    $edit = array(
+      $role_name . '[delete terms in tags]' => TRUE,
+    );
+    $this->backdropPost('admin/config/people/permissions', $edit, t('Save permissions'));
+
+    // Check that this permission is now selected on the vocabulary page.
+    $this->backdropGet('admin/structure/taxonomy/tags/configure');
+    $this->assertFieldByName($role_name . '[delete terms in tags]', 'delete terms in tags', "Role $role_name has delete terms in tags permission.");
+
+    // Test that the permissions actually exist
+    $this->backdropLogin($web_user);
+    backdrop_static_reset('user_roles');
+    backdrop_static_reset('user_access');
+
+    $account = user_load($web_user->uid, TRUE);
+    $this->assertTrue(user_access('edit terms in tags', $account), "Web user has edit terms in tags permission.");
+    $this->assertTrue(user_access('delete terms in tags', $account), "Web user has delete terms in tags permission.");
   }
 
   /**
@@ -178,7 +233,7 @@ class TaxonomyVocabularyFunctionalTest extends TaxonomyWebTestCase {
 class TaxonomyVocabularyUnitTest extends TaxonomyWebTestCase {
   function setUp() {
     parent::setUp('taxonomy', 'field_test');
-    $admin_user = $this->backdropCreateUser(array('create article content', 'administer taxonomy'));
+    $admin_user = $this->backdropCreateUser(array('create post content', 'administer taxonomy'));
     $this->backdropLogin($admin_user);
     $this->vocabulary = $this->createVocabulary();
   }
@@ -394,14 +449,14 @@ class TaxonomyLegacyTestCase extends TaxonomyWebTestCase {
    * Test taxonomy functionality with nodes prior to 1970.
    */
   function testTaxonomyLegacyNode() {
-    // Posts an article with a taxonomy term and a date prior to 1970.
+    // Posts a post with a taxonomy term and a date prior to 1970.
     $langcode = LANGUAGE_NONE;
     $edit = array();
     $edit['title'] = $this->randomName();
     $edit['date'] = '1969-01-01 00:00:00 -0500';
     $edit["body[$langcode][0][value]"] = $this->randomName();
     $edit["field_tags[$langcode]"] = $this->randomName();
-    $this->backdropPost('node/add/article', $edit, t('Save'));
+    $this->backdropPost('node/add/post', $edit, t('Save'));
     // Checks that the node has been saved.
     $node = $this->backdropGetNodeByTitle($edit['title']);
     $this->assertEqual($node->created, strtotime($edit['date']), 'Legacy node was saved with the right date.');
@@ -436,7 +491,7 @@ class TaxonomyTermTestCase extends TaxonomyWebTestCase {
 
     $this->instance = array(
       'field_name' => 'taxonomy_' . $this->vocabulary->machine_name,
-      'bundle' => 'article',
+      'bundle' => 'post',
       'entity_type' => 'node',
       'widget' => array(
         'type' => 'options_select',
@@ -497,13 +552,13 @@ class TaxonomyTermTestCase extends TaxonomyWebTestCase {
     $term1 = $this->createTerm($this->vocabulary);
     $term2 = $this->createTerm($this->vocabulary);
 
-    // Post an article.
+    // Post a post.
     $edit = array();
     $langcode = LANGUAGE_NONE;
     $edit["title"] = $this->randomName();
     $edit["body[$langcode][0][value]"] = $this->randomName();
     $edit[$this->instance['field_name'] . '[' . $langcode . '][]'] = $term1->tid;
-    $this->backdropPost('node/add/article', $edit, t('Save'));
+    $this->backdropPost('node/add/post', $edit, t('Save'));
 
     // Check that the term is displayed when the node is viewed.
     $node = $this->backdropGetNodeByTitle($edit["title"]);
@@ -547,7 +602,7 @@ class TaxonomyTermTestCase extends TaxonomyWebTestCase {
 
     // Save, creating the terms.
     $this->backdropPost('node/add/page', $edit, t('Save'));
-    $this->assertRaw(t('@type %title has been created.', array('@type' => t('Basic page'), '%title' => $edit["title"])), 'The node was created successfully.');
+    $this->assertRaw(t('@type %title has been created.', array('@type' => t('Page'), '%title' => $edit["title"])), 'The node was created successfully.');
     foreach ($terms as $term) {
       $this->assertText($term, 'The term was saved and appears on the node page.');
     }
@@ -564,7 +619,7 @@ class TaxonomyTermTestCase extends TaxonomyWebTestCase {
     $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
     foreach ($terms as $term) {
       $this->assertText($term, 'The term was retained after edit and still appears on the node page.');
-    }    
+    }
 
     // Delete term 1 from the term edit page.
     $this->backdropPost('taxonomy/term/' . $term_objects['term1']->tid . '/edit', array(), t('Delete'));
@@ -636,7 +691,7 @@ class TaxonomyTermTestCase extends TaxonomyWebTestCase {
     // Test edit link as accessed from Taxonomy administration pages.
     // Because Simpletest creates its own database when running tests, we know
     // the first edit link found on the listing page is to our term.
-    $this->clickLink(t('Edit'), 1);
+    $this->clickLink(t('Edit'), 0);
 
     $this->assertRaw($edit['name'], 'The randomly generated term name is present.');
     $this->assertText($edit['description[value]'], 'The randomly generated term description is present.');
@@ -838,7 +893,7 @@ class TaxonomyTermTestCase extends TaxonomyWebTestCase {
 class TaxonomyRSSTestCase extends TaxonomyWebTestCase {
   function setUp() {
     parent::setUp('taxonomy');
-    $this->admin_user = $this->backdropCreateUser(array('administer taxonomy', 'bypass node access', 'administer content types'));
+    $this->admin_user = $this->backdropCreateUser(array('administer taxonomy', 'bypass node access', 'administer content types', 'administer fields', 'administer view modes'));
     $this->backdropLogin($this->admin_user);
     $this->vocabulary = $this->createVocabulary();
 
@@ -859,7 +914,7 @@ class TaxonomyRSSTestCase extends TaxonomyWebTestCase {
 
     $this->instance = array(
       'field_name' => 'taxonomy_' . $this->vocabulary->machine_name,
-      'bundle' => 'article',
+      'bundle' => 'post',
       'entity_type' => 'node',
       'widget' => array(
         'type' => 'options_select',
@@ -883,25 +938,24 @@ class TaxonomyRSSTestCase extends TaxonomyWebTestCase {
     $term1 = $this->createTerm($this->vocabulary);
 
     // RSS display must be added manually.
-    $this->backdropGet("admin/structure/types/manage/article/display");
-    $edit = array(
-      "view_modes_custom[rss]" => '1',
-    );
-    $this->backdropPost(NULL, $edit, t('Save'));
+    $this->backdropGet("admin/structure/types/manage/post/display");
+    list($enable_link) = $this->xpath('//tr[contains(@class, "view-mode--rss")]//a');
+    $enable_href_parts = backdrop_parse_url($enable_link['href']);
+    $this->backdropGet($enable_href_parts['path'], $enable_href_parts);
 
     // Change the format to 'RSS category'.
-    $this->backdropGet("admin/structure/types/manage/article/display/rss");
+    $this->backdropGet("admin/structure/types/manage/post/display/rss");
     $edit = array(
       "fields[taxonomy_" . $this->vocabulary->machine_name . "][type]" => 'taxonomy_term_reference_rss_category',
     );
     $this->backdropPost(NULL, $edit, t('Save'));
 
-    // Post an article.
+    // Post a post.
     $edit = array();
     $langcode = LANGUAGE_NONE;
     $edit["title"] = $this->randomName();
     $edit[$this->instance['field_name'] . '[' . $langcode . '][]'] = $term1->tid;
-    $this->backdropPost('node/add/article', $edit, t('Save'));
+    $this->backdropPost('node/add/post', $edit, t('Save'));
 
     // Check that the term is displayed when the RSS feed is viewed.
     $this->backdropGet('rss.xml');
@@ -928,7 +982,7 @@ class TaxonomyTermIndexTestCase extends TaxonomyWebTestCase {
     $this->admin_user = $this->backdropCreateUser(array('administer taxonomy', 'bypass node access'));
     $this->backdropLogin($this->admin_user);
 
-    // Create a vocabulary and add two term reference fields to article nodes.
+    // Create a vocabulary and add two term reference fields to post nodes.
     $this->vocabulary = $this->createVocabulary();
 
     $this->field_name_1 = backdrop_strtolower($this->randomName());
@@ -948,7 +1002,7 @@ class TaxonomyTermIndexTestCase extends TaxonomyWebTestCase {
     field_create_field($this->field_1);
     $this->instance_1 = array(
       'field_name' => $this->field_name_1,
-      'bundle' => 'article',
+      'bundle' => 'post',
       'entity_type' => 'node',
       'widget' => array(
         'type' => 'options_select',
@@ -978,7 +1032,7 @@ class TaxonomyTermIndexTestCase extends TaxonomyWebTestCase {
     field_create_field($this->field_2);
     $this->instance_2 = array(
       'field_name' => $this->field_name_2,
-      'bundle' => 'article',
+      'bundle' => 'post',
       'entity_type' => 'node',
       'widget' => array(
         'type' => 'options_select',
@@ -1000,14 +1054,14 @@ class TaxonomyTermIndexTestCase extends TaxonomyWebTestCase {
     $term_1 = $this->createTerm($this->vocabulary);
     $term_2 = $this->createTerm($this->vocabulary);
 
-    // Post an article.
+    // Post a post.
     $edit = array();
     $langcode = LANGUAGE_NONE;
     $edit["title"] = $this->randomName();
     $edit["body[$langcode][0][value]"] = $this->randomName();
     $edit["{$this->field_name_1}[$langcode][]"] = $term_1->tid;
     $edit["{$this->field_name_2}[$langcode][]"] = $term_1->tid;
-    $this->backdropPost('node/add/article', $edit, t('Save'));
+    $this->backdropPost('node/add/post', $edit, t('Save'));
 
     // Check that the term is indexed, and only once.
     $node = $this->backdropGetNodeByTitle($edit["title"]);
@@ -1017,7 +1071,7 @@ class TaxonomyTermIndexTestCase extends TaxonomyWebTestCase {
     ))->fetchField();
     $this->assertEqual(1, $index_count, 'Term 1 is indexed once.');
 
-    // Update the article to change one term.
+    // Update the post to change one term.
     $edit["{$this->field_name_1}[$langcode][]"] = $term_2->tid;
     $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
 
@@ -1033,7 +1087,7 @@ class TaxonomyTermIndexTestCase extends TaxonomyWebTestCase {
     ))->fetchField();
     $this->assertEqual(1, $index_count, 'Term 2 is indexed.');
 
-    // Update the article to change another term.
+    // Update the post to change another term.
     $edit["{$this->field_name_2}[$langcode][]"] = $term_2->tid;
     $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
 
@@ -1054,7 +1108,7 @@ class TaxonomyTermIndexTestCase extends TaxonomyWebTestCase {
     unset($node->{$this->field_name_1});
     unset($node->{$this->field_name_2});
 
-    // Update the article with no term changed.
+    // Update the post with no term changed.
     $node->save();
 
     // Check that the index was not changed.
@@ -1069,7 +1123,7 @@ class TaxonomyTermIndexTestCase extends TaxonomyWebTestCase {
     ))->fetchField();
     $this->assertEqual(1, $index_count, 'Term 2 is indexed once.');
 
-    // Update the article to change one term.
+    // Update the post to change one term.
     $node->{$this->field_name_1}[$langcode] = array(array('tid' => $term_1->tid));
     $node->save();
 
@@ -1085,7 +1139,7 @@ class TaxonomyTermIndexTestCase extends TaxonomyWebTestCase {
     ))->fetchField();
     $this->assertEqual(1, $index_count, 'Term 2 is indexed.');
 
-    // Update the article to change another term.
+    // Update the post to change another term.
     $node->{$this->field_name_2}[$langcode] = array(array('tid' => $term_1->tid));
     $node->save();
 
@@ -1153,7 +1207,7 @@ class TaxonomyLoadMultipleUnitTest extends TaxonomyWebTestCase {
     $this->assertEqual($count, count($terms2), 'Five terms were loaded by tid.');
     $this->assertEqual($terms, $terms2, 'Both arrays contain the same terms.');
 
-    // Load the terms by tid, with a condition on vid.
+    // Load the terms by tid, with a condition on machine name.
     $terms3 = taxonomy_term_load_multiple(array_keys($terms2), array('vocabulary' => $vocabulary->machine_name));
     $this->assertEqual($terms2, $terms3, 'Same terms found when limiting load to vocabulary.');
 
@@ -1483,7 +1537,7 @@ class TaxonomyTokenReplaceTestCase extends TaxonomyWebTestCase {
 
     $this->instance = array(
       'field_name' => 'taxonomy_' . $this->vocabulary->machine_name,
-      'bundle' => 'article',
+      'bundle' => 'post',
       'entity_type' => 'node',
       'widget' => array(
         'type' => 'options_select',
@@ -1515,7 +1569,7 @@ class TaxonomyTokenReplaceTestCase extends TaxonomyWebTestCase {
 
     // Create node with term2.
     $edit = array();
-    $node = $this->backdropCreateNode(array('type' => 'article'));
+    $node = $this->backdropCreateNode(array('type' => 'post'));
     $edit[$this->instance['field_name'] . '[' . $this->langcode . '][]'] = $term2->tid;
     $this->backdropPost('node/' . $node->nid . '/edit', $edit, t('Save'));
 
@@ -1596,8 +1650,10 @@ class TaxonomyTokenReplaceTestCase extends TaxonomyWebTestCase {
  * Tests for verifying that taxonomy pages use the correct theme.
  */
 class TaxonomyThemeTestCase extends TaxonomyWebTestCase {
+  protected $profile = 'testing';
+
   function setUp() {
-    parent::setUp();
+    parent::setUp('taxonomy');
 
     // Make sure we are using distinct default and administrative themes for
     // the duration of these tests.
@@ -1674,4 +1730,106 @@ class TaxonomyEFQTestCase extends TaxonomyWebTestCase {
     asort($result);
     $this->assertEqual(array_keys($terms2), array_keys($result), format_string('Taxonomy terms from the %name vocabulary were retrieved by EntityFieldQuery.', array('%name' => $vocabulary2->name)));
   }
+}
+
+/**
+ * Tests that appropriate query tags are added.
+ */
+class TaxonomyQueryAlterTestCase extends TaxonomyWebTestCase {
+  public function setUp() {
+    parent::setUp('taxonomy_test');
+  }
+
+  /**
+   * Tests that appropriate tags are added when querying the database.
+   */
+  public function testTaxonomyQueryAlter() {
+    // Create a new vocabulary and add a few terms to it.
+    $vocabulary = $this->createVocabulary();
+    $terms = array();
+    for ($i = 0; $i < 5; $i++) {
+      $terms[$i] = $this->createTerm($vocabulary);
+    }
+
+    // Set up hierarchy. Term 2 is a child of 1.
+    $terms[2]->parent = array($terms[1]->tid);
+    taxonomy_term_save($terms[2]);
+
+    $this->setupQueryTagTestHooks();
+    $loaded_term = taxonomy_term_load($terms[0]->tid);
+    $this->assertEqual($loaded_term->tid, $terms[0]->tid, 'First term was loaded');
+    $this->assertQueryTagTestResult(1, 'taxonomy_term_load()');
+
+    $this->setupQueryTagTestHooks();
+    $loaded_terms = taxonomy_get_tree($vocabulary->machine_name);
+    $this->assertEqual(count($loaded_terms), count($terms), 'All terms were loaded');
+    $this->assertQueryTagTestResult(1, 'taxonomy_get_tree()');
+
+    $this->setupQueryTagTestHooks();
+    $loaded_terms = taxonomy_term_load_parents($terms[2]->tid);
+    $this->assertEqual(count($loaded_terms), 1, 'All parent terms were loaded');
+    $this->assertQueryTagTestResult(2, 'taxonomy_term_load_parents()');
+
+    $this->setupQueryTagTestHooks();
+    $loaded_terms = taxonomy_term_load_children($terms[1]->tid);
+    $this->assertEqual(count($loaded_terms), 1, 'All child terms were loaded');
+    $this->assertQueryTagTestResult(2, 'taxonomy_term_load_children()');
+
+    $this->setupQueryTagTestHooks();
+    $query = db_select('taxonomy_term_data', 't');
+    $query->addField('t', 'tid');
+    $query->addTag('taxonomy_term_access');
+    $tids = $query->execute()->fetchCol();
+    $this->assertEqual(count($tids), count($terms), 'All term IDs were retrieved');
+    $this->assertQueryTagTestResult(1, 'custom db_select() with taxonomy_term_access tag (preferred)');
+
+    $this->setupQueryTagTestHooks();
+    $query = db_select('taxonomy_term_data', 't');
+    $query->addField('t', 'tid');
+    $query->addTag('term_access');
+    $tids = $query->execute()->fetchCol();
+    $this->assertEqual(count($tids), count($terms), 'All term IDs were retrieved');
+    $this->assertQueryTagTestResult(1, 'custom db_select() with term_access tag (deprecated)');
+
+    $this->setupQueryTagTestHooks();
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'taxonomy_term');
+    $query->addTag('taxonomy_term_access');
+    $result = $query->execute();
+    $this->assertEqual(count($result['taxonomy_term']), count($terms), 'All term IDs were retrieved');
+    $this->assertQueryTagTestResult(1, 'custom EntityFieldQuery with taxonomy_term_access tag (preferred)');
+
+    $this->setupQueryTagTestHooks();
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'taxonomy_term');
+    $query->addTag('term_access');
+    $result = $query->execute();
+    $this->assertEqual(count($result['taxonomy_term']), count($terms), 'All term IDs were retrieved');
+    $this->assertQueryTagTestResult(1, 'custom EntityFieldQuery with term_access tag (deprecated)');
+  }
+
+  /**
+   * Sets up the hooks in the test module.
+   */
+  protected function setupQueryTagTestHooks() {
+    taxonomy_terms_static_reset();
+    state_set('taxonomy_test_query_alter', 0);
+    state_set('taxonomy_test_query_term_access_alter', 0);
+    state_set('taxonomy_test_query_taxonomy_term_access_alter', 0);
+  }
+
+  /**
+   * Verifies invocation of the hooks in the test module.
+   *
+   * @param int $expected_invocations
+   *   The number of times the hooks are expected to have been invoked.
+   * @param string $method
+   *   A string describing the invoked function which generated the query.
+   */
+  protected function assertQueryTagTestResult($expected_invocations, $method) {
+    $this->assertIdentical($expected_invocations, state_get('taxonomy_test_query_alter'), 'hook_query_alter() invoked when executing ' . $method);
+    $this->assertIdentical($expected_invocations, state_get('taxonomy_test_query_term_access_alter'), 'Deprecated hook_query_term_access_alter() invoked when executing ' . $method);
+    $this->assertIdentical($expected_invocations, state_get('taxonomy_test_query_taxonomy_term_access_alter'), 'Preferred hook_query_taxonomy_term_access_alter() invoked when executing ' . $method);
+  }
+
 }

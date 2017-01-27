@@ -82,7 +82,7 @@ class TokenReplaceTestCase extends BackdropWebTestCase {
     // Check if the token is recognized in each of the contexts.
     foreach ($tests as $test) {
       $input = $test['prefix'] . '[site:name]' . $test['suffix'];
-      $expected = $test['prefix'] . 'Backdrop' . $test['suffix'];
+      $expected = $test['prefix'] . 'Backdrop CMS' . $test['suffix'];
       $output = token_replace($input, array(), array('language' => $language));
       $this->assertTrue($output == $expected, format_string('Token recognized in string %string', array('%string' => $input)));
     }
@@ -456,20 +456,22 @@ class TokenNodeTestCase extends TokenTestHelper {
   protected $profile = 'standard';
 
   function testNodeTokens() {
-    $admin_user = $this->backdropCreateUser(array('create article content', 'create url aliases'));
+    $admin_user = $this->backdropCreateUser(array('create post content', 'create url aliases'));
     $this->backdropLogin($admin_user);
 
     $files = $this->backdropGetTestFiles('image');
     $file = new File((array) $files[0]);
+    $file->uid = $admin_user->uid;
     $file->save();
     $node_title = $this->randomName();
     $node_edit = array(
       'title' => $node_title,
+      'path[auto]' => FALSE,
       'path[alias]' => 'content/source-node',
       'field_tags[und]' => 'foo, bar',
       'field_image[und][0][fid]' => $file->fid,
     );
-    $this->backdropPost('node/add/article', $node_edit, t('Save'));
+    $this->backdropPost('node/add/post', $node_edit, t('Save'));
     $source_node = $this->backdropGetNodeByTitle($node_title);
 
     $tokens = array(
@@ -480,45 +482,45 @@ class TokenNodeTestCase extends TokenTestHelper {
       'url:absolute' => url("node/{$source_node->nid}", array('absolute' => TRUE)),
       'url:relative' => url("node/{$source_node->nid}", array('absolute' => FALSE)),
       'url:unaliased:path' => "node/{$source_node->nid}",
-      'content-type' => 'Article',
-      'content-type:name' => 'Article',
-      'content-type:machine-name' => 'article',
-      'content-type:description' => "Use <em>articles</em> for time-sensitive content like news, press releases or blog posts.",
-      'content-type:node-count' => 1,
-      'content-type:edit-url' => url('admin/structure/types/manage/article', array('absolute' => TRUE)),
+      'content-type' => 'Post',
+      'content-type:name' => 'Post',
+      'content-type:machine-name' => 'post',
+      'content-type:description' => "Add a blog post, news article, or press release.",
+      'content-type:node-count' => 2,
+      'content-type:edit-url' => url('admin/structure/types/manage/post', array('absolute' => TRUE)),
       'field_image' => file_create_url($file->uri),
       'field_tags' => 'foo, bar',
       // Deprecated tokens.
       //'tnid' => 0,
-      'type' => 'article',
-      'type-name' => 'Article',
+      'type' => 'post',
+      'type-name' => 'Post',
       'url:alias' => 'content/source-node',
     );
     $this->assertTokens('node', array('node' => $source_node), $tokens);
 
     $translated_node = $this->backdropCreateNode(array(
       'tnid' => $source_node->nid,
-      'type' => 'article',
+      'type' => 'post',
     ));
     $tokens = array(
       'source' => $source_node->title,
       'source:nid' => $source_node->nid,
       'log' => '',
-      'url:path' => "node/{$translated_node->nid}",
+      'url:path' => $translated_node->path['alias'],
       'url:absolute' => url("node/{$translated_node->nid}", array('absolute' => TRUE)),
       'url:relative' => url("node/{$translated_node->nid}", array('absolute' => FALSE)),
       'url:unaliased:path' => "node/{$translated_node->nid}",
-      'content-type' => 'Article',
-      'content-type:name' => 'Article',
-      'content-type:machine-name' => 'article',
-      'content-type:description' => "Use <em>articles</em> for time-sensitive content like news, press releases or blog posts.",
-      'content-type:node-count' => 2,
-      'content-type:edit-url' => url('admin/structure/types/manage/article', array('absolute' => TRUE)),
+      'content-type' => 'Post',
+      'content-type:name' => 'Post',
+      'content-type:machine-name' => 'post',
+      'content-type:description' => "Add a blog post, news article, or press release.",
+      'content-type:node-count' => 3,
+      'content-type:edit-url' => url('admin/structure/types/manage/post', array('absolute' => TRUE)),
       // Deprecated tokens.
-      'type' => 'article',
-      'type-name' => 'Article',
+      'type' => 'post',
+      'type-name' => 'Post',
       'tnid' => $source_node->nid,
-      'url:alias' => "node/{$translated_node->nid}",
+      'url:alias' => $translated_node->path['alias'],
     );
     $this->assertTokens('node', array('node' => $translated_node), $tokens);
   }
@@ -541,30 +543,30 @@ class TokenMenuTestCase extends TokenTestHelper {
     menu_link_save($root_link);
 
     // Add another link with the root link as the parent
-    $parent_link = array(
+    $child_link = array(
       'link_path' => 'root/parent',
       'link_title' => 'Parent link',
       'menu_name' => 'main-menu',
       'plid' => $root_link['mlid'],
     );
-    menu_link_save($parent_link);
+    menu_link_save($child_link);
 
     // Test menu link tokens.
     $tokens = array(
-      'mlid' => $parent_link['mlid'],
+      'mlid' => $child_link['mlid'],
       'title' => 'Parent link',
       'menu' => 'Primary navigation',
       'menu:name' => 'Primary navigation',
       'menu:machine-name' => 'main-menu',
       'menu:description' => 'The <em>Primary navigation</em> menu is used on many sites to show the major sections of the site, often in a top navigation bar.',
-      'menu:menu-link-count' => 10,
+      'menu:menu-link-count' => 2,
       'menu:edit-url' => url("admin/structure/menu/manage/main-menu", array('absolute' => TRUE)),
       'url' => url('root/parent', array('absolute' => TRUE)),
       'url:absolute' => url('root/parent', array('absolute' => TRUE)),
       'url:relative' => url('root/parent', array('absolute' => FALSE)),
       'url:path' => 'root/parent',
       'url:alias' => 'root/parent',
-      'edit-url' => url("admin/structure/menu/item/{$parent_link['mlid']}/edit", array('absolute' => TRUE)),
+      'edit-url' => url("admin/structure/menu/item/{$child_link['mlid']}/edit", array('absolute' => TRUE)),
       'parent' => 'Root link',
       'parent:mlid' => $root_link['mlid'],
       'parent:title' => 'Root link',
@@ -578,13 +580,13 @@ class TokenMenuTestCase extends TokenTestHelper {
       'root:parent' => NULL,
       'root:root' => NULL,
     );
-    $this->assertTokens('menu-link', array('menu-link' => $parent_link), $tokens);
+    $this->assertTokens('menu-link', array('menu-link' => $child_link), $tokens);
 
     // Add a node menu link
     $node_link = array(
       'enabled' => TRUE,
       'link_title' => 'Node link',
-      'plid' => $parent_link['mlid'],
+      'plid' => $child_link['mlid'],
       'customized' => 0,
       'description' => '',
     );
@@ -597,14 +599,14 @@ class TokenMenuTestCase extends TokenTestHelper {
       'menu-link:title' => 'Node link',
       'menu-link:menu' => 'Primary navigation',
       'menu-link:url' => url('node/' . $node->nid, array('absolute' => TRUE)),
-      'menu-link:url:path' => 'node/' . $node->nid,
+      'menu-link:url:path' => $node->path['alias'],
       'menu-link:edit-url' => url("admin/structure/menu/item/{$node->menu['mlid']}/edit", array('absolute' => TRUE)),
       'menu-link:parent' => 'Parent link',
       'menu-link:parent:mlid' => $node->menu['plid'],
-      'menu-link:parent:mlid' => $parent_link['mlid'],
+      'menu-link:parent:mlid' => $child_link['mlid'],
       'menu-link:parents' => 'Root link, Parent link',
       'menu-link:parents:count' => 2,
-      'menu-link:parents:keys' => $root_link['mlid'] . ', ' . $parent_link['mlid'],
+      'menu-link:parents:keys' => $root_link['mlid'] . ', ' . $child_link['mlid'],
       'menu-link:root' => 'Root link',
       'menu-link:root:mlid' => $root_link['mlid'],
     );
@@ -700,7 +702,7 @@ class TokenTaxonomyTestCase extends TokenTestHelper {
   function addVocabulary(array $vocabulary = array()) {
     $vocabulary += array(
       'name' => backdrop_strtolower($this->randomName(5)),
-      'nodes' => array('article' => 'article'),
+      'nodes' => array('post' => 'post'),
     );
     $vocabulary = new TaxonomyVocabulary($vocabulary);
     taxonomy_vocabulary_save($vocabulary);
@@ -856,20 +858,20 @@ class TokenCurrentPageTestCase extends TokenTestHelper {
 
   function testCurrentPageTokens() {
     $tokens = array(
-      '[current-page:title]' => t('Welcome to @site-name', array('@site-name' => config_get('system.core', 'site_name'))),
-      '[current-page:url]' => url('node', array('absolute' => TRUE)),
-      '[current-page:url:absolute]' => url('node', array('absolute' => TRUE)),
-      '[current-page:url:relative]' => url('node', array('absolute' => FALSE)),
-      '[current-page:url:path]' => 'node',
-      '[current-page:url:args:value:0]' => 'node',
+      '[current-page:title]' => t('Home', array('@site-name' => config_get('system.core', 'site_name'))),
+      '[current-page:url]' => url('home', array('absolute' => TRUE)),
+      '[current-page:url:absolute]' => url('home', array('absolute' => TRUE)),
+      '[current-page:url:relative]' => url('home', array('absolute' => FALSE)),
+      '[current-page:url:path]' => 'home',
+      '[current-page:url:args:value:0]' => 'home',
       '[current-page:url:args:value:1]' => NULL,
-      '[current-page:url:unaliased]' => url('node', array('absolute' => TRUE, 'alias' => TRUE)),
+      '[current-page:url:unaliased]' => url('home', array('absolute' => TRUE, 'alias' => TRUE)),
       '[current-page:page-number]' => 1,
       '[current-page:query:foo]' => NULL,
       '[current-page:query:bar]' => NULL,
-      '[current-page:query:q]' => 'node',
+      '[current-page:query:q]' => 'home',
       // Deprecated tokens
-      '[current-page:arg:0]' => 'node',
+      '[current-page:arg:0]' => 'home',
       '[current-page:arg:1]' => NULL,
     );
     $this->assertPageTokens('', $tokens);
@@ -896,10 +898,10 @@ class TokenCurrentPageTestCase extends TokenTestHelper {
       '[current-page:page-number]' => 1,
       '[current-page:query:foo]' => 'bar',
       '[current-page:query:bar]' => NULL,
-      '[current-page:query:q]' => 'node/1',
+      '[current-page:query:q]' => 'node/3',
       // Deprecated tokens
       '[current-page:arg:0]' => 'node',
-      '[current-page:arg:1]' => 1,
+      '[current-page:arg:1]' => 3,
       '[current-page:arg:2]' => NULL,
     );
     $this->assertPageTokens("node/{$node->nid}", $tokens, array(), array('url_options' => array('query' => array('foo' => 'bar'))));

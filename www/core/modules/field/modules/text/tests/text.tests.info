@@ -15,3 +15,8 @@ name = Text translation
 description = Check if the text field is correctly prepared for translation.
 group = Field types
 file = text.test
+
+; Added by Backdrop CMS packaging script on 2017-01-15
+project = backdrop
+version = 1.6.0
+timestamp = 1484537173

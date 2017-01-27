@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Functions that need to be loaded on every Backdrop request.
@@ -8,7 +7,7 @@
 /**
  * The current system version.
  */
-define('BACKDROP_VERSION', '1.1.3');
+define('BACKDROP_VERSION', '1.6.0');
 
 /**
  * Core API compatibility.
@@ -111,6 +110,11 @@ define('WATCHDOG_INFO', 6);
  * Log message severity -- Debug-level messages.
  */
 define('WATCHDOG_DEBUG', 7);
+
+/**
+ * Log message severity -- Deprecated function / feature notices.
+ */
+define('WATCHDOG_DEPRECATED', 8);
 
 /**
  * @} End of "defgroup logging_severity_levels".
@@ -252,7 +256,7 @@ define('BACKDROP_PHP_FUNCTION_PATTERN', '[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]
 
 // Exit early if running an incompatible PHP version to avoid fatal errors.
 if (version_compare(PHP_VERSION, BACKDROP_MINIMUM_PHP) < 0) {
-  print 'Your PHP installation is too old. Backdrop CMS requires at least PHP 5.3.2. See the <a href="http://backdropcms.org/guide/requirements">system requirements</a> page for more information.';
+  print 'Your PHP installation is too old. Backdrop CMS requires at least PHP 5.3.2. See the <a href="https://backdropcms.org/requirements">System Requirements</a> page for more information.';
   exit;
 }
 
@@ -764,7 +768,7 @@ function backdrop_settings_initialize() {
     require_once $conf_path . '/settings.php';
   }
   if (!empty($settings['backdrop_drupal_compatibility'])) {
-    require_once './core/includes/drupal.inc';
+    require_once BACKDROP_ROOT . '/core/includes/drupal.inc';
   }
 
   // Convert simplified database settings into the full databases array.
@@ -810,6 +814,13 @@ function backdrop_settings_initialize() {
         }
       }
     }
+  }
+
+  // Pull in the database charset option if specified. This removes the need
+  // to use the long-form array and allows enabling ut8mb4 support even if the
+  // server provided options via $_SERVER['BACKDROP_SETTINGS'].
+  if (isset($database_charset) && isset($databases['default']['default']) && !isset($databases['default']['default']['charset'])) {
+    $databases['default']['default']['charset'] = $database_charset;
   }
 
   if (isset($base_url)) {
@@ -896,20 +907,20 @@ function backdrop_settings_initialize() {
  * The filename, whether provided, cached, or retrieved from the database, is
  * only returned if the file exists.
  *
- * This function plays a key role in allowing Backdrop's resources (modules
- * and themes) to be located in different places depending on a site's
+ * This function plays a key role in allowing Backdrop's resources (modules,
+ * layouts, and themes) to be located in different places depending on a site's
  * configuration. For example, a module 'foo' may legally be located
  * in any of these three places:
  *
+ * core/modules/foo/foo.module
  * modules/foo/foo.module
- * /modules/foo/foo.module
  * sites/example.com/modules/foo/foo.module
  *
  * Calling backdrop_get_filename('module', 'foo') will give you one of
  * the above, depending on where the module is located.
  *
  * @param $type
- *   The type of the item (theme, theme_engine, module, profile).
+ *   The type of the item (theme, layout, theme_engine, module, profile).
  * @param $name
  *   The name of the item for which the filename is requested.
  * @param $filename
@@ -937,7 +948,7 @@ function backdrop_get_filename($type, $name, $filename = NULL) {
     $files[$type][$name] = $filename;
   }
   elseif (isset($files[$type][$name])) {
-    // nothing
+    // The file is in the database but does not exist on the disk.
   }
   // Verify that we have an active database connection, before querying
   // the database. This is required because this function is called both
@@ -945,7 +956,15 @@ function backdrop_get_filename($type, $name, $filename = NULL) {
   // when a database connection fails.
   else {
     try {
-      if (function_exists('db_query')) {
+      // Layouts we use the existing registry rather than the system table.
+      if ($type === 'layout' && function_exists('layout_get_layout_template_info')) {
+        $layout_info = layout_get_layout_template_info($name);
+        if ($layout_info) {
+          $files[$type][$name] = $layout_info['path'] . '/' . $layout_info['name'] . '.info';
+        }
+      }
+      // Modules, themes, and profiles pull from the system table.
+      elseif (function_exists('db_query')) {
         $file = db_query("SELECT filename FROM {system} WHERE name = :name AND type = :type", array(':name' => $name, ':type' => $type))->fetchField();
         if ($file && file_exists(BACKDROP_ROOT . '/' . $file)) {
           $files[$type][$name] = $file;
@@ -957,6 +976,7 @@ function backdrop_get_filename($type, $name, $filename = NULL) {
       // or the database might be down. We have a fallback for this case so we
       // hide the error completely.
     }
+
     // Fallback to searching the filesystem if the database could not find the
     // file or the file returned by the database is not found.
     if (!isset($files[$type][$name])) {
@@ -966,7 +986,7 @@ function backdrop_get_filename($type, $name, $filename = NULL) {
         $dir = 'themes/engines';
         $extension = 'engine';
       }
-      elseif ($type == 'theme') {
+      elseif ($type === 'theme' || $type === 'layout') {
         $extension = 'info';
       }
       else {
@@ -990,9 +1010,7 @@ function backdrop_get_filename($type, $name, $filename = NULL) {
     }
   }
 
-  if (isset($files[$type][$name])) {
-    return $files[$type][$name];
-  }
+  return isset($files[$type][$name]) ? $files[$type][$name] : NULL;
 }
 
 /**
@@ -1005,6 +1023,9 @@ function backdrop_get_filename($type, $name, $filename = NULL) {
  * @deprecated since 1.0
  */
 function variable_initialize($conf = array()) {
+  // watchdog_deprecated_function() is not called here even though this function
+  // is deprecated because this function is *always* called during bootstrap.
+
   // NOTE: caching the variables improves performance by 20% when serving
   // cached pages.
   if ($cached = cache('bootstrap')->get('variables')) {
@@ -1089,6 +1110,7 @@ function settings_get($name, $default = NULL) {
 function variable_get($name, $default = NULL) {
   global $conf;
 
+  watchdog_deprecated_function('bootstrap', __FUNCTION__);
   return isset($conf[$name]) ? $conf[$name] : $default;
 }
 
@@ -1122,6 +1144,8 @@ function variable_get($name, $default = NULL) {
 function variable_set($name, $value) {
   global $conf;
 
+  watchdog_deprecated_function('bootstrap', __FUNCTION__);
+
   db_merge('variable')->key(array('name' => $name))->fields(array('value' => serialize($value)))->execute();
 
   cache('bootstrap')->delete('variables');
@@ -1146,6 +1170,8 @@ function variable_set($name, $value) {
  */
 function variable_del($name) {
   global $conf;
+
+  watchdog_deprecated_function('bootstrap', __FUNCTION__);
 
   db_delete('variable')
     ->condition('name', $name)
@@ -1270,35 +1296,58 @@ function state_del($name) {
  * from a form submission, the contents of a shopping cart, or other user-
  * specific content that should not be cached and displayed to other users.
  *
- * @param $check_only
- *   (optional) Set to TRUE to only return whether a previous call found a
- *   cache entry.
+ * @param bool $check_only
+ *   Set to TRUE to only return whether a previous call found a cache entry.
+ * @param bool $return_stale
+ *   If background fetch is enabled, page cache entries are stored for longer
+ *   period of time than the page cache maximum age. This allows stale entries
+ *   to be served while generating new cache entries. If set to TRUE, then
+ *   these stale cache entries will be returned. If left at the default of
+ *   FALSE, only cache entries within the maximum cache lifetime will be
+ *   returned.
  *
- * @return
+ * @return stdClass|NULL
  *   The cache object, if the page was found in the cache, NULL otherwise.
  */
-function backdrop_page_get_cache($check_only = FALSE) {
+function backdrop_page_get_cache($check_only = FALSE, $return_stale = FALSE) {
   global $base_root;
-  static $cache_hit = FALSE;
+  static $cache_hit = array();
 
-  if ($check_only) {
-    return $cache_hit;
+  // Keep two separate cache entries for an expired or non-expired hit.
+  $cache_type = $return_stale ? 'stale' : 'fresh';
+  if (!isset($cache_hit[$cache_type])) {
+    $cache_hit[$cache_type] = FALSE;
   }
 
+  // Return any previous value on checks only.
+  if ($check_only) {
+    return $cache_hit[$cache_type];
+  }
+
+  $cache = NULL;
   if (backdrop_page_is_cacheable()) {
     $cache = cache('page')->get($base_root . request_uri());
-    if ($cache !== FALSE && $cache->expire >= REQUEST_TIME) {
-      $cache_hit = TRUE;
-      return $cache;
+    if ($cache !== FALSE) {
+      $cache_lifetime = config_get('system.core', 'page_cache_maximum_age');
+      $cache_valid = $cache->created + $cache_lifetime >= REQUEST_TIME;
+      // Return the cache entry if not expired or if an expired entry is okay.
+      if ($cache_valid || $return_stale) {
+        $cache_hit[$cache_type] = TRUE;
+      }
+      else {
+        $cache_hit[$cache_type] = FALSE;
+        $cache = NULL;
+      }
     }
   }
+  return $cache;
 }
 
 /**
  * Determines the cacheability of the current page.
  *
  * @param $allow_caching
- *   Set to FALSE if you want to prevent this page to get cached.
+ *   Set to FALSE if you want to prevent this page from being cached.
  *
  * @return
  *   TRUE if the current page can be cached, FALSE otherwise.
@@ -1309,8 +1358,7 @@ function backdrop_page_is_cacheable($allow_caching = NULL) {
     $allow_caching_static = $allow_caching;
   }
 
-  return $allow_caching_static && ($_SERVER['REQUEST_METHOD'] == 'GET' || $_SERVER['REQUEST_METHOD'] == 'HEAD')
-    && !backdrop_is_cli();
+  return $allow_caching_static && ($_SERVER['REQUEST_METHOD'] == 'GET' || $_SERVER['REQUEST_METHOD'] == 'HEAD') && !backdrop_is_cli();
 }
 
 /**
@@ -1432,14 +1480,21 @@ function backdrop_get_http_header($name = NULL) {
  *
  * Header names are case-insensitive, but for maximum compatibility they should
  * follow "common form" (see RFC 2617, section 4.2).
+ *
+ * @param string $name
+ *   Optional. A header name with the preferred capitalization, e.g.
+ *   Cache-Control or Content-Type.
+ * @return
+ *   The array of all current preferred header names. Keyed by a lower-case
+ *   string of each header name.
  */
 function _backdrop_set_preferred_header_name($name = NULL) {
   static $header_names = array();
 
-  if (!isset($name)) {
-    return $header_names;
+  if (isset($name)) {
+    $header_names[strtolower($name)] = $name;
   }
-  $header_names[strtolower($name)] = $name;
+  return $header_names;
 }
 
 /**
@@ -1455,6 +1510,12 @@ function _backdrop_set_preferred_header_name($name = NULL) {
  *   specified headers.
  */
 function backdrop_send_headers($default_headers = array(), $only_default = FALSE) {
+  // If we are in background mode, we are unable to send headers because the
+  // request has already been delivered back to the client.
+  if (backdrop_is_background()) {
+    return;
+  }
+
   $headers_sent = &backdrop_static(__FUNCTION__, FALSE);
   $headers = backdrop_get_http_header();
   if ($only_default && $headers_sent) {
@@ -1506,22 +1567,44 @@ function backdrop_send_headers($default_headers = array(), $only_default = FALSE
  * the client think that the anonymous and authenticated pageviews are
  * identical.
  *
- * @see backdrop_page_set_cache()
+ * @return bool
+ *   TRUE if the headers were sent. FALSE if the headers have already been sent
+ *   and may not be sent again.
+ *
+ * @see backdrop_page_create_cache()
+ * @see backdrop_page_save_cache()
  */
 function backdrop_page_header() {
   $headers_sent = &backdrop_static(__FUNCTION__, FALSE);
   if ($headers_sent) {
-    return TRUE;
+    return FALSE;
   }
   $headers_sent = TRUE;
 
   $default_headers = array(
     'Expires' => 'Sun, 19 Nov 1978 05:00:00 GMT',
     'Last-Modified' => gmdate(DATE_RFC1123, REQUEST_TIME),
-    'Cache-Control' => 'no-cache, must-revalidate, post-check=0, pre-check=0',
+    'Cache-Control' => 'no-cache, must-revalidate',
+    'X-Content-Type-Options' => 'nosniff',
     'ETag' => '"' . REQUEST_TIME . '"',
   );
   backdrop_send_headers($default_headers);
+  return TRUE;
+}
+
+/**
+ * Set headers for content-length and content-range.
+ *
+ * These headers allow the browser to deliver the page to the user without
+ * waiting for PHP to finish execution.
+ */
+function backdrop_set_length_headers($content_length) {
+  // Set the total content length.
+  backdrop_add_http_header('Content-Length', $content_length);
+
+  // If using chunked content (enabled with Apache mod_deflate), then specifying
+  // the content range is required. This delivers the entire page in one chunk.
+  backdrop_add_http_header('Content-Range', '0-' . ($content_length - 1) . '/' . $content_length);
 }
 
 /**
@@ -1536,6 +1619,8 @@ function backdrop_page_header() {
  * response is sent.
  */
 function backdrop_serve_page_from_cache(stdClass $cache) {
+  $page_content = $cache->data['body'];
+
   // Negotiate whether to use compression.
   $page_compression = !empty($cache->data['page_compressed']);
   $return_compressed = $page_compression && isset($_SERVER['HTTP_ACCEPT_ENCODING']) && strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== FALSE;
@@ -1567,7 +1652,7 @@ function backdrop_serve_page_from_cache(stdClass $cache) {
   $default_headers['Cache-Control'] = 'public, max-age=' . $max_age;
 
   // Entity tag should change if the output changes.
-  $etag = '"' . $cache->created . '-' . intval($return_compressed) . '"';
+  $etag = $cache->created . ($return_compressed ? '-gzip' : '');
   header('Etag: ' . $etag);
 
   // See if the client has provided the required HTTP headers.
@@ -1619,12 +1704,24 @@ function backdrop_serve_page_from_cache(stdClass $cache) {
     else {
       // The client does not support compression, so unzip the data in the
       // cache. Strip the gzip header and run uncompress.
-      $cache->data['body'] = gzinflate(substr(substr($cache->data['body'], 10), 0, -8));
+      $page_content = gzinflate(substr(substr($page_content, 10), 0, -8));
     }
   }
 
-  // Print the page.
-  print $cache->data['body'];
+  // Send the final headers that indicate the page total length, after the
+  // decompression of the gzipped HTML.
+  $page_length = strlen($page_content);
+  backdrop_set_length_headers($page_length);
+
+  // Print the page. If doing an HTTP HEAD request on some servers like
+  // Apache, it will abort PHP immediately once content has been returned
+  // (because no additional headers would be allowed after that point). So we
+  // print nothing for HEAD requests so that background processing may continue
+  // if needed. Note that the content is still saved in the page cache even
+  // though it is not printed to the page. See backdrop_page_footer().
+  if ($_SERVER['REQUEST_METHOD'] !== 'HEAD') {
+    print $page_content;
+  }
 }
 
 /**
@@ -1681,7 +1778,7 @@ function backdrop_unpack($obj, $field = 'data') {
  * @code
  * $text = t("@name's blog", array('@name' => user_format_name($account)));
  * @endcode
- * Basically, you can put variables like @name into your string, and t() will
+ * Basically, you can put variables like "@name" into your string, and t() will
  * substitute their sanitized values at translation time. (See the
  * Localization API pages referenced above and the documentation of
  * format_string() for details about how to define variables in your string.)
@@ -1696,9 +1793,19 @@ function backdrop_unpack($obj, $field = 'data') {
  * @param $string
  *   A string containing the English string to translate.
  * @param $args
- *   An associative array of replacements to make after translation. Based
- *   on the first character of the key, the value is escaped and/or themed.
- *   See format_string() for details.
+ *   An associative array of replacements to make. Occurrences in $string of
+ *   any key in $args are replaced with the corresponding value, after optional
+ *   sanitization and formatting. The type of sanitization and formatting
+ *   depends on the first character of the key:
+ *   - @variable: Escaped to HTML using check_plain(). Use this as the default
+ *     choice for anything displayed on a page on the site.
+ *   - %variable: Escaped to HTML and formatted using backdrop_placeholder(),
+ *     which makes it display as <em>emphasized</em> text.
+ *   - !variable: Inserted as is, with no sanitization or formatting. Only use
+ *     this for text that has already been prepared for HTML display (for
+ *     example, user-supplied text that has already been run through
+ *     check_plain() previously, or is expected to contain some limited HTML
+ *     tags and has already been run through filter_xss() previously).
  * @param $options
  *   An associative array of additional options, with the following elements:
  *   - 'langcode' (defaults to the current language): The language code to
@@ -1737,7 +1844,7 @@ function t($string, array $args = array(), array $options = array()) {
   // and statically cache the result for performance.
   if (!isset($translate_english)) {
     try {
-      $translate_english = config_get('locale.settings', 'translate_english') ? TRUE : FALSE;
+      $translate_english = (function_exists('config_get') && config_get('locale.settings', 'translate_english')) ? TRUE : FALSE;
     }
     catch (ConfigException $e) {
       $translate_english = FALSE;
@@ -1796,6 +1903,9 @@ function t($string, array $args = array(), array $options = array()) {
  *     example, user-supplied text that has already been run through
  *     check_plain() previously, or is expected to contain some limited HTML
  *     tags and has already been run through filter_xss() previously).
+ *
+ * @return string
+ *   The provided string with the replacements made from the $args array.
  *
  * @see t()
  * @ingroup sanitization
@@ -1905,6 +2015,55 @@ function request_uri() {
 }
 
 /**
+ * Logs a deprecation warning.
+ *
+ * This is a wrapper function for watchdog() to record uses of deprecated
+ * functions in Backdrop modules. To prevent an explosion of WATCHDOG_DEPRECATED
+ * messages, only the first use of a function in a particular file:line will get
+ * a watchdog message.
+ *
+ * @param $type
+ *   The category to which this message belongs.
+ * @param $func
+ *   The function or method deprecated. Usually, __FUNCTION__ or __METHOD__.
+ * @param $link
+ *   A link to associate with the message.
+ *
+ * @see watchdog()
+ */
+function watchdog_deprecated_function($type, $func, $link = NULL) {
+  static $deprecated_calls = array();
+
+  // Return early if not logging deprecation warnings.
+  if (!watchdog_severity_enabled(WATCHDOG_DEPRECATED)) {
+    return;
+  }
+
+  require_once BACKDROP_ROOT . '/core/includes/errors.inc';
+
+  // Get the caller of the deprecated function.
+  $trace = debug_backtrace();
+  array_shift($trace);
+  $caller = _backdrop_get_last_caller($trace);
+
+  $caller_sig = $caller['file'] . ':' . $caller['line'];
+  if (array_key_exists($caller_sig, $deprecated_calls)) {
+    return;
+  }
+  $deprecated_calls[$caller_sig] = TRUE;
+
+  // Call watchdog()
+  $message = 'The function @original_caller (@file:@line) called deprecated function @function(). It will be removed in the next major release of Backdrop.';
+  $variables = array(
+    '@function' => $func,
+    '@original_caller' => $caller['function'],
+    '@file' => basename($caller['file']),
+    '@line' => $caller['line'],
+  );
+  watchdog($type, $message, $variables, WATCHDOG_DEPRECATED, $link);
+}
+
+/**
  * Logs an exception.
  *
  * This is a wrapper function for watchdog() which automatically decodes an
@@ -1930,6 +2089,11 @@ function request_uri() {
  */
 function watchdog_exception($type, Exception $exception, $message = NULL, $variables = array(), $severity = WATCHDOG_ERROR, $link = NULL) {
 
+  // Return early if not logging this severity level.
+  if (!watchdog_severity_enabled($severity)) {
+    return;
+  }
+
    // Use a default value if $message is not set.
    if (empty($message)) {
      // The exception message is run through check_plain() by _backdrop_decode_exception().
@@ -1943,6 +2107,36 @@ function watchdog_exception($type, Exception $exception, $message = NULL, $varia
    require_once BACKDROP_ROOT . '/core/includes/errors.inc';
    $variables += _backdrop_decode_exception($exception);
    watchdog($type, $message, $variables, $severity, $link);
+}
+
+/**
+ * Check if logging is enabled for a given severity level.
+ *
+ * @param int $severity
+ *   One of the WATCHDOG_* severity constants.
+ *
+ * @return TRUE if enabled, FALSE otherwise.
+ *
+ * @since 1.5.0
+ *
+ * @see watchdog_severity_levels()
+ */
+function watchdog_severity_enabled($severity = WATCHDOG_NOTICE) {
+  try {
+    $enabled_severity_levels = config('system.core')->get('watchdog_enabled_severity_levels');
+  }
+  catch (Exception $e) {
+    $enabled_severity_levels = NULL;
+  }
+
+  // This may be called before system.core, such as when running update.php or
+  // the initial installation. As such we provide the defaults if needed.
+  if (!isset($enabled_severity_levels)) {
+    $enabled_severity_levels = array(0, 1, 2, 3, 4, 5, 6);
+  }
+
+  // Return TRUE if the severity level is enabled.
+  return in_array($severity, $enabled_severity_levels);
 }
 
 /**
@@ -1972,6 +2166,7 @@ function watchdog_exception($type, Exception $exception, $message = NULL, $varia
  *   - WATCHDOG_NOTICE: (default) Normal but significant conditions.
  *   - WATCHDOG_INFO: Informational messages.
  *   - WATCHDOG_DEBUG: Debug-level messages.
+ *   - WATCHDOG_DEPRECATED: Use of deprecated functions or features.
  * @param $link
  *   A link to associate with the message.
  *
@@ -1982,6 +2177,11 @@ function watchdog($type, $message, $variables = array(), $severity = WATCHDOG_NO
   global $user, $base_root;
 
   static $in_error_state = FALSE;
+
+  // Don't log messages if not enabled for this severity level.
+  if (!watchdog_severity_enabled($severity)) {
+    return;
+  }
 
   // It is possible that the error handling will itself trigger an error. In that case, we could
   // end up in an infinite loop. To avoid that, we implement a simple static semaphore.
@@ -2052,7 +2252,7 @@ function watchdog($type, $message, $variables = array(), $severity = WATCHDOG_NO
  * @see theme_status_messages()
  */
 function backdrop_set_message($message = NULL, $type = 'status', $repeat = TRUE) {
-  if ($message) {
+  if ($message || $message === '0' || $message === 0) {
     if (!isset($_SESSION['messages'][$type])) {
       $_SESSION['messages'][$type] = array();
     }
@@ -2215,6 +2415,9 @@ function backdrop_base64_encode($string) {
  *
  * @param $count
  *   The number of characters (bytes) to return in the string.
+ *
+ * @return string
+ *   A string of random characters.
  */
 function backdrop_random_bytes($count)  {
   // $random_state does not use backdrop_static as it stores random bytes.
@@ -2434,6 +2637,10 @@ function backdrop_anonymous_user() {
  *
  * @return int
  *   The most recently completed phase.
+ *
+ * @throws Exception
+ *   This function rethrows any exceptions it encounters, unless Backdrop has
+ *   not yet been installed, in which case it will redirect to the installer.
  */
 function backdrop_bootstrap($phase = NULL, $new_phase = TRUE) {
   // Not backdrop_static(), because does not depend on any run-time information.
@@ -2538,8 +2745,6 @@ function backdrop_bootstrap($phase = NULL, $new_phase = TRUE) {
  * at an empty database. If this happens, redirect the user to install.php.
  */
 function backdrop_bootstrap_is_installed() {
-  global $databases;
-
   // We may get a situation where the config directory has been specified in
   // settings.php but the database is empty. In which case a config exception
   // is thrown in the first bootstrap phase but the database hasn't been loaded.
@@ -2547,11 +2752,17 @@ function backdrop_bootstrap_is_installed() {
   if (backdrop_get_bootstrap_phase() < BACKDROP_BOOTSTRAP_DATABASE) {
     try {
       _backdrop_bootstrap_database();
+      // Getting a connection the first time opens it and populates the
+      // $GLOBALS['databases'] variable.
+      Database::getConnection('default');
     }
     catch (Exception $e) {}
   }
 
-  if (!empty($databases) && function_exists('db_query')) {
+  if (empty($GLOBALS['databases'])) {
+    return FALSE;
+  }
+  elseif (function_exists('db_query')) {
     try {
       db_query('SELECT name FROM {system} WHERE name = :name', array(':name' => 'system'));
     }
@@ -2585,7 +2796,8 @@ function backdrop_get_user_timezone() {
     // Ignore PHP strict notice if time zone has not yet been set in the php.ini
     // configuration.
     $config_data_default_timezone = $config->get('default_timezone');
-    return !empty($config_data_default_timezone) ? $config_data_default_timezone : @date_default_timezone_get();  }
+    return !empty($config_data_default_timezone) ? $config_data_default_timezone : @date_default_timezone_get();
+  }
 }
 
 /**
@@ -2682,8 +2894,9 @@ function _backdrop_bootstrap_configuration() {
   }
 
   // Check that the config directory is not empty.
-  if (!defined('MAINTENANCE_MODE') && ($directory = config_get_config_directory('active'))) {
-    if (!(is_file($directory . '/system.core.json') || is_file($directory . '/system.performance.json'))) {
+  if (!defined('MAINTENANCE_MODE') && ($config_storage = config_get_config_storage('active'))) {
+    if (!($config_storage->exists('system.core') || $config_storage->exists('system.performance'))) {
+      $directory = config_get_config_directory('active');
       throw new Exception("The configuration directory in settings.php is specified as '$directory', but this directory is either empty or missing crucial files. Check that the \$config_directories variable is correct in settings.php.");
     }
   }
@@ -2709,36 +2922,90 @@ function _backdrop_bootstrap_page_cache() {
     $cache_enabled = FALSE;
   }
 
+  if (!backdrop_page_is_cacheable()) {
+    $cache_enabled = FALSE;
+  }
+
   // If there is no session cookie and cache is enabled, serve a cached page.
   if (!isset($_COOKIE[session_name()]) && $cache_enabled) {
     // Make sure there is a user object because its timestamp will be
     // checked, hook_boot might check for anonymous user etc.
     $user = backdrop_anonymous_user();
     // Get the page from the cache.
-    $cache = backdrop_page_get_cache();
+    $background_fetch_enabled = config_get('system.core', 'page_cache_background_fetch');
+    $cache = backdrop_page_get_cache(FALSE, $background_fetch_enabled);
     // If there is a cached page, display it.
     if (is_object($cache)) {
       header('X-Backdrop-Cache: HIT');
-      // Restore the metadata cached with the page.
-      $_GET['q'] = $cache->data['path'];
-      backdrop_set_title($cache->data['title'], PASS_THROUGH);
-      date_default_timezone_set(backdrop_get_user_timezone());
+
+      // Although a cached page was found, it may be expired if background
+      // fetch is enabled. So we calculate if it is within the max age based
+      // on its creation date.
+      $lifetime = config_get('system.core', 'page_cache_maximum_age');
+      $expires_on = $cache->created + $lifetime;
+      $cache_expired = REQUEST_TIME > $expires_on;
+
+      // Start a buffer for hook_boot(), the cached page, and hook_exit().
+      ob_start();
+
       // Calls to hook_boot() on page cache requests is deprecated, though they
       // can still be enabled via settings.php
       if (settings_get('page_cache_invoke_hooks', FALSE)) {
+        // Restore the metadata cached with the page for hook_boot().
+        $_GET['q'] = $cache->data['path'];
+        backdrop_set_title($cache->data['title'], PASS_THROUGH);
+        date_default_timezone_set(backdrop_get_user_timezone());
+
         // Load bootstrap modules.
         require_once BACKDROP_ROOT . '/core/includes/module.inc';
         module_load_all(TRUE);
         bootstrap_invoke_all('boot');
       }
+
+      // Deliver the cached page.
       backdrop_serve_page_from_cache($cache);
+
       // Like hook_boot(), hook_exit() is no longer called on page cache
       // requests unless enabled via settings.php.
       if (settings_get('page_cache_invoke_hooks', FALSE)) {
         bootstrap_invoke_all('exit');
+      };
+
+      // Close the connection immediately if we are about to serve an expired
+      // cache entry. This allows for background processing without holding up
+      // the browser.
+      if ($cache_expired) {
+        header('Connection: close');
       }
-      // We are done.
-      exit;
+
+      // End the request and send the response to the browser. This call has
+      // error suppression on it as some PHP versions may require it (PHP 5.3)
+      // but other PHP versions throw a warning (PHP 5.5).
+      @ob_end_flush();
+
+      // Flushing for PHP-FPM based installations.
+      if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+      }
+      // Flushing for Apache mod_php installations.
+      else {
+        flush();
+      }
+
+      // Continue processing to generate the new cache entry for the next user.
+      if ($cache_expired) {
+        // Enter background mode (this suppresses any output of headers).
+        backdrop_is_background(TRUE);
+
+        // Restore the current path and page title.
+        $_GET['q'] = request_path();
+        backdrop_static_reset('backdrop_set_title');
+        backdrop_static_reset('backdrop_http_headers');
+      }
+      // No new cache entry needed. Exit immediately after serving the page.
+      else {
+        exit();
+      }
     }
     else {
       header('X-Backdrop-Cache: MISS');
@@ -3040,12 +3307,15 @@ function language_multilingual() {
  *
  * @param $only_enabled
  *   (optional) Whether to return only enabled languages.
+ * @param $option_list
+ *   (optional) Whether to return a list of options instead of objects. This
+ *   list is suitable for use in a select list #options array.
  *
- * @return
+ * @return stdClass[]
  *   An associative array of languages, keyed by the language code, ordered by
  *   weight ascending and name ascending.
  */
-function language_list($only_enabled = FALSE) {
+function language_list($only_enabled = FALSE, $option_list = FALSE) {
   $languages = &backdrop_static(__FUNCTION__);
   // Initialize master language list.
   if (!isset($languages)) {
@@ -3096,6 +3366,15 @@ function language_list($only_enabled = FALSE) {
     }
   }
 
+  if ($option_list) {
+    $list = array();
+    $this_list = $only_enabled ? $languages['enabled'] : $languages['all'];
+    foreach ($this_list as $language) {
+      $list[$language->langcode] = $language->name;
+    }
+    return $list;
+  }
+
   return $only_enabled ? $languages['enabled'] : $languages['all'];
 }
 
@@ -3105,7 +3384,7 @@ function language_list($only_enabled = FALSE) {
  * @param $langcode
  *   The language code.
  *
- * @return
+ * @return stdClass
  *   A fully-populated language object or FALSE.
  */
 function language_load($langcode) {
@@ -3259,7 +3538,7 @@ function request_path() {
  * @param $path
  *   A path to break into components. Defaults to the path of the current page.
  *
- * @return
+ * @return string|NULL
  *   The component specified by $index, or NULL if the specified component was
  *   not found. If called without arguments, it returns an array containing all
  *   the components of the current path.
@@ -3288,6 +3567,8 @@ function arg($index = NULL, $path = NULL) {
   if (isset($arguments[$path][$index])) {
     return $arguments[$path][$index];
   }
+  // Not found.
+  return NULL;
 }
 
 /**
@@ -3345,12 +3626,17 @@ function ip_address() {
  * Gets the schema definition of a table, or the whole database schema.
  *
  * The returned schema will include any modifications made by any
- * module that implements hook_schema_alter().
+ * module that implements hook_schema_alter(). To get the schema without
+ * modifications, use backdrop_get_schema_unprocessed().
+ *
  *
  * @param $table
  *   The name of the table. If not given, the schema of all tables is returned.
  * @param $rebuild
  *   If true, the schema will be rebuilt instead of retrieved from the cache.
+ *
+ * @return array
+ *   The schema definition of the requested table.
  */
 function backdrop_get_schema($table = NULL, $rebuild = FALSE) {
   static $schema;
@@ -3406,6 +3692,9 @@ class SchemaCache extends BackdropCacheArray {
  *
  * @param $rebuild
  *   If true, the schema will be rebuilt instead of retrieved from the cache.
+ *
+ * @return array
+ *   The entire database schema provided by all modules.
  */
 function backdrop_get_complete_schema($rebuild = FALSE) {
   static $schema = array();
@@ -3673,23 +3962,64 @@ function backdrop_is_cli() {
 
 /**
  * Detects if this is an HTML HTTP request.
+ *
+ * This liberal detection considers all requests that lack an Accept header or
+ * X-Requested-With (as set by jQuery and other JavaScript libraries) to be
+ * an HTML request. Any other types of requests must specify X-Requested-With
+ * in order to be returned in an alternative format.
  */
 function backdrop_is_html() {
-  return ((empty($_SERVER['HTTP_ACCEPT']) || $_SERVER['HTTP_ACCEPT'] === '*/*') && empty($_SERVER['X_REQUESTED_WITH'])) || strpos($_SERVER['HTTP_ACCEPT'], 'text/html') === 0;
+  return empty($_SERVER['HTTP_ACCEPT']) || strpos($_SERVER['HTTP_ACCEPT'], 'text/html') === 0 || empty($_SERVER['HTTP_X_REQUESTED_WITH']);
 }
 
 /**
  * Detects if this is an AJAX HTTP request.
  */
 function backdrop_is_ajax() {
-  return !empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/vnd.backdrop-ajax') === 0;
+  return !empty($_POST) && !empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/vnd.backdrop-ajax') === 0;
 }
 
 /**
  * Detects if this is a dialog HTTP request.
  */
 function backdrop_is_dialog() {
-  return !empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/vnd.backdrop-dialog') === 0;
+  return !empty($_POST) && !empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/vnd.backdrop-dialog') === 0;
+}
+
+/**
+ * Stores if Backdrop is currently being executed in the background.
+ *
+ * If Backdrop has entered into background mode, it can no longer print anything
+ * to the page, because the response has already been returned to the browser.
+ * Anything that has been output while in background mode will simply be
+ * silently discarded. Background mode is extremely useful for doing processing
+ * that doesn't require output, such as cron job execution or creating cache
+ * entries.
+ *
+ * Backdrop core uses background mode in two ways:
+ *   - After generating a page (logged-in or anonymous) if cron has not run
+ *     recently, the page will be returned to the user, and Backdrop will enter
+ *     background mode to process the cron jobs.
+ *   - If the page cache is turned on, and the "Use background fetch" option is
+ *     turned on in the performance settings, then Backdrop will serve a cached
+ *     page even after it has expired. After serving the cached page, Backdrop
+ *     will enter background mode to generate a new cache entry for the page,
+ *     which will be delivered to the next user.
+ *
+ * @param bool $is_background
+ *   May be set to TRUE to indicate entering background mode. Once set, it can
+ *   not be set back to FALSE.
+ *
+ * @return bool
+ *   TRUE if the request is in background mode. FALSE if in a normal page
+ *   request and output has not yet started.
+ */
+function backdrop_is_background($is_background = NULL) {
+  static $static = FALSE;
+  if (isset($is_background) && $is_background === TRUE) {
+    $static = $is_background;
+  }
+  return $static;
 }
 
 /**
@@ -3758,12 +4088,16 @@ function _backdrop_shutdown_function() {
     }
   }
   catch (Exception $exception) {
-    // If we are displaying errors, then do so with no possibility of a further uncaught exception being thrown.
-   require_once BACKDROP_ROOT . '/core/includes/errors.inc';
-   if (error_displayable()) {
-      print '<h1>Uncaught exception thrown in shutdown function.</h1>';
-      print '<p>' . _backdrop_render_exception_safe($exception) . '</p><hr />';
+    // If we are displaying errors, then do so with no possibility of a further
+    // uncaught exception being thrown.
+    require_once BACKDROP_ROOT . '/core/includes/errors.inc';
+    $message = '';
+    $message .= '<h1>Uncaught exception thrown in shutdown function.</h1>';
+    $message .= '<p>' . _backdrop_render_exception_safe($exception) . '</p><hr />';
+    try {
+      watchdog('system', $message, array(), WATCHDOG_CRITICAL);
     }
+    catch (Exception $e) {}
   }
 }
 

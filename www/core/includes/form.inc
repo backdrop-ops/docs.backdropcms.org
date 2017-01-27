@@ -512,6 +512,9 @@ function backdrop_rebuild_form($form_id, &$form_state, $old_form = NULL) {
 
 /**
  * Fetches a form from the cache.
+ *
+ * @return array|NULL
+ *   The form array retrieved from cache if found. NULL otherwise.
  */
 function form_get_cache($form_build_id, &$form_state) {
   if ($form = tempstore_get('form', $form_build_id)) {
@@ -547,6 +550,8 @@ function form_get_cache($form_build_id, &$form_state) {
       return $form;
     }
   }
+
+  return NULL;
 }
 
 /**
@@ -759,6 +764,9 @@ function backdrop_form_submit($form_id, &$form_state) {
  *   A keyed array containing the current state of the form, including the
  *   additional arguments to backdrop_get_form() or backdrop_form_submit() in the
  *   'args' component of the array.
+ *
+ * @return array
+ *   The form structure as a renderable array.
  */
 function backdrop_retrieve_form($form_id, &$form_state) {
   $forms = &backdrop_static(__FUNCTION__);
@@ -1471,7 +1479,7 @@ function _form_validate(&$elements, &$form_state, $form_id = NULL) {
     // #value data.
     elseif (isset($elements['#element_validate'])) {
       foreach ($elements['#element_validate'] as $function) {
-        $function($elements, $form_state, $form_state['complete_form']);
+        call_user_func_array($function, array(&$elements, &$form_state, $form_state['complete_form']));
       }
     }
     $elements['#validated'] = TRUE;
@@ -1498,6 +1506,12 @@ function _form_validate(&$elements, &$form_state, $form_id = NULL) {
  *   A keyed array containing the current state of the form. If the user
  *   submitted the form by clicking a button with custom handler functions
  *   defined, those handlers will be stored here.
+ *
+ * @return bool
+ *   TRUE if any handlers were executed at all. FALSE if no handlers were found
+ *   to execute. This return value only indicates if handlers were fired, it
+ *   does not represent all validations passed or all submit values were saved.
+ *   The result of those actions will be stored in the $form_state array.
  */
 function form_execute_handlers($type, &$form, &$form_state) {
   $return = FALSE;
@@ -1621,7 +1635,7 @@ function form_execute_handlers($type, &$form, &$form_state) {
  *   Internal use only. The #limit_validation_errors property of the clicked
  *   button, if it exists.
  *
- * @return
+ * @return array
  *   Return value is for internal use only. To get a list of errors, use
  *   form_get_errors() or form_get_error().
  *
@@ -1680,12 +1694,16 @@ function form_clear_error() {
 
 /**
  * Returns an associative array of all errors.
+ *
+ * @return array|NULL
+ *   An array of any errors that have been set. NULL if no errors occurred.
  */
 function form_get_errors() {
-  $form = form_set_error();
-  if (!empty($form)) {
-    return $form;
+  $errors = form_set_error();
+  if (!empty($errors)) {
+    return $errors;
   }
+  return NULL;
 }
 
 /**
@@ -1693,17 +1711,22 @@ function form_get_errors() {
  *
  * Form errors higher up in the form structure override deeper errors as well as
  * errors on the element itself.
+ *
+ * @return string|NULL
+ *   The error message against the given element. NULL if no error was flagged.
  */
 function form_get_error($element) {
-  $form = form_set_error();
+  $errors = form_set_error();
   $parents = array();
   foreach ($element['#parents'] as $parent) {
     $parents[] = $parent;
     $key = implode('][', $parents);
-    if (isset($form[$key])) {
-      return $form[$key];
+    if (isset($errors[$key])) {
+      return $errors[$key];
     }
   }
+
+  return NULL;
 }
 
 /**
@@ -1794,16 +1817,19 @@ function form_error(&$element, $message = '') {
  *   within functions that run during the rendering phase (#pre_render, #theme,
  *   #theme_wrappers, and #post_render).
  *
- * @param $form_id
+ * @param string $form_id
  *   A unique string identifying the form for validation, submission,
  *   theming, and hook_form_alter functions.
- * @param $element
+ * @param array $element
  *   An associative array containing the structure of the current element.
- * @param $form_state
+ * @param array $form_state
  *   A keyed array containing the current state of the form. In this
  *   context, it is used to accumulate information about which button
  *   was clicked when the form was submitted, as well as the sanitized
  *   $_POST data.
+ *
+ * @return array
+ *   The element with it an all of its children processed.
  */
 function form_builder($form_id, &$element, &$form_state) {
   // Initialize as unprocessed.
@@ -3203,6 +3229,9 @@ function form_pre_render_conditional_form_element($element) {
   // Add the element type to the wrapping container.
   if (isset($element['#type'])) {
     $element['#attributes']['class'][] = 'form-' . $element['#type'];
+    if (isset($element['#parents']) && form_get_error($element) !== NULL && !empty($element['#validated'])) {
+      $element['#attributes']['class'][] = 'form-error';
+    }
   }
 
   // The disabled attribute is only shown on the children, not on the wrapper.
@@ -3300,7 +3329,12 @@ function form_process_actions($element, &$form_state) {
 
   $first_button = NULL;
   $primary_set = FALSE;
-  foreach (element_children($element) as $key) {
+  foreach (element_children($element, TRUE) as $key) {
+    // Don't add automatic classes to non-buttons.
+    if (!in_array($element[$key]['#type'], array('button', 'submit'))) {
+      continue;
+    }
+
     $button = $element[$key];
     if (!$first_button && $button['#type'] === 'submit') {
       $first_button = $key;
@@ -3346,9 +3380,12 @@ function form_process_container($element, &$form_state) {
 /**
  * Returns HTML to wrap child elements in a container.
  *
- * Used for grouped form items. Can also be used as a #theme_wrapper for any
+ * Used for grouped form items. Can also be used as a theme wrapper for any
  * renderable element, to surround it with a <div> and add attributes such as
  * classes or an HTML id.
+ *
+ * See the @link https://api.backdropcms.org/form_api#theme_wrappers Form API reference @endlink
+ * for more information on the #theme_wrappers render array property.
  *
  * @param $variables
  *   An associative array containing:
@@ -3393,9 +3430,9 @@ function theme_container($variables) {
  *     $options = array(
  *       array(
  *         'title' => 'How to Learn Backdrop',
- *         'content_type' => 'Article',
+ *         'content_type' => 'Post',
  *         'status' => 'published',
- *         '#attributes' => array('class' => array('article-row')),
+ *         '#attributes' => array('class' => array('post-row')),
  *       ),
  *       array(
  *         'title' => 'Privacy Policy',
@@ -3556,6 +3593,8 @@ function form_process_tableselect($element) {
  *     - replace: (optional) A character to replace disallowed characters in the
  *       machine name via JavaScript. Defaults to '_' (underscore). When using a
  *       different character, 'replace_pattern' needs to be set accordingly.
+ *     - langcode: (optional) The two-character language code for the input
+ *       language, with which transliteration will be used.
  *     - error: (optional) A custom form error message string to show, if the
  *       machine name contains disallowed characters.
  *     - standalone: (optional) Whether the live preview should stay in its own
@@ -3565,6 +3604,9 @@ function form_process_tableselect($element) {
  *     machine name. Defaults to 64.
  *   - #disabled: (optional) Should be set to TRUE in case an existing machine
  *     name must not be changed after initial creation.
+ *
+ * @return array
+ *   The expanded $element populated with defaults.
  */
 function form_process_machine_name($element, &$form_state) {
   // Apply default form element properties.
@@ -3581,10 +3623,10 @@ function form_process_machine_name($element, &$form_state) {
   // were defined in hook_element_info(). Therefore, we apply the defaults here.
   $element['#machine_name'] += array(
     'source' => array('name'),
-    'target' => '#' . $element['#id'],
     'label' => t('Machine name'),
     'replace_pattern' => '[^a-z0-9_]+',
     'replace' => '_',
+    'langcode' => $GLOBALS['language']->langcode,
     'standalone' => FALSE,
     'field_prefix' => $element['#field_prefix'],
     'field_suffix' => $element['#field_suffix'],
@@ -3627,16 +3669,11 @@ function form_process_machine_name($element, &$form_state) {
     backdrop_array_set_nested_value($form_state['complete_form'], $parents, $source['#field_suffix']);
   }
 
-  $js_settings = array(
-    'type' => 'setting',
-    'data' => array(
-      'machineName' => array(
-        '#' . $source['#id'] => $element['#machine_name'],
-      ),
-    ),
-  );
+  $js_settings = $element['#machine_name'];
+  $js_settings['source'] = '#' . $source['#id'];
+  $js_settings['replace_token'] = backdrop_get_token($element['#machine_name']['replace_pattern']);
+  $element['#attributes']['data-machine-name'] = json_encode($js_settings);
   $element['#attached']['js'][] = 'core/misc/machine-name.js';
-  $element['#attached']['js'][] = $js_settings;
 
   return $element;
 }
@@ -3937,9 +3974,12 @@ function form_process_autocomplete($element) {
   $element['#autocomplete_input'] = array();
   if ($element['#autocomplete_path'] && backdrop_valid_path($element['#autocomplete_path'])) {
     $element['#autocomplete_input']['#id'] = $element['#id'] .'-autocomplete';
-    // Force autocomplete to use non-clean URLs since this protects against the
-    // browser interpreting the path plus search string as an actual file.
-    $element['#autocomplete_input']['#url_value'] = url($element['#autocomplete_path'], array('absolute' => TRUE, 'clean' => FALSE));
+    // Force the script path to 'index.php', in case the server is not
+    // configured to find it automatically. Normally it is the responsibility
+    // of the site to do this themselves using hook_url_outbound_alter() (see
+    // url()) but since this code is forcing non-clean URLs on sites that don't
+    // normally use them, it is done here instead.
+    $element['#autocomplete_input']['#url_value'] = url($element['#autocomplete_path'], array('absolute' => TRUE, 'clean' => FALSE, 'script' => 'index.php'));
   }
   return $element;
 }
@@ -4049,7 +4089,7 @@ function theme_search($variables) {
 
   $extra = '';
   if ($element['#autocomplete_path'] && backdrop_valid_path($element['#autocomplete_path'])) {
-    backdrop_add_library('system', 'drupal.autocomplete');
+    backdrop_add_library('system', 'backdrop.autocomplete');
     $element['#attributes']['class'][] = 'form-autocomplete';
 
     $attributes = array();
@@ -4465,6 +4505,9 @@ function theme_form_element($variables) {
   $attributes['class'][] = 'form-item';
   if (!empty($element['#type'])) {
     $attributes['class'][] = 'form-type-' . strtr($element['#type'], '_', '-');
+    if (isset($element['#parents']) && form_get_error($element) !== NULL && !empty($element['#validated'])) {
+      $attributes['class'][] = 'form-error';
+    }
   }
   if (!empty($element['#name'])) {
     $attributes['class'][] = 'form-item-' . strtr($element['#name'], array(' ' => '-', '_' => '-', '[' => '-', ']' => ''));
@@ -4709,7 +4752,7 @@ function _form_set_class(&$element, $class = array()) {
  *
  * Sample callback_batch_finished():
  * @code
- * function batch_test_finished($success, $results, $operations) {
+ * function my_finished_callback($success, $results, $operations) {
  *   // The 'success' parameter means no fatal PHP errors were detected. All
  *   // other error management should be handled using 'results'.
  *   if ($success) {
@@ -4917,8 +4960,9 @@ function batch_process($redirect = NULL, $url = 'batch', $redirect_callback = 'b
       $_SESSION['batches'][$batch['id']] = TRUE;
 
       // Redirect for processing.
-      $function = $batch['redirect_callback'];
-      $function($batch['url'], array('query' => array('op' => 'start', 'id' => $batch['id'])));
+      if ($function = $batch['redirect_callback']) {
+        $function($batch['url'], array('query' => array('op' => 'start', 'id' => $batch['id'])));
+      }
     }
     else {
       // Non-progressive execution: bypass the whole progressbar workflow
@@ -4984,7 +5028,7 @@ function _batch_populate_queue(&$batch, $set_id) {
  * @param $batch_set
  *   The batch set.
  *
- * @return
+ * @return BatchQueue
  *   The queue object.
  */
 function _batch_queue($batch_set) {

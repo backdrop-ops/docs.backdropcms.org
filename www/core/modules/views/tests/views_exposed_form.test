@@ -35,10 +35,54 @@ class ViewsExposedFormTest extends ViewsSqlTest {
 
     views_invalidate_cache();
 
-    // Look whether ther reset button label changed.
+    // Look whether the reset button label changed.
     $this->backdropGet('test_rename_reset_button');
 
     $this->helperButtonHasLabel('edit-reset', $expected_label);
+  }
+
+  /**
+   * Test remembering exposed filters.
+   */
+  function testExposedRemember() {
+    $admin_user = $this->backdropCreateUser(array('administer views', 'administer site configuration'));
+    $this->backdropLogin($admin_user);
+
+    // Check that filters are remembered.
+    $query = array(
+      'type' => 'page',
+    );
+    $this->backdropGet('test_exposed_remember');
+    $this->assertFieldByName('type', 'All', 'Filter is set to the default with no query string.');
+    $this->backdropGet('test_exposed_remember', array('query' => $query));
+    $this->assertFieldByName('type', 'page', 'Filter is set when visiting by query string.');
+    $this->backdropGet('test_exposed_remember');
+    $this->assertFieldByName('type', 'page', 'Filter is remembered when the query string is removed.');
+
+    // Reset back to the default.
+    $query = array(
+      'type' => 'page',
+      'op' => 'Reset',
+    );
+    $this->backdropGet('test_exposed_remember', array('query' => $query));
+    $this->assertFieldByName('type', 'All', 'Filter is reset to default using Reset button.');
+
+    // Disable remembering.
+    $this->backdropGet('admin/structure/views/nojs/config-item/test_exposed_remember/default/filter/type');
+    $edit = array(
+      'options[expose][remember]' => FALSE,
+    );
+    $this->backdropPost(NULL, $edit, t('Apply'));
+    $this->backdropPost(NULL, array(), t('Save'));
+
+    // Check that values are no longer remembered.
+    $query = array(
+      'type' => 'page',
+    );
+    $this->backdropGet('test_exposed_remember', array('query' => $query));
+    $this->assertFieldByName('type', 'page', 'Filter is set when visiting by query string.');
+    $this->backdropGet('test_exposed_remember');
+    $this->assertFieldByName('type', 'All', 'Filter is set to the default with no query string.');
   }
 
   /**
@@ -59,7 +103,7 @@ class ViewsExposedFormTest extends ViewsSqlTest {
     $this->assertFieldById('edit-options-operator-in', '', 'Operator In exists');
     $this->assertFieldById('edit-options-operator-not-in', '', 'Operator Not In exists');
     $this->assertFieldById('edit-options-value-page', '', 'Checkbox for Page exists');
-    $this->assertFieldById('edit-options-value-article', '', 'Checkbox for Article exists');
+    $this->assertFieldById('edit-options-value-post', '', 'Checkbox for Post exists');
 
     // Click the Expose filter button.
     $this->backdropPost('admin/structure/views/nojs/config-item/test_exposed_admin_ui/default/filter/type', $edit, t('Expose filter'));
@@ -72,7 +116,7 @@ class ViewsExposedFormTest extends ViewsSqlTest {
     $this->assertFieldById('edit-options-operator-in', '', 'Operator In exists');
     $this->assertFieldById('edit-options-operator-not-in', '', 'Operator Not In exists');
     $this->assertFieldById('edit-options-value-page', '', 'Checkbox for Page exists');
-    $this->assertFieldById('edit-options-value-article', '', 'Checkbox for Article exists');
+    $this->assertFieldById('edit-options-value-post', '', 'Checkbox for Post exists');
 
     // Check the validations of the filter handler.
     $edit = array();
@@ -98,7 +142,7 @@ class ViewsExposedFormTest extends ViewsSqlTest {
     $this->assertNoFieldById('edit-options-operator-in', '', 'Operator In not exists');
     $this->assertNoFieldById('edit-options-operator-not-in', '', 'Operator Not In not exists');
     $this->assertNoFieldById('edit-options-value-page', '', 'Checkbox for Page not exists');
-    $this->assertNoFieldById('edit-options-value-article', '', 'Checkbox for Article not exists');
+    $this->assertNoFieldById('edit-options-value-post', '', 'Checkbox for Post not exists');
 
 
     // Check that after click on 'Grouped Filters', a new button is shown to
@@ -108,29 +152,29 @@ class ViewsExposedFormTest extends ViewsSqlTest {
     // Create a grouped filter
     $this->backdropGet('admin/structure/views/nojs/config-item/test_exposed_admin_ui/default/filter/type');
     $edit = array();
-    $edit["options[group_info][group_items][1][title]"] = 'Is Article';
-    $edit["options[group_info][group_items][1][value][article]"] = 'article';
+    $edit["options[group_info][group_items][1][title]"] = 'Is Post';
+    $edit["options[group_info][group_items][1][value][post]"] = 'post';
 
     $edit["options[group_info][group_items][2][title]"] = 'Is Page';
     $edit["options[group_info][group_items][2][value][page]"] = TRUE;
 
-    $edit["options[group_info][group_items][3][title]"] = 'Is Page and Article';
-    $edit["options[group_info][group_items][3][value][article]"] = TRUE;
+    $edit["options[group_info][group_items][3][title]"] = 'Is Page and Post';
+    $edit["options[group_info][group_items][3][value][post]"] = TRUE;
     $edit["options[group_info][group_items][3][value][page]"] = TRUE;
     $this->backdropPost(NULL, $edit, t('Apply'));
 
     // Validate that all the titles are defined for each group
     $this->backdropGet('admin/structure/views/nojs/config-item/test_exposed_admin_ui/default/filter/type');
     $edit = array();
-    $edit["options[group_info][group_items][1][title]"] = 'Is Article';
-    $edit["options[group_info][group_items][1][value][article]"] = TRUE;
+    $edit["options[group_info][group_items][1][title]"] = 'Is Post';
+    $edit["options[group_info][group_items][1][value][post]"] = TRUE;
 
     // This should trigger an error
     $edit["options[group_info][group_items][2][title]"] = '';
     $edit["options[group_info][group_items][2][value][page]"] = TRUE;
 
-    $edit["options[group_info][group_items][3][title]"] = 'Is Page and Article';
-    $edit["options[group_info][group_items][3][value][article]"] = TRUE;
+    $edit["options[group_info][group_items][3][title]"] = 'Is Page and Post';
+    $edit["options[group_info][group_items][3][value][post]"] = TRUE;
     $edit["options[group_info][group_items][3][value][page]"] = TRUE;
     $this->backdropPost(NULL, $edit, t('Apply'));
     $this->assertRaw(t('The title is required if value for this item is defined.'), t('Group items should have a title'));
@@ -143,7 +187,7 @@ class ViewsExposedFormTest extends ViewsSqlTest {
     $this->assertFieldById('edit-options-operator-in', '', 'Operator In exists after hide filter');
     $this->assertFieldById('edit-options-operator-not-in', '', 'Operator Not In exists after hide filter');
     $this->assertFieldById('edit-options-value-page', '', 'Checkbox for Page exists after hide filter');
-    $this->assertFieldById('edit-options-value-article', '', 'Checkbox for Article exists after hide filter');
+    $this->assertFieldById('edit-options-value-post', '', 'Checkbox for Post exists after hide filter');
 
     // Click the Expose sort button.
     $edit = array();

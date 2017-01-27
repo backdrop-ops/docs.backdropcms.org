@@ -59,24 +59,6 @@ function hook_hook_info_alter(&$hooks) {
 }
 
 /**
- * Change the view mode of an entity that is being displayed.
- *
- * @param string $view_mode
- *   The view_mode that is to be used to display the entity.
- * @param array $context
- *   Array with contextual information, including:
- *   - entity_type: The type of the entity that is being viewed.
- *   - entity: The entity object.
- *   - langcode: The langcode the entity is being viewed in.
- */
-function hook_entity_view_mode_alter(&$view_mode, $context) {
-  // For nodes, change the view mode when it is teaser.
-  if ($context['entity_type'] == 'node' && $view_mode == 'teaser') {
-    $view_mode = 'my_custom_view_mode';
-  }
-}
-
-/**
  * Define administrative paths.
  *
  * Modules may specify whether or not the paths they define in hook_menu() are
@@ -117,8 +99,8 @@ function hook_admin_paths_alter(&$paths) {
   // Treat all user pages as administrative.
   $paths['user'] = TRUE;
   $paths['user/*'] = TRUE;
-  // Treat the article node form as a non-administrative page.
-  $paths['node/add/article'] = FALSE;
+  // Treat the post node form as a non-administrative page.
+  $paths['node/add/post'] = FALSE;
 }
 
 /**
@@ -195,7 +177,7 @@ function hook_cron_queue_info_alter(&$queues) {
   $queues['aggregator_feeds']['time'] = 90;
 }
 
- /**
+/**
  * Work on a single queue item.
  *
  * Callback for hook_queue_info().
@@ -210,28 +192,6 @@ function hook_cron_queue_info_alter(&$queues) {
  *   be processed again later.
  *
  * @see backdrop_cron_run()
- */
-function callback_queue_worker($queue_item_data) {
-  $node = node_load($queue_item_data);
-  $node->title = 'Updated title';
-  $node->save();
-}
-
-/**
- * Work on a single queue item.
- *
- * Callback for hook_queue_info().
- *
- * @param $queue_item_data
- *   The data that was passed to DrupalQueue::createItem() when the item was
- *   queued.
- *
- * @throws \Exception
- *   The worker callback may throw an exception to indicate there was a problem.
- *   The cron process will log the exception, and leave the item in the queue to
- *   be processed again later.
- *
- * @see drupal_cron_run()
  */
 function callback_queue_worker($queue_item_data) {
   $node = node_load($queue_item_data);
@@ -710,7 +670,22 @@ function hook_menu_get_item_alter(&$router_item, $path, $original_map) {
  *     backdrop_deliver_html_page() unless a value is inherited from a parent menu
  *     item. Note that this function is called even if the access checks fail,
  *     so any custom delivery callback function should take that into account.
- *     See backdrop_deliver_html_page() for an example.
+ *     Backdrop includes the following delivery callbacks in core:
+ *     - backdrop_deliver_html_page(): The default used for printing HTML pages.
+ *       Menu items with this callback may be wrapped in a layout template by
+ *       Layout module. See layout_route_handler().
+ *     - backdrop_json_deliver: The value of the menu callback will be rendered
+ *       as JSON without any further processing. This delivery callback should
+ *       be used on any path that should return a JSON response at all times,
+ *       even on access denied or 404 pages.
+ *     - ajax_deliver: This delivery callback is used when returning AJAX
+ *       commands that will be interpreted by Backdrop core's ajax.js file. This
+ *       delivery callback is set automatically if the menu callback returns a
+ *       renderable element with the #type property "ajax_commands".
+ *     - ajax_deliver_dialog: This delivery callback is used when the contents
+ *       of a menu callback should be returned as AJAX commands to open as a
+ *       dialog. This delivery callback is set automatically if the requesting
+ *       AJAX call requested a dialog. See system_page_delivery_callback_alter().
  *   - "access callback": A function returning TRUE if the user has access
  *     rights to this menu item, and FALSE if not. It can also be a boolean
  *     constant instead of a function, and you can also use numeric values
@@ -747,6 +722,7 @@ function hook_menu_get_item_alter(&$router_item, $path, $original_map) {
  *     "file". This defaults to the path to the module implementing the hook.
  *   - "load arguments": An array of arguments to be passed to each of the
  *     wildcard object loaders in the path, after the path argument itself.
+ *
  *     For example, if a module registers path node/%node/revisions/%/view
  *     with load arguments set to array(3), the '%node' in the path indicates
  *     that the loader function node_load() will be called with the second
@@ -754,6 +730,7 @@ function hook_menu_get_item_alter(&$router_item, $path, $original_map) {
  *     indicates that the fourth path component will also be passed to
  *     node_load() (numbering of path components starts at zero). So, if path
  *     node/12/revisions/29/view is requested, node_load(12, 29) will be called.
+ *
  *     There are also two "magic" values that can be used in load arguments.
  *     "%index" indicates the index of the wildcard path component. "%map"
  *     indicates the path components as an array. For example, if a module
@@ -1013,11 +990,11 @@ function hook_menu_local_tasks_alter(&$data, $router_item, $root_path) {
   $data['actions']['output'][] = array(
     '#theme' => 'menu_local_task',
     '#link' => array(
-      'title' => t('Add new content'),
+      'title' => t('Add content'),
       'href' => 'node/add',
       'localized_options' => array(
         'attributes' => array(
-          'title' => t('Add new content'),
+          'title' => t('Add content'),
         ),
       ),
     ),
@@ -1031,7 +1008,7 @@ function hook_menu_local_tasks_alter(&$data, $router_item, $root_path) {
       'href' => 'node/add',
       'localized_options' => array(
         'attributes' => array(
-          'title' => t('Add new content'),
+          'title' => t('Add content'),
         ),
       ),
     ),
@@ -1673,10 +1650,9 @@ function hook_permission() {
  *     path, include it here. This path should be relative to the Backdrop root
  *     directory.
  *   - template: If specified, this theme implementation is a template, and
- *     this is the template file without an extension. Do not put .tpl.php on
- *     this file; that extension will be added automatically by the default
- *     rendering engine (which is PHPTemplate). If 'path', above, is specified,
- *     the template should also be in this path.
+ *     this is the template file name without an extension. Do not include the
+ *     extension .tpl.php; it will be added automatically. If 'path' is
+ *     specified, then the template should be located in this path.
  *   - function: If specified, this will be the function name to invoke for
  *     this implementation. If neither 'template' nor 'function' is specified,
  *     a default function name will be assumed. For example, if a module
@@ -1794,7 +1770,7 @@ function hook_theme_registry_alter(&$theme_registry) {
  * @return
  *   The machine-readable name of the theme that should be used for the current
  *   page request. The value returned from this function will only have an
- *   effect if it corresponds to a currently-active theme on the site. Do not 
+ *   effect if it corresponds to a currently-active theme on the site. Do not
  *   return a value if you do not wish to set a custom theme.
  */
 function hook_custom_theme() {
@@ -1830,6 +1806,7 @@ function hook_custom_theme() {
  *     - WATCHDOG_NOTICE: Normal but significant conditions.
  *     - WATCHDOG_INFO: Informational messages.
  *     - WATCHDOG_DEBUG: Debug-level messages.
+ *     - WATCHDOG_DEPRECATED: Deprecated use of a function or feature.
  *   - link: An optional link provided by the module that called the watchdog()
  *     function.
  *   - message: The text of the message to be logged. Variables in the message
@@ -1844,14 +1821,15 @@ function hook_watchdog(array $log_entry) {
   global $base_url, $language;
 
   $severity_list = array(
-    WATCHDOG_EMERGENCY     => t('Emergency'),
-    WATCHDOG_ALERT     => t('Alert'),
-    WATCHDOG_CRITICALI     => t('Critical'),
-    WATCHDOG_ERROR       => t('Error'),
-    WATCHDOG_WARNING   => t('Warning'),
-    WATCHDOG_NOTICE    => t('Notice'),
-    WATCHDOG_INFO      => t('Info'),
-    WATCHDOG_DEBUG     => t('Debug'),
+    WATCHDOG_EMERGENCY  => t('Emergency'),
+    WATCHDOG_ALERT      => t('Alert'),
+    WATCHDOG_CRITICAL   => t('Critical'),
+    WATCHDOG_ERROR      => t('Error'),
+    WATCHDOG_WARNING    => t('Warning'),
+    WATCHDOG_NOTICE     => t('Notice'),
+    WATCHDOG_INFO       => t('Info'),
+    WATCHDOG_DEBUG      => t('Debug'),
+    WATCHDOG_DEPRECATED => t('Deprecated Use'),
   );
 
   $to = 'someone@example.com';
@@ -2006,6 +1984,8 @@ function hook_modules_preenable($modules) {
  * module_enable() for a detailed description of the order in which install and
  * enable hooks are invoked.
  *
+ * This hook should be implemented in a .module file, not in an .install file.
+ *
  * @param $modules
  *   An array of the modules that were installed.
  *
@@ -2121,31 +2101,31 @@ function hook_stream_wrappers() {
     'public' => array(
       'name' => t('Public files'),
       'class' => 'BackdropPublicStreamWrapper',
-      'description' => t('Public local files served by the webserver.'),
+      'description' => t('Public local files served by the webserver'),
       'type' => STREAM_WRAPPERS_LOCAL_NORMAL,
     ),
     'private' => array(
       'name' => t('Private files'),
       'class' => 'BackdropPrivateStreamWrapper',
-      'description' => t('Private local files served by Backdrop.'),
+      'description' => t('Private local files served by Backdrop'),
       'type' => STREAM_WRAPPERS_LOCAL_NORMAL,
     ),
     'temp' => array(
       'name' => t('Temporary files'),
       'class' => 'BackdropTempStreamWrapper',
-      'description' => t('Temporary local files for upload and previews.'),
+      'description' => t('Temporary local files for upload and previews'),
       'type' => STREAM_WRAPPERS_LOCAL_HIDDEN,
     ),
     'cdn' => array(
       'name' => t('Content delivery network files'),
       'class' => 'MyModuleCDNStreamWrapper',
-      'description' => t('Files served by a content delivery network.'),
+      'description' => t('Files served by a content delivery network'),
       // 'type' can be omitted to use the default of STREAM_WRAPPERS_NORMAL
     ),
     'youtube' => array(
       'name' => t('YouTube video'),
       'class' => 'MyModuleYouTubeStreamWrapper',
-      'description' => t('Video streamed from YouTube.'),
+      'description' => t('Video streamed from YouTube'),
       // A module implementing YouTube integration may decide to support using
       // the YouTube API for uploading video, but here, we assume that this
       // particular module only supports playing YouTube video.
@@ -2563,7 +2543,9 @@ function hook_requirements($phase) {
  * creation and alteration of the supported database engines.
  *
  * See the Schema API Handbook at http://drupal.org/node/146843 for details on
- * schema definition structures.
+ * schema definition structures. Note that foreign key definitions are for
+ * documentation purposes only; foreign keys are not created in the database,
+ * nor are they enforced by Backdrop.
  *
  * @return array
  *   A schema definition structure array. For each element of the
@@ -2615,6 +2597,8 @@ function hook_schema() {
       'nid_vid' => array('nid', 'vid'),
       'vid'     => array('vid')
     ),
+    // For documentation purposes only; foreign keys are not created in the
+    // database.
     'foreign keys' => array(
       'node_revision' => array(
         'table' => 'node_revision',
@@ -2811,7 +2795,7 @@ function hook_install() {
  * A good rule of thumb is to remove updates older than two major releases of
  * Backdrop. See hook_update_last_removed() to notify Backdrop about the
  * removals. For further information about releases and release numbers see the
- * @link http://backdropcms.org/about/releases Backdrop CMS Release Cycle handbook page @endlink
+ * @link https://backdropcms.org/about/releases Backdrop CMS Release Cycle handbook page @endlink
  *
  * Because Backdrop keeps track of the last ran update based on the function
  * name, you should never renumber update functions. It may result in updates
@@ -3039,15 +3023,55 @@ function hook_disable() {
 }
 
 /**
+ * Define the paths to classes and interfaces within a module.
+ *
+ * Most classes and interfaces in Backdrop should be autoloaded. This will
+ * prevent the need to manually include the file that contains that class with
+ * PHP's include_once() or require_once().
+ *
+ * Note that all paths to classes are relative to the module that is
+ * implementing this hook. If you need to reference classes outside of the
+ * module root or modify existing paths, use hook_autoload_info_alter() instead.
+ *
+ * Class names in Backdrop are typically CamelCase, with uppercase letters at
+ * the start of each word (including the first letter) and no underscores.
+ * The file names for classes are typically either [module_name].[class_name].inc
+ * or simply [ModuleNameClassName].php.
+ *
+ * For more information about class naming conventions see the
+ * @link https://api.backdropcms.org/php-standards Backdrop Coding Standards @endlink
+ *
+ * The contents of this hook are not cached. Because of this, absolutely no
+ * logic should be included in this hook. Do not do any database queries or
+ * traverse files or directories on disk. Each class and interface class should
+ * be specified manually with the exact path to ensure fast performance.
+ *
+ * @see backdrop_autoload()
+ * @see hook_autoload_info_alter()
+ */
+function hook_autoload_info() {
+  return array(
+    'MyModuleClassName' => 'includes/my_module.class_name.inc',
+    'MyModuleOtherName' => 'includes/my_module.other_name.inc',
+    'MyModuleSomeInterface' => 'includes/my_module.some_interface.inc',
+  );
+}
+
+/**
  * Perform alterations to the list of classes included in the registry.
  *
- * Modules can manually modify the list of classes before the registry caches
- * them.
+ * This hook may be used to modify the list of classes and interfaces used by
+ * Backdrop that have been provided by other modules. If your module is
+ * defining it's own classes or interfaces, it should use hook_autoload_info()
+ * instead.
  *
  * @param $class_registry
  *   List of classes in the registry.
+ *
+ * @see backdrop_autoload()
+ * @see hook_autoload_info()
  */
-function hook_class_registry_alter(&$class_registry, $modules) {
+function hook_autoload_info_alter(&$class_registry) {
   // Replace the database cache with a different database cache.
   $class_registry['BackdropDatabaseCache'] = 'alternative/path/to/cache.inc';
 }
@@ -3099,7 +3123,7 @@ function hook_class_registry_alter(&$class_registry, $modules) {
  * inspect later. It is important to remove any temporary variables using
  * state_del() before your last task has completed and control is handed
  * back to the installer.
- * 
+ *
  * @param array $install_state
  *   An array of information about the current installation state.
  *
@@ -3742,17 +3766,17 @@ function hook_token_info_alter(&$data) {
   // Modify description of node tokens for our site.
   $data['tokens']['node']['nid'] = array(
     'name' => t("Node ID"),
-    'description' => t("The unique ID of the article."),
+    'description' => t("The unique ID of the post."),
   );
   $data['tokens']['node']['title'] = array(
     'name' => t("Title"),
-    'description' => t("The title of the article."),
+    'description' => t("The title of the post."),
   );
 
   // Chained tokens for nodes.
   $data['tokens']['node']['created'] = array(
     'name' => t("Date created"),
-    'description' => t("The date the article was posted."),
+    'description' => t("The date the post was posted."),
     'type' => 'date',
   );
 }

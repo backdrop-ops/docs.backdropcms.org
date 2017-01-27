@@ -1,3 +1,9 @@
+[FileTaxonomyTermTestCase]
+name = Taxonomy term file test
+description = Tests adding a file to a non-node entity.
+group = File
+file = file.test
+
 [FileManagedFileElementTestCase]
 name = Managed file element test
 description = Tests the managed_file element type.
@@ -45,3 +51,14 @@ name = Private file test
 description = Uploads a test to a private node and checks access.
 group = File
 file = file.test
+
+[FileAdminTestCase]
+name = File administration
+description = Test file administration page functionality.
+group = File
+file = file.test
+
+; Added by Backdrop CMS packaging script on 2017-01-15
+project = backdrop
+version = 1.6.0
+timestamp = 1484537173

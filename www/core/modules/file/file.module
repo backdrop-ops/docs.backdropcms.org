@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Defines a "managed_file" Form API field and a "file" field for Field module.
@@ -7,6 +6,55 @@
 
 // Load all Field module hooks for File.
 require_once BACKDROP_ROOT . '/core/modules/file/file.field.inc';
+
+/**
+ * Implements hook_action_info().
+ */
+function file_action_info() {
+  $actions['file_delete'] = array(
+    'label' => t('Delete file(s)'),
+    'type' => 'file',
+    'callback' => 'file_delete_action',
+    'file' => 'file.actions.inc',
+  );
+
+  return $actions;
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function file_autoload_info() {
+  return array(
+    // Views handlers.
+    'views_handler_argument_file_fid' => 'views/views_handler_argument_file_fid.inc',
+    'views_handler_field_file' => 'views/views_handler_field_file.inc',
+    'views_handler_field_file_link_delete' => 'views/views_handler_field_file_link_delete.inc',
+    'views_handler_field_file_extension' => 'views/views_handler_field_file_extension.inc',
+    'views_handler_field_file_filemime' => 'views/views_handler_field_file_filemime.inc',
+    'views_handler_field_file_uri' => 'views/views_handler_field_file_uri.inc',
+    'views_handler_field_file_status' => 'views/views_handler_field_file_status.inc',
+    'views_handler_filter_file_status' => 'views/views_handler_filter_file_status.inc',
+    'views_handler_field_file_link' => 'views/views_handler_field_file_link.inc',
+  );
+}
+
+/**
+ * Implements hook_permission().
+ */
+function file_permission() {
+  return array(
+    'access file overview' => array(
+      'title' => t('Access the manage files overview'),
+      'description' => t('The <a href="@url">manage files overview page</a> shows all files uploaded to the site.', array('@url' => url('admin/content/files'))),
+    ),
+    'delete files' => array(
+      'title' => t('Delete any file'),
+      'description' => t('Allow deleting files directly from the manage files overview page.'),
+      'restrict access' => TRUE,
+    ),
+  );
+}
 
 /**
  * Implements hook_menu().
@@ -23,9 +71,29 @@ function file_menu() {
   );
   $items['file/progress'] = array(
     'page callback' => 'file_ajax_progress',
+    'delivery callback' => 'backdrop_json_deliver',
     'access arguments' => array('access content'),
     'theme callback' => 'ajax_base_page_theme',
     'type' => MENU_CALLBACK,
+  );
+
+  $items['file/%file/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'backdrop_get_form',
+    'page arguments'  => array('file_delete_form', 1),
+    'access arguments' => array('delete files'),
+    'weight' => 1,
+    'type' => MENU_CALLBACK,
+    'file' => 'file.pages.inc',
+  );
+
+  $items['admin/content/files/delete'] = array(
+    'title' => 'Confirm deleting multiple files',
+    'type' => MENU_VISIBLE_IN_BREADCRUMB,
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('file_multiple_delete_confirm'),
+    'access arguments' => array('delete files'),
+    'file' => 'file.pages.inc',
   );
 
   return $items;
@@ -73,7 +141,7 @@ function file_theme() {
       'variables' => array('file' => NULL, 'icon_directory' => NULL),
     ) + $base,
     'file_icon' => array(
-      'variables' => array('file' => NULL, 'icon_directory' => NULL),
+      'variables' => array('file' => NULL, 'icon_directory' => NULL, 'alt' => ''),
     ) + $base,
     'file_managed_file' => array(
       'render element' => 'element',
@@ -259,16 +327,8 @@ function file_ajax_upload() {
     $form = $form[$parent];
   }
 
-  // Add the special Ajax class if a new file was added.
-  if (isset($form['#file_upload_delta']) && $current_file_count < $form['#file_upload_delta']) {
-    $form[$current_file_count]['#attributes']['class'][] = 'ajax-new-content';
-  }
-  // Otherwise just add the new content class on a placeholder.
-  else {
-    $form['#suffix'] .= '<span class="ajax-new-content"></span>';
-  }
-
-  $output = theme('status_messages') . backdrop_render($form);
+  $form['#prefix'] .= theme('status_messages');
+  $output = backdrop_render($form);
   $js = backdrop_add_js();
   $settings = call_user_func_array('array_merge_recursive', $js['settings']['data']);
 
@@ -304,8 +364,8 @@ function file_ajax_progress($key) {
     }
   }
 
-  backdrop_json_output($progress);
-  backdrop_exit();
+  // Displayed as JSON by delivery callback backdrop_json_deliver().
+  return $progress;
 }
 
 /**
@@ -340,6 +400,22 @@ function file_file_predelete(File $file) {
 }
 
 /**
+ * Implements hook_admin_paths().
+ */
+function file_admin_paths() {
+  // Re-use the node admin theme setting for files.
+  if (config_get('system.core', 'node_admin_theme')) {
+    $paths = array(
+      'file/*/delete' => TRUE,
+    );
+    return $paths;
+  }
+  else {
+    return array();
+  }
+}
+
+/**
  * Render API callback: Expands the managed_file element type.
  *
  * Expands the file type to include Upload and Remove buttons, as well as
@@ -358,7 +434,7 @@ function file_managed_file_process($element, &$form_state, $form) {
   $ajax_settings = array(
     'path' => 'file/ajax/' . implode('/', $element['#array_parents']) . '/' . $form['form_build_id']['#value'],
     'wrapper' => $element['#id'] . '-ajax-wrapper',
-    'effect' => 'fade',
+    'effect' => 'none',
     'progress' => array(
       'type' => $element['#progress_indicator'],
       'message' => $element['#progress_message'],
@@ -375,13 +451,13 @@ function file_managed_file_process($element, &$form_state, $form) {
     '#limit_validation_errors' => array($element['#parents']),
     '#ajax' => $ajax_settings,
     '#weight' => -5,
+    '#attributes' => array('class' => array('file-upload-button')),
   );
 
   // Force the progress indicator for the remove button to be either 'none' or
   // 'throbber', even if the upload button is using something else.
   $ajax_settings['progress']['type'] = ($element['#progress_indicator'] == 'none') ? 'none' : 'throbber';
   $ajax_settings['progress']['message'] = NULL;
-  $ajax_settings['effect'] = 'none';
   $element['remove_button'] = array(
     '#name' => implode('_', $element['#parents']) . '_remove_button',
     '#type' => 'submit',
@@ -391,6 +467,7 @@ function file_managed_file_process($element, &$form_state, $form) {
     '#limit_validation_errors' => array($element['#parents']),
     '#ajax' => $ajax_settings,
     '#weight' => -5,
+    '#attributes' => array('class' => array('file-remove-button')),
   );
 
   $element['fid'] = array(
@@ -446,15 +523,23 @@ function file_managed_file_process($element, &$form_state, $form) {
     );
   }
 
-  // Add the extension list to the page as JavaScript settings.
+  // Enable auto-uploading unless requested otherwise.
+  if (!isset($element['#auto_upload']) || $element['##auto_upload']) {
+    $element['upload']['#attributes']['data-file-auto-upload'] = '1';
+  }
+
+  // Add client-side validation of file extensions.
   if (isset($element['#upload_validators']['file_validate_extensions'][0])) {
-    $extension_list = implode(',', array_filter(explode(' ', $element['#upload_validators']['file_validate_extensions'][0])));
-    $element['upload']['#attached']['js'] = array(
-      array(
-        'type' => 'setting',
-        'data' => array('file' => array('elements' => array('#' . $element['#id'] . '-upload' => $extension_list)))
-      )
-    );
+    $extension_array = array_filter(explode(' ', $element['#upload_validators']['file_validate_extensions'][0]));
+    $extension_string = implode(',', $extension_array);
+    $element['upload']['#attributes']['data-file-extensions'] = $extension_string;
+
+    // Add support for mobile camera uploads if jpg is a valid extension.
+    // Browser support for HTML5 extension validation is still weak at this
+    // point, add more extensive extension support in the future.
+    if (in_array('jpg', $extension_array)) {
+      $element['upload']['#attributes']['accept'] = '*/*,capture=camera';
+    }
   }
 
   // Prefix and suffix used for Ajax replacement.
@@ -471,6 +556,7 @@ function file_managed_file_process($element, &$form_state, $form) {
  */
 function file_managed_file_value(&$element, $input = FALSE, $form_state = NULL) {
   $fid = 0;
+  $force_default = FALSE;
 
   // Find the current value of this field from the form state.
   $form_state_fid = $form_state['values'];
@@ -503,18 +589,30 @@ function file_managed_file_value(&$element, $input = FALSE, $form_state = NULL) 
           $callback($element, $input, $form_state);
         }
       }
-      // Load file and check access if the FID has changed, to confirm it
-      // exists and that the current user has access to it.
+      // If a FID was submitted, load the file (and check access if it's not a
+      // public file) to confirm it exists and that the current user has access
+      // to it.
       if (isset($input['fid']) && ($file = file_load($input['fid']))) {
-        if (file_uri_scheme($file->uri) == 'public' || file_download_access($file->uri)) {
+        if ((file_uri_scheme($file->uri) != 'public') && !file_download_access($file->uri)) {
+          $force_default = TRUE;
+        }
+        // Temporary files that belong to other users should never be allowed.
+        // Since file ownership can't be determined for anonymous users, they
+        // are not allowed to reuse temporary files at all.
+        elseif ($file->status != FILE_STATUS_PERMANENT && (!$GLOBALS['user']->uid || $file->uid != $GLOBALS['user']->uid)) {
+          $force_default = TRUE;
+        }
+        // If all checks pass, allow the file to be changed.
+        else {
           $fid = $file->fid;
         }
       }
     }
   }
 
-  // If there is no input, set the default value.
-  else {
+  // If there is no input or if the default value was requested above, use the
+  // default value.
+  if ($input === FALSE || $force_default) {
     if ($element['#extended']) {
       $default_fid = isset($element['#default_value']['fid']) ? $element['#default_value']['fid'] : 0;
       $return = isset($element['#default_value']) ? $element['#default_value'] : array('fid' => 0);
@@ -901,8 +999,17 @@ function file_icon_map(File $file) {
  *   (optional) The name of a field type. If given, limits the reference check
  *   to fields of the given type.
  *
- * @return
- *   An integer value.
+ * @return array
+ *   A nested array in the following format:
+ *   - field_name => field_references
+ *     - entity_type => type_references
+ *       - id => reference
+ *   The first level key contains the field names.
+ *   The second level key contains the entity type.
+ *   The third level key contains entity ID.
+ *
+ * @see file_file_download()
+ * @see file_file_predelete()
  */
 function file_get_file_references(File $file, $field = NULL, $age = FIELD_LOAD_REVISION, $field_type = 'file') {
   $references = backdrop_static(__FUNCTION__, array());

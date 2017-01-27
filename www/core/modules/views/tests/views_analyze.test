@@ -27,18 +27,18 @@ class ViewsAnalyzeTest extends ViewsSqlTest {
    */
   function testAnalyzeBasic() {
     $this->backdropLogin($this->admin);
-    // Enable the frontpage view and click the analyse button.
-    $view = views_get_view('frontpage');
+    // Enable the taxonomy_term view and click the analyse button.
+    $view = views_get_view('taxonomy_term');
     $view->save();
 
-    $this->backdropGet('admin/structure/views/view/frontpage/edit');
+    $this->backdropGet('admin/structure/views/view/taxonomy_term/configure');
     $this->assertLink(t('analyze view'));
 
     // This redirects the user to the form.
     $this->clickLink(t('analyze view'));
     $this->assertText(t('View analysis'));
 
-    // This redirects the user back to the main views edit page.
+    // This redirects the user back to the main views configure page.
     $this->backdropPost(NULL, array(), t('Ok'));
   }
 }

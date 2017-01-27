@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Code required only when fetching information about available updates.
@@ -13,6 +12,12 @@
  * @see update_menu()
  */
 function update_manual_status() {
+  // Do not trigger an update if in testing.
+  if (!_update_checking_enabled()) {
+    backdrop_set_message(t('Update checking is disabled on this site.'), 'error');
+    return;
+  }
+
   _update_refresh();
   $batch = array(
     'operations' => array(
@@ -120,13 +125,13 @@ function _update_fetch_data() {
  * Once the release history XML data is downloaded, it is parsed and saved into
  * the {cache_update} table in an entry just for that project.
  *
- * @param $project
+ * @param array $project
  *   Associative array of information about the project to fetch data for.
  *
  * @return
  *   TRUE if we fetched parsable XML, otherwise FALSE.
  */
-function _update_process_fetch_task($project) {
+function _update_process_fetch_task(array $project) {
   global $base_url;
   $config = config('update.settings');
   $fail = &backdrop_static(__FUNCTION__, array());
@@ -155,7 +160,10 @@ function _update_process_fetch_task($project) {
   if (empty($fail[$fetch_url_base]) || $fail[$fetch_url_base] < $max_fetch_attempts) {
     $response = backdrop_http_request($url);
     $response_code = (int) $response->code;
-    if (!isset($response->error) && isset($response->data)) {
+    if (isset($response->error)) {
+      watchdog('update', 'HTTP request to @url failed with error: @error.', array('@url' => $url, '@error' => $response->error));
+    }
+    elseif (!isset($response->error) && isset($response->data)) {
       $data = $response->data;
     }
   }
@@ -293,13 +301,19 @@ function _update_create_fetch_task($project) {
  */
 function _update_build_fetch_url($project, $site_key = '') {
   $name = $project['name'];
-  $url = _update_get_fetch_url_base($project);
-  $url .= '/' . $name . '/' . BACKDROP_CORE_COMPATIBILITY;
+
+  if (empty($project['project status url'])) {
+    $url = _update_get_fetch_url_base($project);
+    $url .= '/' . $name . '/' . BACKDROP_CORE_COMPATIBILITY;
+  }
+  else {
+    $url = $project['project status url'];
+  }
 
   // Only append usage information if we have a site key and the project is
   // enabled. We do not want to record usage statistics for disabled projects.
   // Only append a site_key and the version information if we have a site_key
-  // in the first place, and if this is not a disabled module or theme. We do
+  // in the first place, and if this is not a disabled module, theme, or layout. We do
   // not want to record usage statistics for disabled code.
   if (!empty($site_key) && (strpos($project['project_type'], 'disabled') === FALSE)) {
     // Append the site key.
@@ -335,9 +349,15 @@ function _update_build_fetch_url($project, $site_key = '') {
  * @see _update_build_fetch_url()
  */
 function _update_get_fetch_url_base($project) {
-  if (isset($project['info']['project status url'])) {
+  // Specified manually, as from the update server.
+  if (isset($project['project status url'])) {
+    $url = $project['project status url'];
+  }
+  // Specified in the .info file.
+  elseif (isset($project['info']['project status url'])) {
     $url = $project['info']['project status url'];
   }
+  // The site default base URL.
   else {
     $url = config_get('update.settings', 'update_url');
     if (empty($url)) {

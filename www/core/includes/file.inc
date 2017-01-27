@@ -302,7 +302,7 @@ function file_stream_wrapper_uri_normalize($uri) {
  * @param $uri
  *   A stream, referenced as "scheme://target".
  *
- * @return
+ * @return BackdropStreamWrapperInterface
  *   Returns a new stream wrapper object appropriate for the given URI or FALSE
  *   if no registered handler could be found. For example, a URI of
  *   "private://example.txt" would return a new private stream wrapper object
@@ -316,6 +316,7 @@ function file_stream_wrapper_get_instance_by_uri($uri) {
 
   $class = file_stream_wrapper_get_class($scheme);
   if (class_exists($class)) {
+    /* @var BackdropStreamWrapperInterface $instance */
     $instance = new $class();
     $instance->setUri($uri);
     return $instance;
@@ -339,7 +340,7 @@ function file_stream_wrapper_get_instance_by_uri($uri) {
  * @param $scheme
  *   If the stream was "public://target", "public" would be the scheme.
  *
- * @return
+ * @return BackdropLocalStreamWrapper|BackdropStreamWrapperInterface|FALSE
  *   Returns a new stream wrapper object appropriate for the given $scheme.
  *   For example, for the public scheme a stream wrapper object
  *   (BackdropPublicStreamWrapper).
@@ -348,6 +349,7 @@ function file_stream_wrapper_get_instance_by_uri($uri) {
 function file_stream_wrapper_get_instance_by_scheme($scheme) {
   $class = file_stream_wrapper_get_class($scheme);
   if (class_exists($class)) {
+    /* @var BackdropStreamWrapperInterface $instance */
     $instance = new $class();
     $instance->setUri($scheme . '://');
     return $instance;
@@ -529,8 +531,7 @@ function file_save_htaccess($directory, $private = TRUE, $force_overwrite = FALS
 function file_htaccess_lines($private = TRUE) {
   $lines = <<<EOF
 # Turn off all options we don't need.
-Options None
-Options +FollowSymLinks
+Options -Indexes -ExecCGI -Includes
 
 # Set the catch-all handler to prevent scripts from being executed.
 SetHandler Drupal_Security_Do_Not_Remove_See_SA_2006_006
@@ -577,7 +578,7 @@ EOF;
  *   EntityFieldQuery to retrieve a list of entity IDs loadable by
  *   this function.
  *
- * @return
+ * @return File[]
  *   An array of file entities, indexed by fid.
  *
  * @see hook_file_load()
@@ -607,15 +608,14 @@ function file_load($fid) {
 }
 
 /**
- * Saves a file entity to the database.
- *
- * If the $file->fid is not set a new record will be added.
+ * Saves a new or updated file.
  *
  * @param File $file
- *   A file object returned by file_load().
+ *   A file object returned by file_load(). If the $file->fid is not set a new
+ *   record will be added.
  *
- * @return
- *   Either SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
+ * @return int
+ *   Either SAVED_NEW or SAVED_UPDATED depending on the operation performed.
  *
  * @see hook_file_insert()
  * @see hook_file_update()
@@ -687,7 +687,7 @@ function file_usage_add(File $file, $module, $type, $id, $count = 1) {
     ->expression('count', 'count + :count', array(':count' => $count))
     ->execute();
 
-  // Make sure that a used file is permament.
+  // Make sure that a used file is permanent.
   if ($file->status != FILE_STATUS_PERMANENT) {
     $file->status = FILE_STATUS_PERMANENT;
     $file->save();
@@ -889,7 +889,6 @@ function file_valid_uri($uri) {
  */
 function file_unmanaged_copy($source, $destination = NULL, $replace = FILE_EXISTS_RENAME) {
   $original_source = $source;
-  $original_destination = $destination;
 
   // Assert that the source file actually exists.
   if (!file_exists($source)) {
@@ -1263,7 +1262,7 @@ function file_create_filename($basename, $directory) {
  * @see file_usage_list()
  */
 function file_delete($fid) {
-  return file_delete_multiple(array($fid));
+  file_delete_multiple(array($fid));
 }
 
 /**
@@ -1274,7 +1273,7 @@ function file_delete($fid) {
  * remove it during cleanup.
  *
  * @param $fid
- *   The file id.
+ *   The file ID.
  *
  * @see file_unmanaged_delete()
  * @see file_usage_list()
@@ -1410,7 +1409,7 @@ function file_space_used($uid = NULL, $status = FILE_STATUS_PERMANENT) {
  *     unique.
  *   - FILE_EXISTS_ERROR: Do nothing and return FALSE.
  *
- * @return
+ * @return File|FALSE|NULL
  *   An object containing the file information if the upload succeeded, FALSE
  *   in the event of an error, or NULL if no file was uploaded. The
  *   documentation for the "File interface" group, which you can find under
@@ -1470,7 +1469,7 @@ function file_save_upload($form_field_name, $validators = array(), $destination 
     'filesize' => $_FILES['files']['size'][$form_field_name],
   );
   $values['filemime'] = file_get_mimetype($values['filename']);
-  $file = entity_create('file', $values);
+  $file = new File($values);
 
   $extensions = '';
   if (isset($validators['file_validate_extensions'])) {
@@ -1488,7 +1487,7 @@ function file_save_upload($form_field_name, $validators = array(), $destination 
   else {
     // No validator was provided, so add one using the default list.
     // Build a default non-munged safe list for file_munge_filename().
-    $extensions = 'jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp';
+    $extensions = 'jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp docx docm pptx pptm xlsx xlsm';
     $validators['file_validate_extensions'] = array();
     $validators['file_validate_extensions'][0] = $extensions;
   }
@@ -1765,7 +1764,7 @@ function file_validate_is_image(File $file) {
 /**
  * Verifies that image dimensions are within the specified maximum and minimum.
  *
- * Non-image files will be ignored. If a image toolkit is available the image
+ * Non-image files will be ignored. If an image toolkit is available the image
  * will be scaled to fit within the desired maximum dimensions.
  *
  * @param File $file
@@ -1856,7 +1855,7 @@ function file_save_data($data, $destination = NULL, $replace = FILE_EXISTS_RENAM
 
   if ($uri = file_unmanaged_save_data($data, $destination, $replace)) {
     // Create a file entity.
-    $file = entity_create('file', array(
+    $file = new File(array(
       'uri' => $uri,
       'uid' => $user->uid,
       'status' => FILE_STATUS_PERMANENT,
@@ -2063,7 +2062,8 @@ function file_download_access($uri) {
  * @param $options
  *   An associative array of additional options, with the following elements:
  *   - 'nomask': The preg_match() regular expression of the files to ignore.
- *     Defaults to '/(\.\.?|CVS)$/'.
+ *     Defaults to '/^(\..*)|(CVS)$/'. This default ignores all hidden files
+ *     (those that start with a period) and items named "CVS".
  *   - 'callback': The callback function to call for each match. There is no
  *     default callback.
  *   - 'recurse': When TRUE, the directory scan will recurse the entire tree
@@ -2083,9 +2083,16 @@ function file_download_access($uri) {
  *   'filename', and 'name' members corresponding to the matching files.
  */
 function file_scan_directory($dir, $mask, $options = array(), $depth = 0) {
+  // By default, do not check for files in common special-purpose directories.
+  $ignore_directories = array(
+    'node_modules',
+    'bower_components',
+  );
+  $no_mask = '/^((\..*)|' . implode('|', $ignore_directories) .  ')$/';
+
   // Merge in defaults.
   $options += array(
-    'nomask' => '/(\.\.?|CVS)$/',
+    'nomask' => $no_mask,
     'callback' => 0,
     'recurse' => TRUE,
     'key' => 'uri',
@@ -2096,7 +2103,7 @@ function file_scan_directory($dir, $mask, $options = array(), $depth = 0) {
   $files = array();
   if (is_dir($dir) && $handle = opendir($dir)) {
     while (FALSE !== ($filename = readdir($handle))) {
-      if (!preg_match($options['nomask'], $filename) && $filename[0] != '.') {
+      if (!preg_match($options['nomask'], $filename) && $filename !== '.' && $filename !== '..') {
         $uri = "$dir/$filename";
         $uri = file_stream_wrapper_uri_normalize($uri);
         if (is_dir($uri) && $options['recurse']) {
@@ -2518,7 +2525,6 @@ function file_directory_temp() {
  *   An associative array of headers, as expected by file_transfer().
  */
 function file_get_content_headers(File $file) {
-  $name = mime_header_encode($file->filename);
   $type = mime_header_encode($file->filemime);
 
   return array(

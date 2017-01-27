@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Global variable that holds information about the tests being run.
  *
@@ -33,6 +32,13 @@ abstract class BackdropTestCase {
   protected $databasePrefix = NULL;
 
   /**
+   * The file directory for this test's files. Usually matches $databasePrefix.
+   *
+   * @var string
+   */
+  protected $fileDirectoryName = NULL;
+
+  /**
    * The original file directory, before it was changed for testing purposes.
    *
    * @var string
@@ -54,7 +60,7 @@ abstract class BackdropTestCase {
   /**
    * Current results of this test case.
    *
-   * @var Array
+   * @var array
    */
   public $results = array(
     '#pass' => 0,
@@ -66,7 +72,7 @@ abstract class BackdropTestCase {
   /**
    * Assertions thrown in that test case.
    *
-   * @var Array
+   * @var array
    */
   protected $assertions = array();
 
@@ -95,6 +101,16 @@ abstract class BackdropTestCase {
   protected $setupDatabasePrefix = FALSE;
 
   protected $setupEnvironment = FALSE;
+
+  /**
+   * HTTP authentication method
+   */
+  protected $httpauth_method = CURLAUTH_BASIC;
+
+  /**
+   * HTTP authentication credentials (<username>:<password>).
+   */
+  protected $httpauth_credentials = NULL;
 
   /**
    * Constructor for BackdropTestCase.
@@ -139,6 +155,7 @@ abstract class BackdropTestCase {
       $prefix_exists = db_query("SELECT COUNT(*) FROM {simpletest_prefix} WHERE prefix = :prefix", array(':prefix' => $prefix))->fetchField();
     } while ($prefix_exists);
     $this->databasePrefix = $prefix;
+    $this->fileDirectoryName = substr($prefix, 10);
 
     // As soon as the database prefix is set, the test might start to execute.
     // All assertions as well as the SimpleTest batch operations are associated
@@ -167,6 +184,9 @@ abstract class BackdropTestCase {
    *   by passing in an associative array as $caller. Key 'file' is
    *   the name of the source file, 'line' is the line number and 'function'
    *   is the caller function itself.
+   *
+   * @return bool
+   *   TRUE if the assertion passed and FALSE if it failed.
    */
   protected function assert($status, $message = '', $group = 'Other', array $caller = NULL) {
     // Convert boolean status to string status.
@@ -537,8 +557,8 @@ abstract class BackdropTestCase {
     // HTTP auth settings (<username>:<password>) for the simpletest browser
     // when sending requests to the test site.
     $this->httpauth_method = $config->get('simpletest_method');
-    $username = $config->get('simpletest_username', NULL);
-    $password = $config->get('simpletest_password', NULL);
+    $username = $config->get('simpletest_username');
+    $password = $config->get('simpletest_password');
     if (!empty($username) && !empty($password)) {
       $this->httpauth_credentials = $username . ':' . $password;
     }
@@ -553,12 +573,8 @@ abstract class BackdropTestCase {
     }
     $missing_requirements = $this->checkRequirements();
     if (!empty($missing_requirements)) {
-      $missing_requirements_object = new ReflectionObject($this);
-      $caller = array(
-        'file' => $missing_requirements_object->getFileName(),
-      );
       foreach ($missing_requirements as $missing_requirement) {
-        BackdropTestCase::insertAssert($this->testId, $class, FALSE, $missing_requirement, 'Requirements check.', $caller);
+        $this->fail($missing_requirement, 'Requirements check.');
       }
     }
     else {
@@ -597,6 +613,20 @@ abstract class BackdropTestCase {
     backdrop_get_messages();
     restore_error_handler();
   }
+
+  /**
+   * Prepare an environment in which tests will be executed.
+   *
+   * This may be use used to create databases, install Backdrop and dependent
+   * modules, or do any other work necessary to prepare a testing environment
+   * for each test that will be run.
+   */
+  protected abstract function setUp();
+
+  /**
+   * Clean up any database tables, configuration, or files after each test run.
+   */
+  protected abstract function tearDown();
 
   /**
    * Handle errors during test runs.
@@ -638,7 +668,7 @@ abstract class BackdropTestCase {
    *
    * @see set_exception_handler
    */
-  protected function exceptionHandler($exception) {
+  protected function exceptionHandler(Exception $exception) {
     $backtrace = $exception->getTrace();
     // Push on top of the backtrace the call that generated the exception.
     array_unshift($backtrace, array(
@@ -765,6 +795,12 @@ abstract class BackdropTestCase {
  * watchdog(), module_implements(), module_invoke_all() etc.
  */
 class BackdropUnitTestCase extends BackdropTestCase {
+  /**
+   * The list of enabled modules prior to changing for testing.
+   *
+   * @var array
+   */
+  protected $originalModuleList;
 
   /**
    * Constructor for BackdropUnitTestCase.
@@ -794,7 +830,7 @@ class BackdropUnitTestCase extends BackdropTestCase {
     backdrop_static_reset();
 
     // Create test directory.
-    $public_files_directory = $this->originalFileDirectory . '/simpletest/' . substr($this->databasePrefix, 10);
+    $public_files_directory = $this->originalFileDirectory . '/simpletest/' . $this->fileDirectoryName;
     file_prepare_directory($public_files_directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
     $conf['file_public_path'] = $public_files_directory;
 
@@ -824,6 +860,7 @@ class BackdropUnitTestCase extends BackdropTestCase {
       module_list(TRUE, FALSE, FALSE, $module_list);
     }
     $this->setup = TRUE;
+    return TRUE;
   }
 
   protected function tearDown() {
@@ -861,7 +898,7 @@ class BackdropWebTestCase extends BackdropTestCase {
   /**
    * The URL currently loaded in the internal browser.
    *
-   * @var string9
+   * @var string
    */
   protected $url;
 
@@ -875,7 +912,7 @@ class BackdropWebTestCase extends BackdropTestCase {
   /**
    * The headers of the page currently loaded in the internal browser.
    *
-   * @var Array
+   * @var array
    */
   protected $headers;
 
@@ -896,7 +933,7 @@ class BackdropWebTestCase extends BackdropTestCase {
   /**
    * The value of the Backdrop.settings JavaScript variable for the page currently loaded in the internal browser.
    *
-   * @var Array
+   * @var array
    */
   protected $backdropSettings;
 
@@ -910,7 +947,7 @@ class BackdropWebTestCase extends BackdropTestCase {
   /**
    * The current user logged in using the internal browser.
    *
-   * @var bool
+   * @var FALSE|User
    */
   protected $loggedInUser = FALSE;
 
@@ -921,6 +958,13 @@ class BackdropWebTestCase extends BackdropTestCase {
    * but we still need cookie handling, so we set the jar to NULL.
    */
   protected $cookieFile = NULL;
+
+  /**
+   * An array of cookies set in the most recent cURL request.
+   *
+   * @var array
+   */
+  protected $cookies = array();
 
   /**
    * Additional cURL options.
@@ -944,21 +988,38 @@ class BackdropWebTestCase extends BackdropTestCase {
   protected $originalSettings = NULL;
 
   /**
+   * The original installation profile, before changing for testing purposes.
+   *
+   * @var string
+   */
+  protected $originalProfile;
+
+  /**
+   * The original clean URL setting, before changing for testing purposes.
+   * @var bool
+   */
+  protected $originalCleanUrl;
+
+  /**
+   * The original site language object, before changing for testing purposes.
+   *
+   * @var stdClass
+   */
+  protected $originalLanguage;
+
+  /**
+   * The original default language code, before changing for testing purposes.
+   *
+   * @var string
+   */
+  protected $originalLanguageDefault;
+
+  /**
    * The original shutdown handlers array, before it was cleaned for testing purposes.
    *
    * @var array
    */
   protected $originalShutdownCallbacks = array();
-
-  /**
-   * HTTP authentication method
-   */
-  protected $httpauth_method = CURLAUTH_BASIC;
-
-  /**
-   * HTTP authentication credentials (<username>:<password>).
-   */
-  protected $httpauth_credentials = NULL;
 
   /**
    * The current session name, if available.
@@ -984,6 +1045,10 @@ class BackdropWebTestCase extends BackdropTestCase {
    * The number of redirects followed during the handling of a request.
    */
   protected $redirect_count;
+
+  public $public_files_directory;
+  public $private_files_directory;
+  public $temp_files_directory;
 
   /**
    * Constructor for BackdropWebTestCase.
@@ -1017,7 +1082,7 @@ class BackdropWebTestCase extends BackdropTestCase {
    * @param $settings
    *   An associative array of settings to change from the defaults, keys are
    *   node properties, for example 'title' => 'Hello, world!'.
-   * @return
+   * @return Node
    *   Created node entity.
    */
   protected function backdropCreateNode($settings = array()) {
@@ -1062,7 +1127,7 @@ class BackdropWebTestCase extends BackdropTestCase {
     );
     $settings['body'][$settings['langcode']][0] += $body;
 
-    $node = entity_create('node', $settings);
+    $node = new Node($settings);
     $node->save();
 
     // Small hack to link revisions to our test user.
@@ -1096,9 +1161,7 @@ class BackdropWebTestCase extends BackdropTestCase {
       'description' => '',
       'help' => '',
       'title_label' => 'Title',
-      'body_label' => 'Body',
       'has_title' => 1,
-      'has_body' => 1,
       'is_new' => TRUE,
     );
     // Imposed values for a custom type.
@@ -1148,7 +1211,7 @@ class BackdropWebTestCase extends BackdropTestCase {
       $lines = array(16, 256, 1024, 2048, 20480);
       $count = 0;
       foreach ($lines as $line) {
-        simpletest_generate_file('text-' . $count++, 64, $line);
+        simpletest_generate_file('text-' . $count++, 64, $line, 'text');
       }
 
       // Copy other test files from simpletest.
@@ -1328,16 +1391,23 @@ class BackdropWebTestCase extends BackdropTestCase {
    *
    * @param $account
    *   User object representing the user to log in.
+   * @param $by_email
+   *   Whether to use email for login instead of username.
    *
    * @see backdropCreateUser()
    */
-  protected function backdropLogin($account) {
+  protected function backdropLogin($account, $by_email = FALSE) {
+    global $user;
     if ($this->loggedInUser) {
+      $this->backdropLogout();
+    }
+    // Sometimes $this->loggedInUser is FALSE even when user is logged in.
+    elseif ($user->uid) {
       $this->backdropLogout();
     }
 
     $edit = array(
-      'name' => $account->name,
+      'name' => $by_email ? $account->mail : $account->name,
       'pass' => $account->pass_raw
     );
     $this->backdropPost('user', $edit, t('Log in'));
@@ -1355,8 +1425,7 @@ class BackdropWebTestCase extends BackdropTestCase {
    * Generate a token for the currently logged in user.
    */
   protected function backdropGetToken($value = '') {
-    $private_key = backdrop_get_private_key();
-    return backdrop_hmac_base64($value, $this->session_id . $private_key);
+    return backdrop_hmac_base64($value, $this->session_id . backdrop_get_private_key() . backdrop_get_hash_salt());
   }
 
   /*
@@ -1427,7 +1496,7 @@ class BackdropWebTestCase extends BackdropTestCase {
     $this->originalLanguage = $language;
     $this->originalLanguageDefault = config_get('system.core', 'language_default');
     $this->originalConfigDirectories = $config_directories;
-    $this->originalFileDirectory = config_get('system.core', 'file_public_path', 'files');
+    $this->originalFileDirectory = config_get('system.core', 'file_public_path');
     $this->originalProfile = backdrop_get_profile();
     $this->originalCleanUrl = config_get('system.core', 'clean_url');
     $this->originalUser = $user;
@@ -1455,7 +1524,7 @@ class BackdropWebTestCase extends BackdropTestCase {
     // Create test directory ahead of installation so fatal errors and debug
     // information can be logged during installation process.
     // Use temporary files directory with the same prefix as the database.
-    $this->public_files_directory = $this->originalFileDirectory . '/simpletest/' . substr($this->databasePrefix, 10);
+    $this->public_files_directory = $this->originalFileDirectory . '/simpletest/' . $this->fileDirectoryName;
     $this->private_files_directory = $this->public_files_directory . '/private';
     $this->temp_files_directory = $this->private_files_directory . '/temp';
 
@@ -1467,7 +1536,7 @@ class BackdropWebTestCase extends BackdropTestCase {
 
     // Set the new config directories. During test execution, these values are
     // manually set directly in config_get_config_directory().
-    $config_base_path = 'files/simpletest/' . substr($this->databasePrefix, 10) . '/config_';
+    $config_base_path = 'files/simpletest/' . $this->fileDirectoryName . '/config_';
     $config_directories['active'] = $config_base_path . 'active';
     $config_directories['staging'] = $config_base_path . 'staging';
     $active_directory = config_get_config_directory('active');
@@ -1492,6 +1561,58 @@ class BackdropWebTestCase extends BackdropTestCase {
   }
 
   /**
+   * Copies the cached tables and config for a profile if one is available.
+   *
+   * @return
+   *   TRUE when cache used, FALSE when cache is not available.
+   *
+   * @see BackdropWebTestCase::setUp()
+   * @see BackdropWebTestCase::tearDown()
+   */
+  protected function useCache() {
+    $config_cache_dir = $this->originalFileDirectory . '/simpletest/simpletest_cache_' . $this->profile;
+
+    if (is_dir($config_cache_dir)) {
+      $prefix = 'simpletest_cache_' . $this->profile . '_';
+
+      $tables = db_query("SHOW TABLES LIKE :prefix", array(':prefix' => db_like($prefix) . '%' ))->fetchCol();
+
+      foreach ($tables as $table_prefix) {
+        $table = substr($table_prefix, strlen($prefix));
+        db_query('CREATE TABLE ' . $this->databasePrefix . $table . ' LIKE ' . $table_prefix);
+        db_query('INSERT ' . $this->databasePrefix . $table . ' SELECT * FROM ' . $table_prefix);
+      }
+
+      $this->recursiveCopy($config_cache_dir, $this->public_files_directory);
+
+      return TRUE;
+    }
+    return FALSE;
+  }
+
+  /**
+   * Recursively copy one directory to another.
+   *
+   */
+  private function recursiveCopy($src, $dst) {
+    $dir = opendir($src);
+    if(!file_exists($dst)){
+      mkdir($dst);
+    }
+    while(false !== ( $file = readdir($dir)) ) {
+      if (( $file != '.' ) && ( $file != '..' )) {
+        if ( is_dir($src . '/' . $file) ) {
+          $this->recursiveCopy($src . '/' . $file, $dst . '/' . $file);
+        }
+        else {
+          copy($src . '/' . $file, $dst . '/' . $file);
+        }
+      }
+    }
+    closedir($dir);
+  }
+
+  /**
    * Sets up a Backdrop site for running functional and integration tests.
    *
    * Generates a random database prefix and installs Backdrop with the specified
@@ -1511,10 +1632,12 @@ class BackdropWebTestCase extends BackdropTestCase {
    * @see BackdropWebTestCase::prepareDatabasePrefix()
    * @see BackdropWebTestCase::changeDatabasePrefix()
    * @see BackdropWebTestCase::prepareEnvironment()
+   *
+   * @return bool
+   *   TRUE if set up completes, FALSE if an error occurred.
    */
   protected function setUp() {
     global $user, $language, $conf;
-
     // Create the database prefix for this test.
     $this->prepareDatabasePrefix();
 
@@ -1545,9 +1668,27 @@ class BackdropWebTestCase extends BackdropTestCase {
     config_install_default_config('system');
     config_set('system.core', 'install_profile', $this->profile);
 
-    // Perform the actual Backdrop installation.
-    include_once BACKDROP_ROOT . '/core/includes/install.inc';
-    backdrop_install_system();
+    $use_cache = $this->useCache();
+    if (!$use_cache) {
+      // Perform the actual Backdrop installation.
+      include_once BACKDROP_ROOT . '/core/includes/install.inc';
+      backdrop_install_system();
+
+      // Ensure schema versions are recalculated.
+      backdrop_static_reset('backdrop_get_schema_versions');
+
+      // Include the testing profile.
+      config_set('system.core', 'install_profile', $this->profile);
+      $profile_details = install_profile_info($this->profile, 'en');
+
+      // Install the modules specified by the testing profile.
+      module_enable($profile_details['dependencies'], FALSE);
+      // Run the profile tasks.
+      $install_profile_module_exists = db_query("SELECT 1 FROM {system} WHERE type = 'module' AND name = :name", array(':name' => $this->profile))->fetchField();
+      if ($install_profile_module_exists) {
+        module_enable(array($this->profile), FALSE);
+      }
+    }
 
     // Set path variables.
     $core_config = config('system.core');
@@ -1563,16 +1704,6 @@ class BackdropWebTestCase extends BackdropTestCase {
     // @todo This may need to be primed like 'install_profile' above.
     config_set('simpletest.settings', 'parent_profile', $this->originalProfile);
 
-    // Ensure schema versions are recalculated.
-    backdrop_static_reset('backdrop_get_schema_versions');
-
-    // Include the testing profile.
-    config_set('system.core', 'install_profile', $this->profile);
-    $profile_details = install_profile_info($this->profile, 'en');
-
-    // Install the modules specified by the testing profile.
-    module_enable($profile_details['dependencies'], FALSE);
-
     // Install modules needed for this test. This could have been passed in as
     // either a single array argument or a variable number of string arguments.
     // @todo Remove this compatibility layer and only accept a single array.
@@ -1583,14 +1714,6 @@ class BackdropWebTestCase extends BackdropTestCase {
     if ($modules) {
       $success = module_enable($modules, TRUE);
       $this->assertTrue($success, t('Enabled modules: %modules', array('%modules' => implode(', ', $modules))));
-    }
-
-    // Run the profile tasks.
-    $install_profile_module_exists = db_query("SELECT 1 FROM {system} WHERE type = 'module' AND name = :name", array(
-      ':name' => $this->profile,
-    ))->fetchField();
-    if ($install_profile_module_exists) {
-      module_enable(array($this->profile), FALSE);
     }
 
     // Reset/rebuild all data structures after enabling the modules.
@@ -1622,6 +1745,7 @@ class BackdropWebTestCase extends BackdropTestCase {
 
     backdrop_set_time_limit($this->timeLimit);
     $this->setup = TRUE;
+    return TRUE;
   }
 
   /**
@@ -1671,8 +1795,8 @@ class BackdropWebTestCase extends BackdropTestCase {
   }
 
   /**
-   * Delete created files and temporary files directory, delete the tables created by setUp(),
-   * and reset the database prefix.
+   * Delete created files and temporary files directory, delete the tables
+   * created by setUp(), and reset the database prefix.
    */
   protected function tearDown() {
     global $user, $language, $settings, $config_directories;
@@ -1688,7 +1812,7 @@ class BackdropWebTestCase extends BackdropTestCase {
     }
 
     // Delete temporary files directory.
-    file_unmanaged_delete_recursive($this->originalFileDirectory . '/simpletest/' . substr($this->databasePrefix, 10));
+    file_unmanaged_delete_recursive($this->originalFileDirectory . '/simpletest/' . $this->fileDirectoryName);
 
     // Remove all prefixed tables.
     $connection_info = Database::getConnectionInfo('default');
@@ -1716,7 +1840,7 @@ class BackdropWebTestCase extends BackdropTestCase {
       ->condition('prefix', $this->databasePrefix)
       ->execute();
 
-    // Set the configuration direcotires back to the originals.
+    // Set the configuration directories back to the originals.
     $config_directories = $this->originalConfigDirectories;
 
     // Restore the original settings.
@@ -1739,9 +1863,6 @@ class BackdropWebTestCase extends BackdropTestCase {
     // aren't called after tests.
     module_list(TRUE);
     module_implements_reset();
-
-    // Reset the Field API.
-    field_cache_clear();
 
     // Rebuild caches.
     $this->refreshVariables();
@@ -1804,7 +1925,7 @@ class BackdropWebTestCase extends BackdropTestCase {
       $this->session_name = session_name();
     }
     // We set the user agent header on each request so as to use the current
-    // time and a new uniqid.
+    // time and a new unique ID.
     if (preg_match('/simpletest\d+/', $this->databasePrefix, $matches)) {
       curl_setopt($this->curlHandle, CURLOPT_USERAGENT, backdrop_generate_test_ua($matches[0]));
     }
@@ -1844,7 +1965,7 @@ class BackdropWebTestCase extends BackdropTestCase {
     if (!empty($curl_options[CURLOPT_POST])) {
       // This is a fix for the Curl library to prevent Expect: 100-continue
       // headers in POST requests, that may cause unexpected HTTP response
-      // codes from some webservers (like lighttpd that returns a 417 error
+      // codes from some web servers (like lighttpd that returns a 417 error
       // code). It is done by setting an empty "Expect" header field that is
       // not overwritten by Curl.
       $curl_options[CURLOPT_HTTPHEADER][] = 'Expect:';
@@ -1897,6 +2018,9 @@ class BackdropWebTestCase extends BackdropTestCase {
    *   The cURL handler.
    * @param $header
    *   An header.
+   *
+   * @return int
+   *   The header length in bytes.
    */
   protected function curlHeaderCallback($curlHandler, $header) {
     // Header fields can be extended over multiple lines by preceding each
@@ -2010,6 +2134,7 @@ class BackdropWebTestCase extends BackdropTestCase {
    * Retrieve a Backdrop path or an absolute path and JSON decode the result.
    */
   protected function backdropGetAJAX($path, array $options = array(), array $headers = array()) {
+    $headers[] = 'X-Requested-With: XMLHttpRequest';
     $headers[] = 'Accept: application/vnd.backdrop-ajax, */*; q=0.01';
     return backdrop_json_decode($this->backdropGet($path, $options, $headers));
   }
@@ -2088,6 +2213,9 @@ class BackdropWebTestCase extends BackdropTestCase {
    *   is done by backdropPostAJAX(). This string is literally appended to the
    *   POST data, so it must already be urlencoded and contain a leading "&"
    *   (e.g., "&extra_var1=hello+world&extra_var2=you%26me").
+   *
+   * @return string|FALSE
+   *   The returned HTML content from the response.
    */
   protected function backdropPost($path, $edit, $submit, array $options = array(), array $headers = array(), $form_html_id = NULL, $extra_post = NULL) {
     $submit_matches = FALSE;
@@ -2158,7 +2286,7 @@ class BackdropWebTestCase extends BackdropTestCase {
             $out = $new;
           }
           $this->verbose('POST request to: ' . $path .
-                         '<hr />Ending URL: ' . $this->getUrl() .
+                         '<hr />Ending URL: ' . ($this->getUrl()) .
                          '<hr />Fields: ' . highlight_string('<?php ' . var_export($post_array, TRUE), TRUE) .
                          '<hr />' . $out);
           return $out;
@@ -2173,6 +2301,7 @@ class BackdropWebTestCase extends BackdropTestCase {
       }
       $this->fail(t('Found the requested form fields at @path', array('@path' => $path)));
     }
+    return FALSE;
   }
 
   /**
@@ -2272,6 +2401,7 @@ class BackdropWebTestCase extends BackdropTestCase {
     }
 
     // Submit the POST request.
+    $headers[] = 'X-Requested-With: XMLHttpRequest';
     $headers[] = 'Accept: application/vnd.backdrop-ajax, */*; q=0.01';
     $return = backdrop_json_decode($this->backdropPost(NULL, $edit, array('path' => $ajax_path, 'triggering_element' => $triggering_element), $options, $headers, $form_html_id, $extra_post));
     $this->assertIdentical($this->backdropGetHeader('X-Backdrop-Ajax-Token'), '1', 'Ajax response header found.');
@@ -2384,7 +2514,7 @@ class BackdropWebTestCase extends BackdropTestCase {
     $verbose .= '<hr />Ending URL: ' . $this->getUrl();
     $verbose .= '<hr />' . $this->content;
 
-    $this->verbose($verbose);    
+    $this->verbose($verbose);
     return $return;
   }
 
@@ -2448,8 +2578,8 @@ class BackdropWebTestCase extends BackdropTestCase {
    *   Reference to array of edit values to be checked against the form.
    * @param $submit
    *   Form submit button value.
-   * @param $form
-   *   Array of form elements.
+   * @param SimpleXmlElement $form
+   *   A SimpleXmlElement containing the form.
    * @return
    *   Submit value matches a valid submit input in the form.
    */
@@ -2467,18 +2597,16 @@ class BackdropWebTestCase extends BackdropTestCase {
       $done = FALSE;
       if (isset($edit[$name])) {
         switch ($type) {
+          case 'color':
+          case 'email':
+          case 'hidden':
+          case 'number':
+          case 'range':
           case 'text':
           case 'tel':
           case 'textarea':
           case 'url':
-          case 'number':
-          case 'range':
-          case 'color':
-          case 'number':
-          case 'range':
-          case 'hidden':
           case 'password':
-          case 'email':
           case 'search':
             $post[$name] = $edit[$name];
             unset($edit[$name]);
@@ -2583,7 +2711,8 @@ class BackdropWebTestCase extends BackdropTestCase {
             if (!isset($element['checked'])) {
               break;
             }
-            // Deliberate no break.
+            $post[$name] = $value;
+            break;
           default:
             $post[$name] = $value;
         }
@@ -2640,7 +2769,13 @@ class BackdropWebTestCase extends BackdropTestCase {
    *
    * @param $xpath
    *   The xpath string to use in the search.
-   * @return SimpleXmlElement
+   *
+   * @param array $arguments
+   *   An array of arguments with keys in the form ':name' matching the
+   *   placeholders in the query. The values may be either strings or numeric
+   *   values.
+   *
+   * @return SimpleXmlElement[]|FALSE
    *   The return value of the xpath search. For details on the xpath string
    *   format and return values see the SimpleXML documentation,
    *   http://us.php.net/manual/function.simplexml-element-xpath.php.
@@ -2650,7 +2785,7 @@ class BackdropWebTestCase extends BackdropTestCase {
       $xpath = $this->buildXPathQuery($xpath, $arguments);
       $result = $this->elements->xpath($xpath);
       // Some combinations of PHP / libxml versions return an empty array
-      // instead of the documented FALSE. Forcefully convert any falsish values
+      // instead of the documented FALSE. Forcefully convert any false-ish values
       // to an empty array to allow foreach(...) constructions.
       return $result ? $result : array();
     }
@@ -2813,7 +2948,7 @@ class BackdropWebTestCase extends BackdropTestCase {
         $path = substr($path, $length);
       }
       // Ensure that we have an absolute path.
-      if ($path[0] !== '/') {
+      if (strlen($path) && $path[0] !== '/') {
         $path = '/' . $path;
       }
       // Finally, prepend the $base_url.
@@ -2971,7 +3106,7 @@ class BackdropWebTestCase extends BackdropTestCase {
     $this->plainTextContent = FALSE;
     $this->elements = FALSE;
     $this->backdropSettings = array();
-    if (preg_match('/window.Backdrop = {settings: (.*)}/', $content, $matches)) {
+    if (preg_match('/window.Backdrop[ ]?=[ ]?{settings:[ ]?(.*)}/', $content, $matches)) {
       $this->backdropSettings = backdrop_json_decode($matches[1]);
     }
   }
@@ -3173,13 +3308,13 @@ class BackdropWebTestCase extends BackdropTestCase {
     if (!$message) {
       $message = '"' . $text . '"' . ($be_unique ? ' found only once' : ' found more than once');
     }
-    $first_occurance = strpos($this->plainTextContent, $text);
-    if ($first_occurance === FALSE) {
+    $first_occurrence = strpos($this->plainTextContent, $text);
+    if ($first_occurrence === FALSE) {
       return $this->assert(FALSE, $message, $group);
     }
-    $offset = $first_occurance + strlen($text);
-    $second_occurance = strpos($this->plainTextContent, $text, $offset);
-    return $this->assert($be_unique == ($second_occurance === FALSE), $message, $group);
+    $offset = $first_occurrence + strlen($text);
+    $second_occurrence = strpos($this->plainTextContent, $text, $offset);
+    return $this->assert($be_unique == ($second_occurrence === FALSE), $message, $group);
   }
 
   /**
@@ -3827,7 +3962,7 @@ function simpletest_verbose($message, $original_file_directory = NULL, $test_cla
   if ($original_file_directory) {
     $file_directory = $original_file_directory;
     $class = $test_class;
-    $verbose = config_get('simpletest.settings', 'simpletest_verbose', TRUE);
+    $verbose = config_get('simpletest.settings', 'simpletest_verbose');
     $directory = $file_directory . '/simpletest/verbose';
     $writable = file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
     if ($writable && !file_exists($directory . '/.htaccess')) {

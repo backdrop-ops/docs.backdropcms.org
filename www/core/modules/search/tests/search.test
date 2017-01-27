@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Tests for search.module.
@@ -256,7 +255,7 @@ class SearchPageText extends BackdropWebTestCase {
     $this->backdropGet('search/node');
     $this->assertText(t('Enter your keywords'));
     $this->assertText(t('Search'));
-    $title = t('Search') . ' | Backdrop';
+    $title = t('Search') . ' | Backdrop CMS';
     $this->assertTitle($title, 'Search page title is correct');
 
     $edit = array();
@@ -321,10 +320,10 @@ class SearchAdvancedSearchForm extends BackdropWebTestCase {
 
   /**
    * Test using the search form with GET and POST queries.
-   * Test using the advanced search form to limit search to nodes of type "Basic page".
+   * Test using the advanced search form to limit search to nodes of type "Page".
    */
   function testNodeType() {
-    $this->assertTrue($this->node->type == 'page', 'Node type is Basic page.');
+    $this->assertTrue($this->node->type == 'page', 'Node type is Page.');
 
     // Assert that the dummy title doesn't equal the real title.
     $dummy_title = 'Lorem ipsum';
@@ -332,23 +331,23 @@ class SearchAdvancedSearchForm extends BackdropWebTestCase {
 
     // Search for the dummy title with a GET query.
     $this->backdropGet('search/node/' . $dummy_title);
-    $this->assertNoText($this->node->title, 'Basic page node is not found with dummy title.');
+    $this->assertNoText($this->node->title, 'Page node is not found with dummy title.');
 
     // Search for the title of the node with a GET query.
     $this->backdropGet('search/node/' . $this->node->title);
-    $this->assertText($this->node->title, 'Basic page node is found with GET query.');
+    $this->assertText($this->node->title, 'Page node is found with GET query.');
 
     // Search for the title of the node with a POST query.
     $edit = array('or' => $this->node->title);
     $this->backdropPost('search/node', $edit, t('Advanced search'));
-    $this->assertText($this->node->title, 'Basic page node is found with POST query.');
+    $this->assertText($this->node->title, 'Page node is found with POST query.');
 
     // Advanced search type option.
     $this->backdropPost('search/node', array_merge($edit, array('type[page]' => 'page')), t('Advanced search'));
-    $this->assertText($this->node->title, 'Basic page node is found with POST query and type:page.');
+    $this->assertText($this->node->title, 'Page node is found with POST query and type:page.');
 
-    $this->backdropPost('search/node', array_merge($edit, array('type[article]' => 'article')), t('Advanced search'));
-    $this->assertText('bike shed', 'Article node is not found with POST query and type:article.');
+    $this->backdropPost('search/node', array_merge($edit, array('type[post]' => 'post')), t('Advanced search'));
+    $this->assertText('bike shed', 'Post node is not found with POST query and type:post.');
   }
 }
 
@@ -571,7 +570,7 @@ class SearchBlockTestCase extends BackdropWebTestCase {
 
     // Test a normal search via the block form, from the front page.
     $terms = array('search_block_form' => 'test');
-    $this->backdropPost('node', $terms, t('Search'));
+    $this->backdropPost('user', $terms, t('Search'));
     $this->assertText('Your search yielded no results');
 
     // Test a search from the block on a 404 page.
@@ -590,7 +589,7 @@ class SearchBlockTestCase extends BackdropWebTestCase {
 
     // Test an empty search via the block form, from the front page.
     $terms = array('search_block_form' => '');
-    $this->backdropPost('node', $terms, t('Search'));
+    $this->backdropPost('user', $terms, t('Search'));
     $this->assertText('Please enter some keywords');
 
     // Confirm that the user is redirected to the search page, when form is submitted empty.
@@ -599,6 +598,24 @@ class SearchBlockTestCase extends BackdropWebTestCase {
       url('search/node/', array('absolute' => TRUE)),
       'Redirected to correct url.'
     );
+
+    // Test that after entering a too-short keyword in the form, you can then
+    // search again with a longer keyword. First test using the block form.
+    $terms = array('search_block_form' => 'a');
+    $this->backdropPost('user', $terms, t('Search'));
+    $this->assertText('You must include at least one keyword to match in the content. Keywords must be at least 3 characters, and punctuation is ignored.');
+    $terms = array('search_block_form' => 'foo');
+    $this->backdropPost(NULL, $terms, t('Search'));
+    $this->assertNoText('You must include at least one keyword to match in the content. Keywords must be at least 3 characters, and punctuation is ignored.');
+    $this->assertText('Your search yielded no results');
+
+    // Same test again, using the search page form for the second search this time.
+    $terms = array('search_block_form' => 'a');
+    $this->backdropPost('user', $terms, t('Search'));
+    $terms = array('keys' => 'foo');
+    $this->backdropPost(NULL, $terms, t('Search'));
+    $this->assertNoText('You must include at least one keyword to match in the content. Keywords must be at least 3 characters, and punctuation is ignored.');
+    $this->assertText('Your search yielded no results');
   }
 }
 
@@ -664,6 +681,9 @@ class SearchCommentTestCase extends BackdropWebTestCase {
   function setUp() {
     parent::setUp('comment', 'search');
 
+    // Disable cache.
+    config_set('system.core', 'cache', '0');
+
     // Create and log in an administrative user having access to the Full HTML
     // text format.
     $full_html_format = filter_format_load('full_html');
@@ -690,7 +710,7 @@ class SearchCommentTestCase extends BackdropWebTestCase {
   function testSearchResultsComment() {
     $comment_body = 'Test comment body';
 
-    $node_type = node_type_get_type('article');
+    $node_type = node_type_get_type('post');
     $node_type->settings['comment_preview'] = BACKDROP_OPTIONAL;
     $node_type->settings['comment_subject_field'] = TRUE;
     node_type_save($node_type);
@@ -710,7 +730,7 @@ class SearchCommentTestCase extends BackdropWebTestCase {
     $this->backdropPost('admin/config/people/permissions', $edit, t('Save permissions'));
 
     // Create a node.
-    $node = $this->backdropCreateNode(array('type' => 'article'));
+    $node = $this->backdropCreateNode(array('type' => 'post'));
     // Post a comment using 'Full HTML' text format.
     $edit_comment = array();
     $edit_comment['subject'] = 'Test comment subject';
@@ -727,7 +747,7 @@ class SearchCommentTestCase extends BackdropWebTestCase {
     $edit = array(
       'search_block_form' => "'" . $edit_comment['subject'] . "'",
     );
-    $this->backdropPost('', $edit, t('Search'));
+    $this->backdropPost('user', $edit, t('Search'));
     $this->assertText($node->title, 'Node found in search results.');
     $this->assertText($edit_comment['subject'], 'Comment subject found in search results.');
 
@@ -735,7 +755,7 @@ class SearchCommentTestCase extends BackdropWebTestCase {
     $edit = array(
       'search_block_form' => "'" . $comment_body . "'",
     );
-    $this->backdropPost('', $edit, t('Search'));
+    $this->backdropPost('user', $edit, t('Search'));
     $this->assertText($node->title, t('Node found in search results.'));
 
     // Verify that comment is rendered using proper format.
@@ -753,7 +773,7 @@ class SearchCommentTestCase extends BackdropWebTestCase {
     $this->cronRun();
 
     // Search for $title.
-    $this->backdropPost('', $edit, t('Search'));
+    $this->backdropPost('user', $edit, t('Search'));
     $this->assertNoText($comment_body, 'Comment body text not found in search results.');
   }
 
@@ -766,13 +786,13 @@ class SearchCommentTestCase extends BackdropWebTestCase {
     $roles = array_diff($this->admin_user->roles, array(BACKDROP_AUTHENTICATED_ROLE));
     $this->admin_role = reset($roles);
 
-    $node_type = node_type_get_type('article');
+    $node_type = node_type_get_type('post');
     $node_type->settings['comment_preview'] = BACKDROP_OPTIONAL;
     $node_type->settings['comment_subject_field'] = TRUE;
     node_type_save($node_type);
 
     // Create a node.
-    $this->node = $this->backdropCreateNode(array('type' => 'article'));
+    $this->node = $this->backdropCreateNode(array('type' => 'post'));
 
     // Post a comment using 'Full HTML' text format.
     $edit_comment = array();
@@ -842,7 +862,7 @@ class SearchCommentTestCase extends BackdropWebTestCase {
     $edit = array(
       'search_block_form' => "'" . $this->comment_subject . "'",
     );
-    $this->backdropPost('', $edit, t('Search'));
+    $this->backdropPost('user', $edit, t('Search'));
     $method = $assume_access ? 'assertText' : 'assertNoText';
     $verb = $assume_access ? 'found' : 'not found';
     $this->{$method}($this->node->title, "Node $verb in search results: " . $message);
@@ -850,24 +870,24 @@ class SearchCommentTestCase extends BackdropWebTestCase {
   }
 
   /**
-   * Verify that 'add new comment' does not appear in search results or index.
+   * Verify that 'Add comment' does not appear in search results or index.
    */
   function testAddNewComment() {
     // Create a node with a short body.
     $settings = array(
-      'type' => 'article',
+      'type' => 'post',
       'title' => 'short title',
       'body' => array(LANGUAGE_NONE => array(array('value' => 'short body text'))),
     );
 
-    $user = $this->backdropCreateUser(array('search content', 'create article content', 'access content'));
+    $user = $this->backdropCreateUser(array('search content', 'create post content', 'access content'));
     $this->backdropLogin($user);
 
     $node = $this->backdropCreateNode($settings);
-    // Verify that if you view the node on its own page, 'add new comment'
-    // is there.
+    // Verify that if you view the node on its own page, 'Add comment' is
+    // there.
     $this->backdropGet('node/' . $node->nid);
-    $this->assertText(t('Add new comment'), 'Add new comment appears on node page');
+    $this->assertText(t('Add comment'), '"Add comment" appears on node page');
 
     // Run cron to index this page.
     $this->backdropLogout();
@@ -878,11 +898,11 @@ class SearchCommentTestCase extends BackdropWebTestCase {
     $this->backdropPost('search/node', array('keys' => 'comment'), t('Search'));
     $this->assertText(t('Your search yielded no results'), 'No results searching for the word comment');
 
-    // Search for the node title. Should be found, and 'Add new comment' should
-    // not be part of the search snippet.
+    // Search for the node title. Should be found, and 'Add comment' should not
+    // be part of the search snippet.
     $this->backdropPost('search/node', array('keys' => 'short'), t('Search'));
     $this->assertText($node->title, 'Search for keyword worked');
-    $this->assertNoText(t('Add new comment'), 'Add new comment does not appear on search results page');
+    $this->assertNoText(t('Add comment'), '"Add comment" does not appear on search results page');
   }
 
 }
@@ -945,10 +965,10 @@ class SearchExpressionInsertExtractTestCase extends BackdropUnitTestCase {
  *
  * Issue 537278
  *
- * - Nodes with comment status set to Open should always how comment counts
- * - Nodes with comment status set to Closed should show comment counts
- *     only when there are comments
- * - Nodes with comment status set to Hidden should never show comment counts
+ * - Nodes with comment status set to Open should always show comment counts.
+ * - Nodes with comment status set to Closed should show comment counts only
+ *     when there are comments.
+ * - Nodes with comment status set to Hidden should never show comment counts.
  */
 class SearchCommentCountToggleTestCase extends BackdropWebTestCase {
   protected $searching_user;
@@ -961,7 +981,7 @@ class SearchCommentCountToggleTestCase extends BackdropWebTestCase {
     $this->searching_user = $this->backdropCreateUser(array('search content', 'access content', 'access comments', 'skip comment approval'));
 
     // Create initial nodes.
-    $node_params = array('type' => 'article', 'body' => array(LANGUAGE_NONE => array(array('value' => 'SearchCommentToggleTestCase'))));
+    $node_params = array('type' => 'post', 'body' => array(LANGUAGE_NONE => array(array('value' => 'SearchCommentToggleTestCase'))));
 
     $this->searchable_nodes['1 comment'] = $this->backdropCreateNode($node_params);
     $this->searchable_nodes['0 comments'] = $this->backdropCreateNode($node_params);
@@ -1002,7 +1022,7 @@ class SearchCommentCountToggleTestCase extends BackdropWebTestCase {
     );
 
     // Test comment count display for nodes with comment status set to Open
-    $this->backdropPost('', $edit, t('Search'));
+    $this->backdropPost('user', $edit, t('Search'));
     $this->assertText(t('0 comments'), 'Empty comment count displays for nodes with comment status set to Open');
     $this->assertText(t('1 comment'), 'Non-empty comment count displays for nodes with comment status set to Open');
 
@@ -1012,7 +1032,7 @@ class SearchCommentCountToggleTestCase extends BackdropWebTestCase {
     $this->searchable_nodes['1 comment']->comment = COMMENT_NODE_CLOSED;
     node_save($this->searchable_nodes['1 comment']);
 
-    $this->backdropPost('', $edit, t('Search'));
+    $this->backdropPost('user', $edit, t('Search'));
     $this->assertNoText(t('0 comments'), 'Empty comment count does not display for nodes with comment status set to Closed');
     $this->assertText(t('1 comment'), 'Non-empty comment count displays for nodes with comment status set to Closed');
 
@@ -1022,7 +1042,7 @@ class SearchCommentCountToggleTestCase extends BackdropWebTestCase {
     $this->searchable_nodes['1 comment']->comment = COMMENT_NODE_HIDDEN;
     node_save($this->searchable_nodes['1 comment']);
 
-    $this->backdropPost('', $edit, t('Search'));
+    $this->backdropPost('user', $edit, t('Search'));
     $this->assertNoText(t('0 comments'), 'Empty comment count does not display for nodes with comment status set to Hidden');
     $this->assertNoText(t('1 comment'), 'Non-empty comment count does not display for nodes with comment status set to Hidden');
   }
@@ -1314,6 +1334,9 @@ class SearchConfigSettingsForm extends BackdropWebTestCase {
     $this->search_user = $this->backdropCreateUser(array('search content', 'administer search', 'administer nodes', 'bypass node access', 'access user profiles', 'administer users', 'administer blocks'));
     $this->backdropLogin($this->search_user);
 
+    // Delete the two default nodes.
+    node_delete_multiple(array(1, 2));
+
     // Add a single piece of content and index it.
     $node = $this->backdropCreateNode();
     $this->search_node = $node;
@@ -1342,11 +1365,11 @@ class SearchConfigSettingsForm extends BackdropWebTestCase {
     $this->backdropGet('admin/config/search/settings');
     $this->assertText(t('There are @count items left to index.', array('@count' => 0)));
 
-    // Test the re-index button.
-    $this->backdropPost('admin/config/search/settings', array(), t('Re-index site'));
-    $this->assertText(t('Are you sure you want to re-index the site'));
-    $this->backdropPost('admin/config/search/settings/reindex', array(), t('Re-index site'));
-    $this->assertText(t('The index will be rebuilt'));
+    // Test the Invalidate search index button.
+    $this->backdropPost('admin/config/search/settings', array(), t('Invalidate search index'));
+    $this->assertText(t('Are you sure you want to invalidate the search index?'));
+    $this->backdropPost('admin/config/search/settings/reindex', array(), t('Invalidate search index'));
+    $this->assertText(t('The search index will be invalidated'));
     $this->backdropGet('admin/config/search/settings');
     $this->assertText(t('There is 1 item left to index.'));
 
@@ -1418,7 +1441,7 @@ class SearchConfigSettingsForm extends BackdropWebTestCase {
       // Run a search from the search block on the node page. Verify you get
       // to this module's search results page.
       $terms = array('search_block_form' => $info['keys']);
-      $this->backdropPost('node', $terms, t('Search'));
+      $this->backdropPost('user', $terms, t('Search'));
       $this->assertEqual(
         $this->getURL(),
         url('search/' . $info['path'] . '/' . $info['keys'], array('absolute' => TRUE)),
@@ -1858,10 +1881,11 @@ class SearchNodeAccessTest extends BackdropWebTestCase {
   }
 
   /**
-   * Tests that search returns results with punctuation in the search phrase.
+   * Tests that search works with punctuation and HTML entities.
    */
   function testPhraseSearchPunctuation() {
     $node = $this->backdropCreateNode(array('body' => array(LANGUAGE_NONE => array(array('value' => "The bunny's ears were fuzzy.")))));
+    $node2 = $this->backdropCreateNode(array('body' => array(LANGUAGE_NONE => array(array('value' => 'Dignissim Aliquam &amp; Quieligo meus natu quae quia te. Damnum&copy; erat&mdash; neo pneum. Facilisi feugiat ibidem ratis.')))));
 
     // Update the search index.
     module_invoke_all('update_index');
@@ -1874,6 +1898,17 @@ class SearchNodeAccessTest extends BackdropWebTestCase {
     $edit = array('keys' => '"bunny\'s"');
     $this->backdropPost('search/node', $edit, t('Search'));
     $this->assertText($node->title);
+
+    // Search for "&" and verify entities are not broken up in the output.
+    $edit = array('keys' => '&');
+    $this->backdropPost('search/node', $edit, t('Search'));
+    $this->assertNoRaw('<strong>&</strong>amp;');
+    $this->assertText('You must include at least one keyword to match in the content. Keywords must be at least 3 characters, and punctuation is ignored.');
+
+    $edit = array('keys' => '&amp;');
+    $this->backdropPost('search/node', $edit, t('Search'));
+    $this->assertNoRaw('<strong>&</strong>amp;');
+    $this->assertText('You must include at least one keyword to match in the content. Keywords must be at least 3 characters, and punctuation is ignored.');
   }
 }
 

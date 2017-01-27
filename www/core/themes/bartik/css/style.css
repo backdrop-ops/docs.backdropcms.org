@@ -276,20 +276,22 @@ ul.tips {
 
 /* ------------------ Layout ------------------ */
 
-/* All layouts */
-.l-container,
-.l-top,
-.l-messages,
+/* Bootstrap layouts, restrict to 960px total width. */
+.container {
+  max-width: 920px;
+  padding: 0 20px;
+}
 
-/* Special wrapper added in template.php. */
-.l-header-inner,
-
-/* Bartik (three-three-four) layout specifics */
-.l-featured,
-.l-triptych,
-.l-footer-columns {
-  max-width: 960px;
+/* Legacy layouts, restrict to 960px total width. */
+.layout-legacy .l-container,
+.layout-legacy .l-top,
+.layout-legacy .l-messages,
+.layout-legacy .l-header-inner,
+.layout-legacy .l-featured,
+.layout-legacy .l-triptych,
+.layout-legacy .l-footer-columns {
   margin: 0 auto;
+  max-width: 960px;
   padding: 0 20px;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
@@ -311,6 +313,7 @@ ul.tips {
   padding-top: 33px;
   margin-top: -33px;
 }
+.l-wrapper,
 .l-container,
 .l-triptych {
   -webkit-flex: 1 0 auto;
@@ -349,6 +352,8 @@ ul.tips {
   text-decoration: none;
   -moz-border-radius: 0 0 10px 10px;
   border-radius: 0 0 10px 10px;
+  white-space: nowrap;
+  width: auto;
 }
 #skip-link a:hover,
 #skip-link a:active,
@@ -496,7 +501,7 @@ ul.tips {
   padding: 0;
   clear: both;
 }
-.l-header .block-user-login input.form-submit {
+.l-header .block-user-login .form-submit {
   border: 1px solid;
   border-color: #ccc;
   border-color: rgba(255, 255, 255, 0.5);
@@ -505,8 +510,8 @@ ul.tips {
   margin: 4px 0;
   padding: 3px 8px;
 }
-.l-header .block-user-login input.form-submit:hover,
-.l-header .block-user-login input.form-submit:focus {
+.l-header .block-user-login .form-submit:hover,
+.l-header .block-user-login .form-submit:focus {
   background: #fff;
   background: rgba(255, 255, 255, 0.9);
 }
@@ -549,43 +554,120 @@ ul.tips {
   padding: 0;
 }
 .l-header ul.menu li {
-  float: left; /* LTR */
   list-style: none;
+}
+.l-header ul.menu > li {
   padding: 0 1px;
   margin: 0 1px;
 }
-[dir="rtl"] .l-header ul.menu li {
-  float: right;
+.l-header ul.menu > li > a {
+  display: block;
 }
 .l-header ul.menu a {
   color: #333;
   background: #ccc;
   background: rgba(255, 255, 255, 0.7);
-  float: left; /* LTR */
   height: 2.4em;
   line-height: 2.4em;
   padding: 0 0.8em;
   text-decoration: none;
+}
+.l-header ul.menu li li a {
+  background: rgba(255, 255, 255, 0.8);
+}
+.l-header ul.menu li li li a {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.l-header .rounded-tabs ul.menu > li > a,
+.l-header .square-tabs ul.menu > li > a {
+  color: #333;
   text-shadow: 0 1px #eee;
+}
+
+.l-header .rounded-tabs ul.menu > li > a.active,
+.l-header .square-tabs ul.menu > li > a.active {
+  color: #333;
+  background: #ffffff;
+}
+
+
+.l-header ul.menu > li.last > a {
+  margin-bottom: 1em;
+}
+
+/* Only the first tab is rounded on mobile. */
+.l-header .rounded-tabs ul.menu > li.first > a {
   -moz-border-radius-topleft: 8px;
   -moz-border-radius-topright: 8px;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
 }
-[dir="rtl"] .l-header ul.menu a {
-  float: right;
+/* Likewise, the last tab is rounded on the bottom. */
+.l-header .rounded-tabs ul.menu > li.last > a {
+  -moz-border-radius-bottomleft: 8px;
+  -moz-border-radius-bottomright: 8px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+@media (min-width: 768px) {
+  .l-header ul.menu > li.last > a {
+    margin-bottom: 0;
+  }
+  .l-header .rounded-tabs ul.menu > li > a {
+    -moz-border-radius-topleft: 8px;
+    -moz-border-radius-topright: 8px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+  .l-header .rounded-tabs ul.menu > li.last > a {
+    -moz-border-radius-bottomleft: 0;
+    -moz-border-radius-bottomright: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+
+  .l-header ul.menu > li {
+    float: left; /* LTR */
+  }
+  [dir="rtl"] .l-header ul.menu > li {
+    float: right;
+  }
+
+  /* Drop down specific styling. */
+  .l-header ul.menu-dropdown ul {
+    background-color: white;
+  }
+  .l-header ul.menu-dropdown > li.has-children > a {
+    padding-right: 2.5em;
+  }
+  .l-header ul.menu-dropdown > li > a.highlighted {
+    background-color: white;
+  }
+  .l-header ul.menu-dropdown ul {
+    border: 0;
+    box-shadow: 2px 2px 2px -2px #333333;
+  }
+}
+.l-header .no-tabs ul.menu > li > a.active {
+  text-decoration: underline;
 }
 .l-header ul.menu a:hover,
 .l-header ul.menu a:focus {
   background: #f6f6f2;
-  background: rgba(255, 255, 255, 0.95);
-}
-.l-header ul.menu a:active {
-  background: #b3b3b3;
-  background: rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.60);
 }
 .l-header ul.menu li a.active {
   border-bottom: none;
+}
+.l-header .no-tabs ul.menu a,
+.l-header .no-tabs ul.menu a:hover,
+.l-header .no-tabs ul.menu a:focus,
+.l-header .no-tabs ul.menu a:active,
+.l-header .no-tabs ul.menu a.highlighted,
+.l-header .no-tabs ul.menu li a.active {
+  background: none;
 }
 
 /* ------------------- Main ------------------- */
@@ -601,12 +683,18 @@ ul.tips {
   margin-top: 20px;
 }
 
+/* ----------------- Bottom ----------------- */
+
+.l-bottom {
+  margin-top: 20px;
+}
+
 /* ----------------- Content ------------------ */
 
 .content {
   margin-top: 10px;
 }
-h1#page-title {
+.page-title {
   font-size: 2em;
   line-height: 1;
   margin-top: .5em;
@@ -1049,7 +1137,7 @@ article .link-wrapper ul.links {
 
 .tabs {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  margin-bottom: 20px;
+  margin: 20px 0;
 }
 .tabs ul.primary {
   padding: 0 3px;
@@ -1153,6 +1241,35 @@ ul.action-links li a {
   padding: 0;
 }
 
+ /* -------------- Hero blocks  -------------- */
+
+.block-hero {
+  position: relative;
+  padding: 8% 4%; /* All padding shrinks/grows according to available width. */
+  min-height: 128px;
+  font-size: 120%;
+  -webkit-transition: min-height 0.25s;
+  transition: min-height 0.25s;
+  will-change: min-height;
+}
+.block-hero .block-title {
+  margin: 2% 0; /* Top/bottom margin shrinks/grows according to width. */
+  font-size: 180%;
+}
+@media (min-width: 34em) {
+  .block-hero {
+    min-height: 166px;
+    font-size: 140%;
+  }
+}
+@media (min-width: 48em) {
+  .block-hero {
+    min-height: 200px;
+    font-size: 180%;
+  }
+}
+
+
 /* -------------- User Profile   -------------- */
 
 .profile .user-picture {
@@ -1161,7 +1278,7 @@ ul.action-links li a {
 
 /* ---------------- Buttons    ---------------- */
 
-input.form-submit,
+.form-submit,
 a.button {
   background: #fff url(../images/buttons.png) 0 0 repeat-x;
   border: 1px solid #e4e4e4;
@@ -1179,7 +1296,7 @@ a.button {
   -moz-border-radius: 20px;
   border-radius: 15px;
 }
-[dir="rtl"] input.form-submit,
+[dir="rtl"] .form-submit,
 [dir="rtl"] a.button {
   margin-right: 0;
   margin-left: 0.6em;
@@ -1207,31 +1324,24 @@ fieldset {
   border-radius: 4px;
 }
 .fieldset-wrapper {
-  margin-top: 25px;
+  margin-top: 20px;
 }
 .node-form .vertical-tabs .fieldset-wrapper {
   margin-top: 0;
 }
 .filter-wrapper {
-  top: 0;
-  padding: 1em 0 0.2em;
+  padding: .5em 0;
+}
+.filter-wrapper legend,
+.filter-wrapper.collapsed legend {
   -moz-border-radius-topright: 0;
   -moz-border-radius-topleft: 0;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-}
-.filter-help a {
-  font-size: 0.857em;
-  padding: 2px 20px 0;
+  border-top: none;
 }
 .filter-wrapper .form-item label {
   margin-right: 10px;
-}
-.filter-wrapper .form-item {
-  padding: 0 0 0.5em 0.5em;
-}
-.filter-guidelines {
-  padding: 0 1.5em 0 0.5em;
 }
 fieldset.collapsed {
   background: transparent;
@@ -1309,8 +1419,8 @@ select.form-select {
   box-sizing: border-box;
   max-width: 100%;
 }
-input.form-submit:hover,
-input.form-submit:focus {
+.form-submit:hover,
+.form-submit:focus {
   background: #dedede;
 }
 .form-item {
@@ -1425,15 +1535,6 @@ input.form-button-disabled:active,
 .comment-form input.form-file {
   width: auto;
 }
-.no-sidebars .comment-form .form-text {
-  width: 800px;
-}
-.one-sidebar .comment-form .form-text {
-  width: 500px;
-}
-.two-sidebars .comment-form .form-text {
-  width: 320px;
-}
 .comment-form .form-item .description {
   font-size: 0.786em;
   line-height: 1.2;
@@ -1452,8 +1553,7 @@ h2.comment-form {
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
 }
-.comment-form fieldset.filter-wrapper .fieldset-wrapper,
-.comment-form .text-format-wrapper .form-item {
+.comment-form .text-format-wrapper .form-type-textarea {
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -1508,8 +1608,8 @@ div.vertical-tabs .vertical-tabs-panes fieldset.vertical-tabs-pane {
   margin-left: 5px;
   margin-right: 0;
 }
-#search-block-form input.form-submit,
-#search-form input.form-submit {
+#search-block-form .form-submit,
+#search-form .form-submit {
   margin-left: 0;
   margin-right: 0;
   height: 25px;
@@ -1521,10 +1621,10 @@ div.vertical-tabs .vertical-tabs-panes fieldset.vertical-tabs-pane {
   background: url(../images/search-button.png) no-repeat center top;
   overflow: hidden;
 }
-#search-block-form input.form-submit:hover,
-#search-block-form input.form-submit:focus,
-#search-form input.form-submit:hover,
-#search-form input.form-submit:focus {
+#search-block-form .form-submit:hover,
+#search-block-form .form-submit:focus,
+#search-form .form-submit:hover,
+#search-form .form-submit:focus {
   background-position: center bottom;
 }
 #search-form .form-item-keys label {

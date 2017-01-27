@@ -2,7 +2,13 @@ name = Node
 description = Allows content to be submitted to the site and displayed on pages.
 package = System
 version = BACKDROP_VERSION
+type = module
 backdrop = 1.x
 required = TRUE
 dependencies[] = entity
 configure = admin/structure/types
+
+; Added by Backdrop CMS packaging script on 2017-01-15
+project = backdrop
+version = 1.6.0
+timestamp = 1484537173

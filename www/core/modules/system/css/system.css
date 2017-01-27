@@ -121,6 +121,10 @@ a.tabledrag-handle .handle {
   margin: -0.4em 0.5em; /* LTR */
   padding: 0.42em 0.5em; /* LTR */
   width: 13px;
+  box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  -o-box-sizing: content-box;
 }
 [dir="rtl"] a.tabledrag-handle .handle {
   margin: -0.4em 0.5em;
@@ -236,6 +240,13 @@ tr .ajax-progress-throbber .throbber {
 }
 
 /**
+ * Text centered wrapper.
+ */
+.centered-wrapper {
+  text-align: center;
+}
+
+/**
  * For anything you want to hide on page load when JS is enabled, so
  * that you can use the JS to control visibility and avoid flicker.
  */
@@ -298,6 +309,44 @@ tr .ajax-progress-throbber .throbber {
 }
 
 /**
+ * Text alignment classes.
+ */
+.text-align-left {
+  text-align: left;
+}
+.text-align-right {
+  text-align: right;
+}
+.text-align-center {
+  text-align: center;
+}
+.text-align-justify {
+  text-align: justify;
+}
+
+/**
+ * Alignment classes (images, videos, blockquotes …).
+ */
+.align-left {
+  float: left;
+}
+.align-right {
+  float: right;
+}
+.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/**
+ * Underline content.
+ */
+.underline {
+  text-decoration: underline;
+}
+
+/**
  * Block-level HTML5 display definition.
  *
  * Provides display values for browsers that don't recognize the new elements
@@ -317,14 +366,4 @@ nav,
 section,
 summary {
   display: block;
-}
-
-/**
- * Floated images.
- */
-img.align-left {
-  float: left;
-}
-img.align-right {
-  float: right;
 }

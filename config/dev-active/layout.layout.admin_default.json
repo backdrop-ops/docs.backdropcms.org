@@ -6,7 +6,6 @@
     "description": null,
     "module": "layout",
     "weight": 1,
-    "layout": "one_column",
     "settings": [],
     "positions": {
         "content": [
@@ -33,5 +32,6 @@
             },
             "uuid": "default"
         }
-    }
+    },
+    "layout_template": "one_column"
 }

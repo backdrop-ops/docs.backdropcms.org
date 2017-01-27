@@ -37,17 +37,31 @@ function taxonomy_permission() {
     ),
   );
   foreach (taxonomy_vocabulary_load_multiple(FALSE) as $vocabulary) {
-    $permissions += array(
-      'edit terms in ' . $vocabulary->machine_name => array(
-        'title' => t('%vocabulary: Edit terms', array('%vocabulary' => $vocabulary->name)),
-      ),
-    );
-    $permissions += array(
-       'delete terms in ' . $vocabulary->machine_name => array(
-         'title' => t('%vocabulary: Delete terms', array('%vocabulary' => $vocabulary->name)),
-      ),
-    );
+    $permissions += taxonomy_vocabulary_list_permissions($vocabulary);
   }
+
+  return $permissions;
+}
+
+/**
+ * Helper function to generate standard permission list for a vocabulary.
+ *
+ * @param $vocabulary
+ *   Fully loaded TaxonomyVocabulary object.
+ *
+ * @return array
+ *   An array of permission names and descriptions.
+ */
+function taxonomy_vocabulary_list_permissions($vocabulary) {
+  $permissions = array(
+    'edit terms in ' . $vocabulary->machine_name => array(
+      'title' => t('%vocabulary: Edit terms', array('%vocabulary' => $vocabulary->name)),
+    ),
+    'delete terms in ' . $vocabulary->machine_name => array(
+      'title' => t('%vocabulary: Delete terms', array('%vocabulary' => $vocabulary->name)),
+    ),
+  );
+
   return $permissions;
 }
 
@@ -64,6 +78,7 @@ function taxonomy_entity_info() {
       'base table' => 'taxonomy_term_data',
       'token type' => 'term',
       'fieldable' => TRUE,
+      'redirect support' => TRUE,
       'entity keys' => array(
         'id' => 'tid',
         'bundle' => 'vocabulary',
@@ -212,6 +227,10 @@ function taxonomy_theme() {
       'render element' => 'elements',
       'template' => 'templates/taxonomy-term',
     ) + $base,
+    'taxonomy_vocabulary_form_permissions' => array(
+      'render element' => 'form',
+      'function' => 'theme_user_admin_permissions',
+    ),
   );
 }
 
@@ -228,7 +247,7 @@ function taxonomy_menu() {
     'file' => 'taxonomy.admin.inc',
   );
   $items['admin/structure/taxonomy/list'] = array(
-    'title' => 'List',
+    'title' => 'List vocabularies',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
@@ -289,6 +308,7 @@ function taxonomy_menu() {
   $items['taxonomy/autocomplete'] = array(
     'title' => 'Autocomplete taxonomy',
     'page callback' => 'taxonomy_autocomplete',
+    'delivery callback' => 'backdrop_json_deliver',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
     'file' => 'taxonomy.pages.inc',
@@ -303,12 +323,12 @@ function taxonomy_menu() {
     'file' => 'taxonomy.admin.inc',
   );
   $items['admin/structure/taxonomy/%taxonomy_vocabulary/list'] = array(
-    'title' => 'List',
+    'title' => 'List terms',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -20,
   );
-  $items['admin/structure/taxonomy/%taxonomy_vocabulary/edit'] = array(
-    'title' => 'Edit',
+  $items['admin/structure/taxonomy/%taxonomy_vocabulary/configure'] = array(
+    'title' => 'Configure',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('taxonomy_form_vocabulary', 3),
     'access arguments' => array('administer taxonomy'),
@@ -383,14 +403,13 @@ function taxonomy_vocabulary_title(TaxonomyVocabulary $vocabulary) {
 }
 
 /**
- * Saves a vocabulary.
+ * Saves a new or updated taxonomy vocabulary.
  *
  * @param TaxonomyVocabulary $vocabulary
  *   The taxonomy vocabulary entity to be saved.
  *
- * @return
- *   Status constant indicating whether the vocabulary was inserted (SAVED_NEW)
- *   or updated (SAVED_UPDATED).
+ * @return int
+ *   Either SAVED_NEW or SAVED_UPDATED depending on the operation performed.
  */
 function taxonomy_vocabulary_save(TaxonomyVocabulary $vocabulary) {
   return $vocabulary->save();
@@ -492,15 +511,13 @@ function taxonomy_check_vocabulary_hierarchy(TaxonomyVocabulary $vocabulary, $ch
 }
 
 /**
- * Saves a term object to the database.
+ * Saves a new or updated taxonomy term.
  *
  * @param TaxonomyTerm $term
  *   The taxonomy term entity to be saved.
  *
- * @return
- *   Status constant indicating whether term was inserted (SAVED_NEW) or updated
- *   (SAVED_UPDATED). When inserting a new term, $term->tid will contain the
- *   term ID of the newly created term.
+ * @return int
+ *   Either SAVED_NEW or SAVED_UPDATED depending on the operation performed.
  */
 function taxonomy_term_save(TaxonomyTerm $term) {
   return $term->save();
@@ -667,7 +684,7 @@ function taxonomy_term_view(TaxonomyTerm $term, $view_mode = 'full', $langcode =
   unset($term->content);
 
   $build += array(
-    '#theme' => 'taxonomy_term',
+    '#theme' => 'taxonomy_term__' . $term->vocabulary . '__' . $view_mode,
     '#term' => $term,
     '#view_mode' => $view_mode,
     '#language' => $langcode,
@@ -728,6 +745,7 @@ function taxonomy_vocabulary_static_reset(array $ids = NULL) {
  * @see taxonomy_vocabulary_load_multiple()
  */
 function taxonomy_vocabulary_get_names() {
+  watchdog_deprecated_function('taxonomy', __FUNCTION__);
   return taxonomy_vocabulary_load_multiple(FALSE);
 }
 
@@ -749,7 +767,7 @@ function taxonomy_term_load_parents($tid) {
     $query->join('taxonomy_term_hierarchy', 'h', 'h.parent = t.tid');
     $query->addField('t', 'tid');
     $query->condition('h.tid', $tid);
-    $query->addTag('term_access');
+    $query->addTag('taxonomy_term_access');
     $query->orderBy('t.weight');
     $query->orderBy('t.name');
     $tids = $query->execute()->fetchCol();
@@ -807,7 +825,7 @@ function taxonomy_term_load_children($tid, $vocabulary_name = NULL) {
     if ($vocabulary_name) {
       $query->condition('t.vocabulary', $vocabulary_name);
     }
-    $query->addTag('term_access');
+    $query->addTag('taxonomy_term_access');
     $query->orderBy('t.weight');
     $query->orderBy('t.name');
     $tids = $query->execute()->fetchCol();
@@ -855,7 +873,7 @@ function taxonomy_get_tree($vocabulary_name, $parent = 0, $max_depth = NULL, $lo
     $query->join('taxonomy_term_hierarchy', 'h', 'h.tid = t.tid');
     $result = $query
       ->addTag('translatable')
-      ->addTag('term_access')
+      ->addTag('taxonomy_term_access')
       ->fields('t')
       ->fields('h', array('parent'))
       ->condition('t.vocabulary', $vocabulary_name)
@@ -1003,7 +1021,7 @@ function taxonomy_autoload_info() {
  *   EntityFieldQuery to retrieve a list of entity IDs loadable by
  *   this function.
  *
- * @return
+ * @return TaxonomyTerm[]
  *   An array of taxonomy term entities, indexed by tid. When no results are
  *   found, an empty array is returned.
  */
@@ -1115,6 +1133,7 @@ function taxonomy_vocabulary_load($machine_name) {
  * @see taxonomy_vocabulary_load()
  */
 function taxonomy_vocabulary_machine_name_load($machine_name) {
+  watchdog_deprecated_function('taxonomy', __FUNCTION__);
   return taxonomy_vocabulary_load($machine_name);
 }
 

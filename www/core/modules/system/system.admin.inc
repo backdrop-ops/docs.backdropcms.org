@@ -8,10 +8,6 @@
  * Menu callback; Provide the administration overview page.
  */
 function system_admin_config_page() {
-  // Check for status report errors.
-  if (system_status(TRUE) && user_access('administer site configuration')) {
-    backdrop_set_message(t('One or more problems were detected with your Backdrop installation. Check the <a href="@status">status report</a> for more information.', array('@status' => url('admin/reports/status'))), 'error');
-  }
   $blocks = array();
   if ($admin = db_query("SELECT menu_name, mlid FROM {menu_links} WHERE link_path = 'admin/config' AND module = 'system'")->fetchAssoc()) {
     $result = db_query("
@@ -108,6 +104,12 @@ function system_admin_index() {
  * Menu callback; displays a listing of all themes.
  */
 function system_themes_page() {
+  // Inform the user if theme_debug is enabled.
+  $theme_debug_enabled = config_get('system.core', 'theme_debug');
+  if ($theme_debug_enabled) {
+    backdrop_set_message(t('Theme debugging is enabled. See the <a href="!url">Status report</a> page for more info.', array('!url' => url('admin/reports/status'))), 'warning', FALSE);
+  }
+
   // Get current list of themes.
   $themes = system_rebuild_theme_data();
   uasort($themes, 'system_sort_modules_by_info_name');
@@ -150,9 +152,7 @@ function system_themes_page() {
 
     if (empty($theme->status)) {
      // Ensure this theme is compatible with this version of core.
-     // Require the 'content' region to make sure the main page
-     // content has a common place in all themes.
-      $theme->incompatible_core = !isset($theme->info['backdrop']) || ($theme->info['backdrop'] != BACKDROP_CORE_COMPATIBILITY) || (!isset($theme->info['regions']['content']));
+      $theme->incompatible_core = !isset($theme->info['backdrop']) || ($theme->info['backdrop'] != BACKDROP_CORE_COMPATIBILITY);
       $theme->incompatible_php = version_compare(phpversion(), $theme->info['php']) < 0;
     }
     $query['token'] = backdrop_get_token('system-theme-operation-link');
@@ -223,6 +223,7 @@ function system_themes_page() {
   backdrop_alter('system_themes_page', $theme_groups);
 
   $admin_form = backdrop_get_form('system_themes_admin_form', $admin_theme_options);
+
   return theme('system_themes_page', array('theme_groups' => $theme_groups, 'theme_group_titles' => $theme_group_titles)) . backdrop_render($admin_form);
 }
 
@@ -372,6 +373,12 @@ function system_theme_default() {
 function system_theme_settings($form, &$form_state, $key) {
   $themes = list_themes();
 
+  // Inform the user if theme_debug is enabled.
+  $theme_debug_enabled = config_get('system.core', 'theme_debug');
+  if ($theme_debug_enabled) {
+    backdrop_set_message(t('Theme debugging is enabled. See the <a href="!url">Status report</a> page for more info.', array('!url' => url('admin/reports/status'))), 'warning', FALSE);
+  }
+
   $form['theme'] = array(
     '#type' => 'value',
     '#value' => $key,
@@ -493,7 +500,7 @@ function system_modules($form, $form_state = array()) {
   );
   $form['filter']['search'] = array(
     '#type' => 'textfield',
-    '#title' => t('Search'),
+    '#title' => t('Filter'),
     '#size' => 30,
     '#placeholder' => t('Enter module name…'),
     '#attributes' => array(
@@ -1119,6 +1126,7 @@ function system_site_information_settings($form, &$form_state) {
     $site_mail = ini_get('sendmail_from');
   }
 
+  $form['#config'] = 'system.core';
   $form['site_information'] = array(
     '#type' => 'fieldset',
     '#title' => t('Site details'),
@@ -1233,7 +1241,7 @@ function system_site_information_settings($form, &$form_state) {
   $form['error_page']['site_403'] = array(
     '#type' => 'textfield',
     '#title' => t('Default 403 (access denied) page'),
-    '#default_value' => $site_config->get('site_403'),
+    '#default_value' => ($site_config->get('site_403') != '' ? backdrop_get_path_alias($site_config->get('site_403')) : ''),
     '#size' => 40,
     '#description' => t('This page is displayed when the requested document is denied to the current user. Leave blank to display a generic "access denied" page.'),
     '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (config_get('system.core', 'clean_url') ? '' : '?q=')
@@ -1241,19 +1249,14 @@ function system_site_information_settings($form, &$form_state) {
   $form['error_page']['site_404'] = array(
     '#type' => 'textfield',
     '#title' => t('Default 404 (not found) page'),
-    '#default_value' => $site_config->get('site_404'),
+    '#default_value' => ($site_config->get('site_404') != '' ? backdrop_get_path_alias($site_config->get('site_404')) : ''),
     '#size' => 40,
     '#description' => t('This page is displayed when no other content matches the requested document. Leave blank to display a generic "page not found" page.'),
     '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (config_get('system.core', 'clean_url') ? '' : '?q=')
   );
 
   $form['#validate'][] = 'system_site_information_settings_validate';
-
-  $form['actions']['#type'] = 'actions';
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration')
-  );
+  $form['#submit'][] = 'system_site_information_settings_submit';
 
   // Inject human-friendly form element descriptions for logo and favicon.
   foreach (array('logo' => 'logo.png', 'favicon' => 'favicon.ico') as $type => $default) {
@@ -1285,7 +1288,7 @@ function system_site_information_settings($form, &$form_state) {
     }
   }
 
-  return $form;
+  return system_settings_form($form);
 }
 
 /**
@@ -1416,6 +1419,21 @@ function system_site_information_settings_submit($form, &$form_state) {
     $form_state['values']['site_logo_theme'] = 0;
     $form_state['values']['site_logo_path'] = $filename;
   }
+
+  if ($form_state['values']['site_logo_path']) {
+    $dimensions = @getimagesize($form_state['values']['site_logo_path']);
+    $form_state['values']['site_logo_attributes'] = array(
+      'width' => $dimensions[0],
+      'height' => $dimensions[1],
+    );
+  }
+  else {
+    $form_state['values']['site_logo_attributes'] = array(
+      'width' => "",
+      'height' => "",
+    );
+  }
+
   if (!empty($form_state['values']['site_favicon_upload'])) {
     $file = $form_state['values']['site_favicon_upload'];
     unset($form_state['values']['site_favicon_upload']);
@@ -1441,19 +1459,11 @@ function system_site_information_settings_submit($form, &$form_state) {
   }
 
   config('system.core')
-    ->set('site_name', $form_state['values']['site_name'])
-    ->set('site_logo_theme', $form_state['values']['site_logo_theme'])
-    ->set('site_logo_path', $form_state['values']['site_logo_path'])
+    ->set('site_logo_attributes', $form_state['values']['site_logo_attributes'])
     ->set('site_favicon_theme', $form_state['values']['site_favicon_theme'])
     ->set('site_favicon_path', $form_state['values']['site_favicon_path'])
     ->set('site_favicon_mimetype', $form_state['values']['site_favicon_mimetype'])
-    ->set('site_mail', $form_state['values']['site_mail'])
-    ->set('site_slogan', $form_state['values']['site_slogan'])
-    ->set('site_frontpage', $form_state['values']['site_frontpage'])
-    ->set('site_403', $form_state['values']['site_403'])
-    ->set('site_404', $form_state['values']['site_404'])
     ->save();
-  backdrop_set_message(t('The configuration options have been saved.'));
 }
 
 /**
@@ -1463,6 +1473,7 @@ function system_site_information_settings_submit($form, &$form_state) {
  */
 function system_cron_settings($form, &$form_state) {
   global $base_url;
+  $form['#config'] = 'system.core';
   $form['description'] = array(
     '#markup' => '<p>' . t('Cron takes care of running periodic tasks like checking for updates and indexing content for search.') . '</p>',
   );
@@ -1471,7 +1482,7 @@ function system_cron_settings($form, &$form_state) {
     '#value' => t('Run cron'),
     '#submit' => array('system_run_cron_submit'),
   );
-  
+
   $status = '<p>' . t('Last run: %cron-last ago.', array('%cron-last' => format_interval(REQUEST_TIME - state_get('cron_last')),)) . '</p>';
   $form['status'] = array(
     '#markup' => $status,
@@ -1482,6 +1493,7 @@ function system_cron_settings($form, &$form_state) {
   );
 
   $form['cron'] = array(
+    '#title' => t('Cron configuration'),
     '#type' => 'fieldset',
   );
   $form['cron']['cron_safe_threshold'] = array(
@@ -1492,24 +1504,7 @@ function system_cron_settings($form, &$form_state) {
     '#options' => array(0 => t('Never')) + backdrop_map_assoc(array(3600, 10800, 21600, 43200, 86400, 604800), 'format_interval'),
   );
 
-  $form['actions']['#type'] = 'actions';
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration')
-  );
-  return $form;
-}
-
-/**
- * Form submit handler; Handle submission for cron settings.
- *
- * @ingroup forms
- */
-function system_cron_settings_submit($form, &$form_state) {
-  config('system.core')
-    ->set('cron_safe_threshold', $form_state['values']['cron_safe_threshold'])
-    ->save();
-  backdrop_set_message(t('The configuration options have been saved.'));
+  return system_settings_form($form);
 }
 
 /**
@@ -1536,6 +1531,7 @@ function system_run_cron_submit($form, &$form_state) {
  * @see system_logging_settings_submit()
  */
 function system_logging_settings($form, &$form_state) {
+  $form['#config'] = 'system.core';
   $form['error_level'] = array(
     '#type' => 'radios',
     '#title' => t('Error messages to display'),
@@ -1548,24 +1544,7 @@ function system_logging_settings($form, &$form_state) {
     '#description' => t('It is recommended that sites running on production environments do not display any errors.'),
   );
 
-  $form['actions']['#type'] = 'actions';
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration')
-  );
-  return $form;
-}
-
-/**
- * Form submission handler for system_logging_settings().
- *
- * @ingroup forms
- */
-function system_logging_settings_submit($form, &$form_state) {
-  config('system.core')
-    ->set('error_level', $form_state['values']['error_level'])
-    ->save();
-  backdrop_set_message(t('The configuration options have been saved.'));
+  return system_settings_form($form);
 }
 
 /**
@@ -1578,6 +1557,7 @@ function system_performance_settings($form, &$form_state) {
   backdrop_add_js(backdrop_get_path('module', 'system') . '/js/system.admin.js');
   $config = config('system.core');
 
+  $form['#config'] = 'system.core';
   $form['clear_cache'] = array(
     '#type' => 'fieldset',
     '#title' => t('Clear cache'),
@@ -1600,6 +1580,17 @@ function system_performance_settings($form, &$form_state) {
     '#default_value' => $config->get('cache'),
     '#weight' => -2,
   );
+  $form['caching']['page_cache_background_fetch'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use background fetch for cached pages'),
+    '#default_value' => $config->get('page_cache_background_fetch'),
+    '#description' => t('Allows serving stale pages while new page cache entries are being generated.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="cache"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
   $period = backdrop_map_assoc(array(60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 900, 1800, 2700, 3600, 10800, 21600, 32400, 43200, 86400), 'format_interval');
   $form['caching']['page_cache_maximum_age'] = array(
     '#type' => 'select',
@@ -1607,6 +1598,11 @@ function system_performance_settings($form, &$form_state) {
     '#default_value' => $config->get('page_cache_maximum_age'),
     '#options' => $period,
     '#description' => t('The maximum time the page cache can use an old version of a page.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="cache"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $directory = 'public://';
@@ -1646,35 +1642,13 @@ function system_performance_settings($form, &$form_state) {
     '#disabled' => $disabled,
   );
 
-  $form['actions'] = array('#type' => 'actions');
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-  );
-
   $form['#submit'][] = 'backdrop_clear_css_cache';
   $form['#submit'][] = 'backdrop_clear_js_cache';
   // This form allows page compression settings to be changed, which can
   // invalidate the page cache, so it needs to be cleared on form submit.
   $form['#submit'][] = 'system_clear_page_cache_submit';
-  $form['#submit'][] = 'system_performance_settings_submit';
 
-  return $form;
-}
-
-/**
- * Form submission handler for system_performance_settings().
- *
- * @ingroup forms
- */
-function system_performance_settings_submit($form, &$form_state) {
-  $config = config('system.core');
-  $config->set('cache', $form_state['values']['cache']);
-  $config->set('page_cache_maximum_age', $form_state['values']['page_cache_maximum_age']);
-  $config->set('page_compression', $form_state['values']['page_compression']);
-  $config->set('preprocess_css', $form_state['values']['preprocess_css']);
-  $config->set('preprocess_js', $form_state['values']['preprocess_js']);
-  $config->save();
+  return system_settings_form($form);
 }
 
 /**
@@ -1702,6 +1676,7 @@ function system_clear_page_cache_submit($form, &$form_state) {
  * @ingroup forms
  */
 function system_file_system_settings() {
+  $form['#config'] = 'system.core';
   $form['file_public_path'] = array(
     '#type' => 'textfield',
     '#title' => t('Public file system path'),
@@ -1746,27 +1721,41 @@ function system_file_system_settings() {
     );
   }
 
-  $form['actions']['#type'] = 'actions';
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
+  $form['transliteration'] = array(
+    '#type' => 'item',
+    '#title' => t('Transliteration'),
+    '#value' => '',
+  );
+  $form['transliteration']['file_transliterate_uploads'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Transliterate file names during upload'),
+    '#description' => t('Enable to convert file names to US-ASCII character set for cross-platform compatibility. If you enable this setting later, you may want to <a href="@transliteration">retroactively transliterate existing file names</a>.', array('@transliteration' => url('admin/config/media/file-system/transliteration'))),
+    '#default_value' => config_get('system.core', 'file_transliterate_uploads'),
+  );
+  $form['transliteration']['file_transliterate_uploads_display_name'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Transliterate the displayed file name'),
+    '#description' => t('Enable to also convert the file name that is displayed within the site (for example, in link text).'),
+    '#default_value' => config_get('system.core', 'file_transliterate_uploads_display_name'),
+    '#states' => array(
+      'invisible' => array(
+        'input[name="file_transliterate_uploads"]' => array('checked' => FALSE),
+      ),
+    ),
+  );
+  $form['transliteration']['file_transliterate_lowercase'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Lowercase transliterated file names'),
+    '#default_value' => config_get('system.core', 'file_transliterate_lowercase'),
+    '#description' => t('This is a recommended setting to prevent issues with case-insensitive file systems. It has no effect if transliteration has been disabled.'),
+    '#states' => array(
+      'invisible' => array(
+        'input[name="file_transliterate_uploads"]' => array('checked' => FALSE),
+      ),
+    ),
   );
 
-  return $form;
-}
-
-/**
- * Submit handler for system_file_system_settings().
- */
-function system_file_system_settings_submit($form, &$form_state) {
-  backdrop_set_message(t('The configuration options have been saved.'));
-  $config = config('system.core');
-  $config->set('file_public_path', $form_state['values']['file_public_path']);
-  $config->set('file_private_path', $form_state['values']['file_private_path']);
-  $config->set('file_temporary_path', $form_state['values']['file_temporary_path']);
-  $config->set('file_default_scheme', $form_state['values']['file_default_scheme']);
-  $config->save();
-
+  return system_settings_form($form);
 }
 
 /**
@@ -1845,6 +1834,7 @@ function system_image_toolkit_settings_submit($form, &$form_state) {
  */
 function system_rss_feeds_settings() {
   $rss_config = config('system.core');
+  $form['#config'] = 'system.core';
   $form['rss_description'] = array(
     '#type' => 'textarea',
     '#title' => t('Feed description'),
@@ -1870,25 +1860,7 @@ function system_rss_feeds_settings() {
     '#description' => t('Global setting for the default display of content items in each feed.')
   );
 
-  $form['actions']['#type'] = 'actions';
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration')
-  );
-
-  return $form;
-}
-
-/**
- * Submit handler for system_rss_feeds_settings().
- */
-function system_rss_feeds_settings_submit($form, &$form_state) {
-  $config = config('system.core');
-  $config->set('rss_description', $form_state['values']['rss_description']);
-  $config->set('rss_limit', $form_state['values']['rss_limit']);
-  $config->set('rss_viewmode', $form_state['values']['rss_viewmode']);
-  $config->save();
-  backdrop_set_message(t('The configuration options have been saved.'));
+  return system_settings_form($form);
 }
 
 /**
@@ -1905,6 +1877,7 @@ function system_regional_settings($form, &$form_state) {
   // Date settings:
   $zones = system_time_zones();
 
+  $form['#config'] = 'system.date';
   $form['locale'] = array(
     '#type' => 'fieldset',
     '#title' => t('Locale'),
@@ -1975,29 +1948,7 @@ function system_regional_settings($form, &$form_state) {
     '#description' => t('Only applied if users may set their own time zone.')
   );
 
-  $form['actions']['#type'] = 'actions';
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration'),
-  );
-  return $form;
-}
-
-/**
- * Form submission handler for regional settings.
- *
- * @ingroup forms
- * @see system_regional_settings()
- */
-function system_regional_settings_submit($form, &$form_state) {
-  config('system.date')
-    ->set('default_country', $form_state['values']['site_default_country'])
-    ->set('first_day', $form_state['values']['date_first_day'])
-    ->set('default_timezone', $form_state['values']['date_default_timezone'])
-    ->set('user_configurable_timezones', $form_state['values']['configurable_timezones'])
-    ->set('user_empty_timezone_message', $form_state['values']['empty_timezone_message'])
-    ->set('user_default_timezone', $form_state['values']['user_default_timezone'])
-    ->save();
+  return system_settings_form($form);
 }
 
 /**
@@ -2011,7 +1962,7 @@ function system_site_maintenance_mode($form, &$form_state) {
   $form['maintenance_mode'] = array(
     '#type' => 'checkbox',
     '#title' => t('Put site into maintenance mode'),
-    '#default_value' => state_get('maintenance_mode', 0),
+    '#default_value' => state_get('maintenance_mode', FALSE),
     '#description' => t('Visitors will only see the maintenance mode message. Only users with the "Access site in maintenance mode" <a href="@permissions-url">permission</a> will be able to access the site. Authorized users can log in directly via the <a href="@user-login">user login</a> page.', array('@permissions-url' => url('admin/config/people/permissions'), '@user-login' => url('user'))),
   );
   $form['maintenance_mode_message'] = array(
@@ -2032,7 +1983,7 @@ function system_site_maintenance_mode($form, &$form_state) {
  * Submit handler for the system_site_maintenance_mode() form.
  */
 function system_site_maintenance_mode_submit($form, &$form_state) {
-  state_set('maintenance_mode', (int) $form_state['values']['maintenance_mode']);
+  state_set('maintenance_mode', (bool) $form_state['values']['maintenance_mode']);
   config_set('system.core', 'maintenance_mode_message', $form_state['values']['maintenance_mode_message']);
 
   // Give specific messages on the primary action for this form.
@@ -2040,6 +1991,7 @@ function system_site_maintenance_mode_submit($form, &$form_state) {
     backdrop_set_message(t('The site is now in maintenance mode. Only users with the "Access site in maintenance mode" permission will be able to access the site.'), 'warning');
   }
   elseif ($form['maintenance_mode']['#default_value'] != $form_state['values']['maintenance_mode']) {
+    backdrop_get_messages();
     backdrop_set_message(t('The site is no longer in maintenance mode.'));
   }
   else {
@@ -2062,7 +2014,7 @@ function system_urls_settings($form, &$form_state) {
     $available = TRUE;
   }
   else {
-    $request = backdrop_http_request($GLOBALS['base_url'] . '/admin/config/search/urls/check');
+    $request = backdrop_http_request($GLOBALS['base_url'] . '/admin/config/urls/urls/check');
     // If the request returns HTTP 200, clean URLs are available.
     if (isset($request->code) && $request->code == 200) {
       $available = TRUE;
@@ -2072,6 +2024,10 @@ function system_urls_settings($form, &$form_state) {
       }
     }
     else {
+      if ($request->error) {
+        watchdog('system', 'HTTP request for Clean URLs failed with error: @error', array('@error' => $request->error));
+      }
+
       // If the test failed while clean URLs are enabled, make sure clean URLs
       // can be disabled.
       if (config_get('system.core', 'clean_url')) {
@@ -2089,6 +2045,7 @@ function system_urls_settings($form, &$form_state) {
     }
   }
 
+  $form['#config'] = 'system.core';
   // Show the enable/disable form if clean URLs are available or if the user
   // must be able to resolve a conflicting setting.
   if ($available || $conflict) {
@@ -2097,11 +2054,6 @@ function system_urls_settings($form, &$form_state) {
       '#title' => t('Enable clean URLs'),
       '#default_value' => config_get('system.core', 'clean_url'),
       '#description' => t('Use URLs like <code>example.com/user</code> instead of <code>example.com/?q=user</code>.'),
-    );
-    $form['actions']['#type'] = 'actions';
-    $form['actions']['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Save configuration'),
     );
     if ($conflict) {
       // $form_state['redirect'] needs to be set to the non-clean URL,
@@ -2135,7 +2087,7 @@ function system_urls_settings($form, &$form_state) {
       '#value' => 1,
     );
   }
-  
+
   $form['canonical_secure'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use HTTPS for canonical URLs'),
@@ -2143,18 +2095,7 @@ function system_urls_settings($form, &$form_state) {
     '#description' => t('This option makes Backdrop use HTTPS protocol for generated canonical URLs. Please note: to get it working in mixed-mode (both secure and insecure) sessions, the variable "https" should be set to TRUE in your file <code>settings.php</code>' ),
   );
 
-  return $form;
-}
-
-/**
- * Submit handler for system_urls_settings().
- */
-function system_urls_settings_submit($form, $form_state) {
-  $config = config('system.core');
-  $config->set('clean_url', $form_state['values']['clean_url']);
-  $config->set('canonical_secure', $form_state['values']['canonical_secure']);
-  $config->save();
-  backdrop_set_message(t('The configuration options have been saved.'));
+  return system_settings_form($form);
 }
 
 /**
@@ -2162,16 +2103,16 @@ function system_urls_settings_submit($form, $form_state) {
  *
  * @param $check
  *   If true, only returns a boolean whether there are system status errors.
+ *   This parameter will be removed in Backdrop 2.0.
+ *
+ * @see system_get_requirements().
  */
 function system_status($check = FALSE) {
   // Load .install files
   include_once BACKDROP_ROOT . '/core/includes/install.inc';
-  backdrop_load_updates();
+  $requirements = system_get_requirements();
 
-  // Check run-time requirements and status information.
-  $requirements = module_invoke_all('requirements', 'runtime');
-  usort($requirements, '_system_sort_requirements');
-
+  // @todo remove this check and return in Backdrop 2.0.
   if ($check) {
     return backdrop_requirements_severity($requirements) == REQUIREMENT_ERROR;
   }
@@ -2266,8 +2207,8 @@ function system_date_delete_format_form_submit($form, &$form_state) {
  */
 function system_date_time_formats() {
   $header = array(
-    array('data' => t('Machine name')),
     array('data' => t('Label')),
+    array('data' => t('Machine name')),
     array('data' => t('Pattern')),
     array('data' => t('Operations'))
   );
@@ -2279,8 +2220,8 @@ function system_date_time_formats() {
       // Do not display date formats that are hidden.
       if (empty($format_info['hidden'])) {
         $row = array();
-        $row[] = array('data' => $date_format_name);
         $row[] = array('data' => check_plain($format_info['label']));
+        $row[] = array('data' => $date_format_name);
         $row[] = array('data' => format_date(REQUEST_TIME, 'custom', $format_info['pattern']));
 
         // Prepare Operational links.
@@ -2339,7 +2280,9 @@ function system_configure_date_formats_form($form, &$form_state, $format = NULL)
     '#type' => 'textfield',
     '#title' => 'Label',
     '#maxlength' => 100,
-    '#default_value' => empty($format['label']) ? '' : $format['label']
+    '#default_value' => empty($format['label']) ? '' : $format['label'],
+    '#description' => t('A name for the new format'),
+    '#placeholder' => t('e.g. My date format'),
   );
 
   $form['name'] = array(
@@ -2361,7 +2304,8 @@ function system_configure_date_formats_form($form, &$form_state, $format = NULL)
     '#type' => 'textfield',
     '#title' => t('Format string'),
     '#maxlength' => 100,
-    '#description' => t('A user-defined date format. See the <a href="@url">PHP manual</a> for available options.', array('@url' => 'http://php.net/manual/function.date.php')),
+    '#description' => t('A date format using PHP date and time codes. See the <a href="@url">PHP manual</a> for available options.', array('@url' => 'http://php.net/manual/function.date.php')),
+    '#placeholder' => t('e.g. F j Y'),
     '#default_value' => $pattern,
     '#field_suffix' => '<small class="pattern-preview">' . $preview . '</small>',
     '#ajax' => array(
@@ -2412,4 +2356,387 @@ function system_date_time_lookup($form, &$form_state) {
   $parent_id = $element['#wrapper_attributes']['id'];
   $commands[] = ajax_command_html("#$parent_id .field-suffix", '<span>' . $element['#field_suffix'] . '</span>');
   return array('#type' => 'ajax', '#commands' => $commands);
+}
+
+/**
+ * Form to convert existing database tables to utf8mb4 if supported.
+ */
+function system_utf8mb4_convert_form($form, &$form_state) {
+  // Reuse the installation requirements checking and messages.
+  module_load_install('system');
+  $requirements = _system_check_db_utf8mb4_requirements('runtime');
+
+  $connection = Database::getConnection();
+  $utf8mb4_active = $connection->utf8mb4IsActive();
+  $utf8mb4_supported = $connection->utf8mb4IsSupported();
+  $utf8mb4_tables_converted = state_get('database_utf8mb4_active', FALSE);
+
+  $form['help'] = array(
+    '#markup' => '<p>' . $requirements['description'] . '</p>',
+  );
+
+  // Not active and/or supported. Existing messages should be sufficient.
+  if (!$utf8mb4_active || !$utf8mb4_supported) {
+    return $form;
+  }
+
+  // Already active and supported. Indicate completion.
+  if ($utf8mb4_active && $utf8mb4_supported && $utf8mb4_tables_converted) {
+    $form['help']['#markup'] .= '<p>' . t('This feature is already enabled on your site, no further action is needed.') . '</p>';
+    return $form;
+  }
+
+  $form['help']['#markup'] .= '<p>' . t('This operation is irreversible! Make sure that you have backed up your database before continuing. Your site will be put into maintenance mode during the upgrade. A site with hundreds of pieces of content should take a few minutes. Sites with thousands of pieces of content may take @minutes minutes or more.', array('@minutes' => 10)) . '</p>';
+
+  $form['actions'] = array(
+    '#type' => 'actions',
+  );
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Upgrade database to 4 byte UTF-8'),
+  );
+  $form['actions']['cancel'] = array(
+    '#type' => 'link',
+    '#title' => t('Cancel'),
+    '#href' => 'admin/reports/status',
+  );
+
+  return $form;
+}
+
+/**
+ * Form submit function; convert existing database tables to utf8mb4.
+ *
+ * @see system_utf8mb4_convert_form()
+ */
+function system_utf8mb4_convert_form_submit($form, &$form_state) {
+  global $databases;
+
+  // Enter maintenance mode.
+  state_set('maintenance_mode', TRUE);
+
+  // Build the list of tables to convert.
+  $database = $databases['default']['default'];
+  $like = '';
+  if (!empty($database['prefix'])) {
+    $like = ' LIKE "' . $database['prefix'] . '%"';
+  }
+  $table_names = db_query('SHOW TABLES' . $like)->fetchCol();
+
+  $batch = array(
+    'operations' => array(
+      array('_system_utf8mb4_convert_batch', array($table_names))
+    ),
+    'finished' => '_system_utf8mb4_convert_batch_finished',
+    'title' => t('Converting database tables'),
+    'progress_message' => '',
+    'init_message' => t('Collecting list of tables...'),
+    'error_message' => t('The update has encountered an error.'),
+    'file' => backdrop_get_path('module', 'system') . '/system.admin.inc',
+  );
+  batch_set($batch);
+}
+
+/**
+ * Executes a batch operation for system_utf8mb4_convert_form_submit().
+ *
+ * @param array $tables
+ *   Associative array of table names to update.
+ * @param array $context
+ *   Batch array of contextual key/values.
+ */
+function _system_utf8mb4_convert_batch($tables, &$context) {
+  global $databases;
+
+  // Instantiate a character set converter object.
+  $converter = new DatabaseCharsetConverter();
+
+  // Initial run, prepare sandbox and results arrays.
+  if (!isset($context['sandbox']['progress'])) {
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['max'] = count($tables) + 1;
+    $context['sandbox']['tables_to_process'] = $tables;
+    $context['results']['converted'] = array();
+    $context['results']['errors'] = array();
+
+    // If converting the database itself fails, bail out entirely.
+    try {
+      $result = $converter->convertDatabase($databases['default']['default']['database']);
+      if (!$result) {
+        $context['results']['errors'][] = t('The database %name could not be converted.', array('%name' => $databases['default']['default']['database']));
+        $context['finished'] = 1;
+        return;
+      }
+    }
+    catch (PDOException $e) {
+      $context['results']['errors'] = $e->getMessage();
+      $context['finished'] = 1;
+      return;
+    }
+  }
+  // Subsequent runs, convert each table.
+  else {
+    // When converting tables, record but continue after failures.
+    $table_name = array_shift($context['sandbox']['tables_to_process']);
+    try {
+      $result = $converter->convertTable($table_name);
+      if (!$result) {
+        $context['results']['errors'][] = t('The table %name could not be converted.', array('%name' => $table_name));
+      }
+    }
+    catch (PDOException $e) {
+      $context['results']['errors'][] = $e->getMessage();
+    }
+
+    // Store result for post-processing in the finished callback.
+    $context['results']['converted'][] = $table_name;
+  }
+
+  // Update our progress information.
+  $context['sandbox']['progress']++;
+  if (!empty($context['sandbox']['tables_to_process'])) {
+    $context['message'] = t('Converting database table "@table_name"...', array('@table_name' => reset($context['sandbox']['tables_to_process'])));
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+  }
+  else {
+    $context['message'] = t('Completing...');
+    $context['finished'] = 1;
+  }
+}
+
+/**
+ * Performs post-processing for node_access_rebuild().
+ *
+ * @param bool $success
+ *   A boolean indicating whether the re-build process has completed.
+ * @param array $results
+ *   An array of results information.
+ * @param array $operations
+ *   An array of function calls (not used in this function).
+ */
+function _system_utf8mb4_convert_batch_finished($success, $results, $operations) {
+  if ($success) {
+    backdrop_set_message(t('Upgrade successful. @count database tables have been converted to use 4 byte UTF-8.', array('@count' => count($results['converted']))));
+    state_set('maintenance_mode', FALSE);
+    state_set('database_utf8mb4_active', TRUE);
+  }
+  else {
+    backdrop_set_message(t('An error was encountered while converting tables! You should restore a database backup, correct any errors, and then try again. Errors reported:') . theme('item_list', $results['errors']), 'error');
+  }
+  backdrop_goto('admin/reports/status');
+}
+
+/**
+ * Form builder function; generates retroactive transliteration confirm form.
+ *
+ * @see system_transliteration_retroactive_submit()
+ * @ingroup forms
+ */
+function system_transliteration_retroactive() {
+  $query = system_transliteration_file_query();
+  $count = $query->countQuery()->execute()->fetchColumn();
+  if (!$count) {
+    if (empty($_POST)) {
+      backdrop_set_message(t('Transliteration is not required.'));
+    }
+    $form['description']['#markup'] = t('There are currently no file names containing non-ASCII characters. Return to the !file_system page.', array('!file_system' => l('File system', 'admin/config/media/file-system')));
+    return $form;
+  }
+
+  if (!config_get('system.core', 'file_transliterate_uploads')) {
+    backdrop_set_message(t('File transliteration is not yet enabled.'), 'warning');
+    $form['description']['#markup'] = t('You must enable the "@option" on the !file_system page to use this form.', array('@option' => t('Transliterate file names during upload'), '!file_system' => l('File system', 'admin/config/media/file-system')));
+    return $form;
+  }
+
+  $form['#redirect'] = 'admin/config/media/file-system/settings';
+  $question = t('Are you sure you want to transliterate existing file names?');
+
+  // Generate a sample list.
+  $rows = array();
+  $header = array(
+    t('Original file name'),
+    t('Transliterated file name')
+  );
+  include_once BACKDROP_ROOT . '/core/includes/transliteration.inc';
+  foreach ($query->range(0, 10)->execute() as $file) {
+    $filename = backdrop_basename($file->uri);
+    $rows[] = array(l($filename, file_create_url($file->uri)), transliteration_clean_filename($filename));
+  }
+  $description = '<p><strong>' . t('The database currently lists @x_filenames containing non-ASCII characters.', array('@x_filenames' => format_plural($count, '1 file name', '@count file names'))) . '</strong><br />';
+  $description .= t('This count might be inaccurate, though, since some files may not need to be renamed. For example, off-site files will never be changed.') . '</p>';
+  $description .= theme('table', array('header' => $header, 'sticky' => FALSE, 'rows' => $rows));
+  if ($count > 10) {
+    $description .= '<p>' . t('Note: table shows only the first 10 entries.') . '</p>';
+  }
+  $description .= '<p>' . t('<strong>WARNING:</strong> if you have manually entered image or file paths in text fields (for example, text areas or WYSIWYG editors), renaming the files will break these references. Since there is currently no automated way to also fix referenced files in textual contents, it is a very good idea to backup the database and %files directory beforehand. Modules accessing files using their internal system ids are not affected.', array('%files' => backdrop_realpath(file_default_scheme() . '://'))) . '</p>';
+  $description .= '<p>' . t('This action cannot be undone.') . '</p>';
+
+  return confirm_form($form, $question, 'admin/config/media/file-system/settings', $description, t('Transliterate'));
+}
+
+/**
+ * Form submit function; retroactively transliterates existing file names.
+ *
+ * @see system_transliteration_retroactive()
+ */
+function system_transliteration_retroactive_submit($form, &$form_state) {
+  include_once BACKDROP_ROOT . '/core/includes/transliteration.inc';
+  $count = 0;
+  $errors = array();
+  $result = system_transliteration_file_query()->execute();
+
+  while ($row = $result->fetchAssoc()) {
+    $file = new File($row);
+    $wrapper = file_stream_wrapper_get_instance_by_uri($file->uri);
+    $scheme = file_uri_scheme($file->uri);
+
+    // Missing implementation.
+    if (!$wrapper) {
+      $errors[] = file_uri_target($file->uri);
+      continue;
+    }
+
+    // Skip non-writable stream wrappers.
+    $writeable_stream_wrappers = file_get_stream_wrappers(STREAM_WRAPPERS_WRITE);
+    if (!isset($writeable_stream_wrappers[$scheme])) {
+      continue;
+    }
+
+    // Missing file.
+    if (!file_exists($wrapper->realpath())) {
+      $errors[] = file_uri_target($file->uri);
+      continue;
+    }
+
+    // Sanitize file name.
+    $filename = transliteration_clean_filename(backdrop_basename($file->uri));
+
+    // Build destination URI.
+    $destination = file_stream_wrapper_uri_normalize(backdrop_dirname($file->uri) . '/' . $filename);
+    $destination = file_destination($destination, FILE_EXISTS_RENAME);
+
+    // Rename and update the file record accordingly.
+    if ($wrapper->rename($file->uri, $destination)) {
+      $file->uri = $destination;
+      // Don't use file_save() as it modifies the timestamp.
+      backdrop_write_record('file_managed', $file, 'fid');
+      // Inform modules that the file has been updated.
+      module_invoke_all('file_update', $file);
+      $count++;
+    }
+    else {
+      $errors[] = file_uri_target($file->uri);
+    }
+  }
+
+  if ($errors) {
+    $message = t('Not all file names could be converted. The following files could not be accessed and have been ignored:');
+    $message .= theme('item_list', array('items' => $errors));
+    backdrop_set_message($message, 'error');
+  }
+  else {
+    backdrop_set_message(format_plural($count, 'One file name has been successfully transliterated.', '@count file names have been successfully transliterated.'));
+  }
+
+  backdrop_flush_all_caches();
+}
+
+/**
+ * Builds a query that returns all file names from the database containing non-ASCII characters.
+ *
+ * @return
+ *   SelectQuery
+ */
+function system_transliteration_file_query() {
+  $operator = 'NOT REGEXP';
+  if (config_get('system.core', 'file_transliterate_lowercase')) {
+    $operator .= ' BINARY';
+  }
+  $regex = '/[a-z0-9_.-]+$';
+
+  return db_select('file_managed')
+    ->fields('file_managed')
+    ->condition('uri', $regex, $operator);
+}
+
+/**
+ * Ajax callback; Returns the transliterated version for a given string.
+ *
+ * This callback takes an array of arguments from $_GET and passes them to
+ * system_transliterate_machine_name().
+ *
+ * @param $string
+ *   The string to be transliterated.
+ */
+function system_transliterate_ajax($string = '') {
+  backdrop_add_http_header('Content-Type', 'text/plain');
+  $string = system_transliterate_machine_name($string, $_GET);
+
+  print $string;
+  backdrop_exit();
+}
+
+/**
+ * Access callback for system/transliterate/%. Validates transliteration token.
+ */
+function system_transliterate_ajax_access() {
+  $replace = isset($_GET['replace']) ? $_GET['replace'] : '_';
+  $replace_pattern = isset($_GET['replace_pattern']) ? $_GET['replace_pattern'] : '[^0-9A-Za-z' . $replace . ']+';
+  $replace_token = isset($_GET['replace_token']) ? $_GET['replace_token'] : '';
+  return backdrop_valid_token($replace_token, $replace_pattern);
+}
+
+/**
+ * Wrapper around transliteration_get() that handles common clean up on strings.
+ *
+ * @param string $string
+ *   The string to be transliterated.
+ * @param $options
+ *   An array of options for further cleanup. This array includes:
+ *   - langcode: The language code of the source string.
+ *   - replace: The character with which to replace unknown characters in the
+ *     string. Defaults to '_'.
+ *   - replace_pattern: A pattern for replacing unknown characters with the
+ *     "replace" value.
+ *   - maxlength: The maximum allowed length of the returned string.
+ * @return string
+ *   The transliterated and cleaned up string.
+ */
+function system_transliterate_machine_name($string, $options) {
+  include_once BACKDROP_ROOT . '/core/includes/transliteration.inc';
+  $defaults = array(
+    'langcode' => $GLOBALS['language']->langcode,
+    'replace' => '_',
+    'replace_pattern' => NULL,
+    'maxlength' => NULL,
+  );
+  $options = array_intersect_key($options, $defaults) + $defaults;
+
+  // Build the default replacement pattern on the given "replace" property.
+  if (!isset($options['replace_pattern'])) {
+    $options['replace_pattern'] = '[^0-9A-Za-z' . $options['replace'] . ']+';
+  }
+
+  $replace = $options['replace'];
+  $string = transliteration_get($string, $replace, $options['langcode']);
+
+  // Remove remaining unsafe characters.
+  if ($options['replace_pattern']) {
+    $string = preg_replace('/' . $options['replace_pattern'] . '/', $options['replace'], $string);
+  }
+  // Replace whitespace.
+  $string = str_replace(' ', $replace, $string);
+  // Remove leading and trailing whitespace/unknown characters.
+  $string = trim($string, $replace);
+  // Collapse multiple consecutive replacement characters.
+  $replace_regex = strlen($replace) ? "([$replace])[$replace]+|" : '';
+  $string = preg_replace("/{$replace_regex}(_)_+|(\\.)\\.+|(-)-+/", '$1$2$3$4$5', $string);
+
+  // Set maxlength.
+  if ($options['maxlength']) {
+    $string = substr($string, 0, $options['maxlength']);
+  }
+
+  return $string;
 }

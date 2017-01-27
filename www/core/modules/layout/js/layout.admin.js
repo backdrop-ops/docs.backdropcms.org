@@ -9,12 +9,32 @@
 "use strict";
 
 /**
+ * Behavior for showing a list of layouts.
+ *
+ * Detect flexbox support for displaying our list of layouts with vertical
+ * height matching for each row of layout template icons.
+ */
+Backdrop.behaviors.layoutList = {
+  attach: function(context) {
+    var $element = $(context).find('.layout-options');
+    if ($element.length) {
+      if (Backdrop.featureDetect.flexbox()) {
+        $element.addClass('flexbox');
+      }
+      else {
+        $element.addClass('no-flexbox');
+      }
+    }
+  }
+};
+
+/**
  * Behavior for creating/configuring layout settings.
  */
 Backdrop.behaviors.layoutConfigure = {
   attach: function(context) {
     var $form = $('.layout-settings-form').once('layout-settings');
-    if ($form.length) {
+    if ($form.length && Backdrop.ajax) {
       var ajax = Backdrop.ajax['edit-path-update'];
       var updateContexts = function() {
         // Cancel existing AJAX requests and start a new one.
@@ -63,6 +83,7 @@ Backdrop.behaviors.layoutDisplayEditor = {
     if ($regions.length) {
       $regions.sortable({
         connectWith: '.layout-editor-region-content',
+        tolerance: 'pointer',
         update: Backdrop.behaviors.layoutDisplayEditor.updateLayout,
         items: '.layout-editor-block',
         placeholder: 'layout-editor-placeholder layout-editor-block',
@@ -76,7 +97,7 @@ Backdrop.behaviors.layoutDisplayEditor = {
           $('[data-block-id="' + blockUuid + '"]').find('li.configure > a').triggerHandler('click');
           // Clear out the hash. Use history if available, preventing another
           // entry (which would require two back button clicks). Fallback to
-          // directlty updating the URL in the location bar.
+          // directly updating the URL in the location bar.
           if (window.history && window.history.replaceState) {
             window.history.replaceState({}, '', '#');
           }
@@ -110,5 +131,62 @@ Backdrop.behaviors.layoutDisplayEditor = {
   }
 };
 
+/**
+ * Filters the 'Add block' list by a text input search string.
+ */
+Backdrop.behaviors.blockListFilterByText = {
+  attach: function (context, settings) {
+    var $input = $('input#layout-block-list-search').once('layout-block-list-search');
+    var $form = $('.layout-block-list');
+    var $rows, zebraClass;
+    var zebraCounter = 0;
+
+    // Filter the list of layouts by provided search string.
+    function filterBlockList() {
+      var query = $input.val().toLowerCase();
+
+      function showBlockItem(index, row) {
+        var $row = $(row);
+        var $sources = $row.find('.block-item, .description');
+        var textMatch = $sources.text().toLowerCase().indexOf(query) !== -1;
+        var $match = $row.closest('div.layout-block-add-row');
+        $match.toggle(textMatch);
+        if (textMatch) {
+          stripeRow($match);
+        }
+      }
+
+      // Reset the zebra striping for consistent even/odd classes.
+      zebraCounter = 0;
+      $rows.each(showBlockItem);
+
+      if ($('div.layout-block-add-row:visible').length === 0) {
+        if ($('.filter-empty').length === 0) {
+          $('.layout-block-list').append('<p class="filter-empty">' + Backdrop.t('No blocks match your search.') + '</p>');
+        }
+      }
+      else {
+        $('.filter-empty').remove();
+      }
+    }
+
+    function stripeRow($match) {
+      zebraClass = (zebraCounter % 2) ? 'odd' : 'even';
+      $match.removeClass('even odd');
+      $match.addClass(zebraClass);
+      zebraCounter++;
+    }
+
+    if ($form.length && $input.length) {
+      $rows = $form.find('div.layout-block-add-row');
+      $rows.each(function () {
+        stripeRow($(this));
+      });
+
+      // @todo Use autofocus attribute when possible.
+      $input.focus().on('keyup', filterBlockList);
+    }
+  }
+}
 
 })(jQuery);

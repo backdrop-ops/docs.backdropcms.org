@@ -142,6 +142,12 @@ description = Make sure the variable system functions correctly.
 group = Bootstrap
 file = bootstrap.test
 
+[EarlyBootstrapTestCase]
+name = Early bootstrap test
+description = Confirm that calling module_implements() during early bootstrap does not pollute the module_implements() cache.
+group = System
+file = boot.test
+
 [HookBootExitTestCase]
 name = Boot and exit hook invocation
 description = Test that hook_boot() and hook_exit() are called correctly.
@@ -184,6 +190,12 @@ description = Test that $_GET['destination'] and $_REQUEST['destination'] cannot
 group = Bootstrap
 file = bootstrap.test
 
+[BootstrapWatchdogTestCase]
+name = Watchdog
+description = Check the basic watchdog functionality
+group = Bootstrap
+file = bootstrap.test
+
 [CacheSavingCase]
 name = Cache saving test
 description = Check our variables are saved and restored the right way.
@@ -220,10 +232,22 @@ description = Tests alteration of arguments passed to backdrop_alter().
 group = Common
 file = common.test
 
-[CommonURLUnitTestCase]
+[CommonURLWebTestCase]
 name = URL generation tests
-description = Confirm that url(), backdrop_get_query_parameters(), backdrop_http_build_query(), and l() work correctly with various input.
+description = Confirm that url() and l() work correctly with various input.
 group = Common
+file = common.test
+
+[CommonURLUnitTestCase]
+name = URL checking tests
+description = Confirm URL parsing functions work correctly with various input.
+group = Common
+file = common.test
+
+[UrlIsExternalUnitTest]
+name = External URL checking
+description = Performs tests on url_is_external().
+group = System
 file = common.test
 
 [CommonXssUnitTestCase]
@@ -375,6 +399,12 @@ name = Feed icon
 description = Check escaping of theme_feed_icon().
 group = System
 file = common.test
+
+[ConfigObjectTestCase]
+name = Config object tests
+description = low-level object tests of the Config class and friends.
+group = System
+file = config_obj.test
 
 [DatabaseConnectionTestCase]
 name = Connection tests
@@ -626,6 +656,12 @@ file = file.test
 name = File uploading
 description = Tests the file uploading functions.
 group = File API (remote)
+file = file.test
+
+[FileUploadTransliterationTest]
+name = File uploading transliteration
+description = Tests files are transliterated when uploaded.
+group = File API
 file = file.test
 
 [FileDirectoryTest]
@@ -916,6 +952,12 @@ description = Tests the form API url element.
 group = Form API
 file = form.test
 
+[SystemSettingsFormTest]
+name = System Settings Form
+description = Tests system_settings_form().
+group = System
+file = form.test
+
 [GraphUnitTest]
 name = Graph
 description = Graph handling unit tests.
@@ -943,7 +985,7 @@ file = image.test
 [InstallerLanguageTestCase]
 name = Installer language tests
 description = Tests for installer language support.
-group = Installer
+group = Installer (install.php)
 file = installer.test
 
 [LockFunctionalTest]
@@ -1021,6 +1063,12 @@ file = module.test
 [ModuleUninstallTestCase]
 name = Module uninstallation
 description = Tests the uninstallation of modules.
+group = Module
+file = module.test
+
+[ModuleImplementsAlterTestCase]
+name = Module implements alter
+description = Tests the hook_module_implements_alter.
 group = Module
 file = module.test
 
@@ -1116,7 +1164,7 @@ file = theme.test
 
 [RenderElementTypesTestCase]
 name = Render element types
-description = Tests the markup of core render element types passed to drupal_render().
+description = Tests the markup of core render element types passed to backdrop_render().
 group = Theme
 file = theme.test
 
@@ -1137,6 +1185,12 @@ name = Theme Datetime
 description = Test the theme_datetime() function.
 group = Theme
 file = theme.test
+
+[TransliterationTest]
+name = Transliteration API
+description = Tests the transliteration API.
+group = Transliteration
+file = transliteration.test
 
 [UnicodeUnitTest]
 name = Unicode handling
@@ -1269,3 +1323,8 @@ name = File token tests
 description = Test the file tokens.
 group = Token
 file = token.test
+
+; Added by Backdrop CMS packaging script on 2017-01-15
+project = backdrop
+version = 1.6.0
+timestamp = 1484537173

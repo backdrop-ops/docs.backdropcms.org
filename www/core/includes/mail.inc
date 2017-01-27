@@ -118,7 +118,7 @@ define('MAIL_LINE_ENDINGS', isset($_SERVER['WINDIR']) || (isset($_SERVER['SERVER
  */
 function backdrop_mail($module, $key, $to, $language, $params = array(), $reply = NULL, $send = TRUE) {
   $from = config_get('system.core', 'site_mail');
-  if (empty($site_mail))  {
+  if (empty($from))  {
     $from = ini_get('sendmail_from');
   }
 
@@ -255,6 +255,8 @@ function backdrop_mail($module, $key, $to, $language, $params = array(), $reply 
  *   alter hook in backdrop_mail() would have been {$module}_{$key}.
  *
  * @return MailSystemInterface
+ *
+ * @throws Exception
  */
 function backdrop_mail_system($module, $key) {
   $instances = &backdrop_static(__FUNCTION__, array());
@@ -419,7 +421,7 @@ function backdrop_html_to_text($string, $allowed_tags = NULL) {
   $string = preg_replace('!</?(strong|b)((?> +)[^>]*)?>!i', '*', $string);
 
   // Replace inline <a> tags with the text of link and a footnote.
-  // 'See <a href="http://backdropcms.org">the Backdrop CMS site</a>' becomes
+  // 'See <a href="https://backdropcms.org">the Backdrop CMS site</a>' becomes
   // 'See the Backdrop CMS site [1]' with the URL included as a footnote.
   _backdrop_html_to_mail_urls(NULL, TRUE);
   $pattern = '@(<a[^>]+?href="([^"]*)"[^>]*?>(.+?)</a>)@i';
@@ -568,7 +570,7 @@ function _backdrop_wrap_mail_line(&$line, $key, $values) {
   // Use soft-breaks only for purely quoted or unindented text.
   $line = wordwrap($line, 77 - $values['length'], $values['soft'] ? " \n" : "\n");
   // Break really long words at the maximum width allowed.
-  $line = wordwrap($line, 996 - $values['length'], $values['soft'] ? " \n" : "\n");
+  $line = wordwrap($line, 996 - $values['length'], $values['soft'] ? " \n" : "\n", TRUE);
 }
 
 /**

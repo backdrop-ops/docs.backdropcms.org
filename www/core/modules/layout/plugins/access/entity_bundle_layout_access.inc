@@ -24,6 +24,7 @@ class EntityBundleLayoutAccess extends LayoutAccess {
   function form(&$form, &$form_state) {
     parent::form($form, $form_state);
 
+    $options = array();
     $entity_info = entity_get_info($this->entity_type);
     foreach ($entity_info['bundles'] as $type => $info) {
       $options[$type] = check_plain($info['label']);
@@ -71,6 +72,7 @@ class EntityBundleLayoutAccess extends LayoutAccess {
       return FALSE;
     };
 
+    /* @var Entity $entity */
     $entity = $this->contexts[$this->entity_type]->data;
     $bundle = $entity->bundle();
     if (!in_array($bundle, $this->settings['bundles'])) {

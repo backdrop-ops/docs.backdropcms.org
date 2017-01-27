@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Field module functionality for the File module.
@@ -44,13 +43,18 @@ function file_field_settings_form($field, $instance, $has_data) {
     '#type' => 'checkbox',
     '#title' => t('Enable <em>Display</em> field'),
     '#default_value' => $settings['display_field'],
-    '#description' => t('The display option allows users to choose if a file should be shown when viewing the content.'),
+    '#description' => t('This option allows users to choose if the uploaded files should be shown or hidden when viewing the content.'),
   );
   $form['display_default'] = array(
     '#type' => 'checkbox',
     '#title' => t('Files displayed by default'),
     '#default_value' => $settings['display_default'],
-    '#description' => t('This setting only has an effect if the display option is enabled.'),
+    '#description' => t('This option sets the default behavior for uploaded files for this field. Users are still allowed to change this setting individually for each file before saving their content.'),
+    '#states' => array(
+      'visible' => array(
+        'input[name="field[settings][display_field]"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $scheme_options = array();
@@ -79,6 +83,7 @@ function file_field_instance_settings_form($field, $instance) {
     '#type' => 'textfield',
     '#title' => t('File directory'),
     '#default_value' => $settings['file_directory'],
+    '#field_prefix' => $field['settings']['uri_scheme'] == 'public' ? config_get('system.core', 'file_public_path') . '/' : '',
     '#description' => t('Optional subdirectory within the upload destination where files will be stored. Do not include preceding or trailing slashes.'),
     '#element_validate' => array('_file_generic_settings_file_directory_validate'),
     '#weight' => 3,
@@ -229,7 +234,9 @@ function file_field_insert($entity_type, $entity, $field, $instance, $langcode, 
 
   // Add a new usage of each uploaded file.
   foreach ($items as $item) {
-    file_usage_add(file_load($item['fid']), 'file', $entity_type, $id);
+    if ($file = file_load($item['fid'])) {
+      file_usage_add($file, 'file', $entity_type, $id);
+    }
   }
 }
 
@@ -245,7 +252,9 @@ function file_field_update($entity_type, $entity, $field, $instance, $langcode, 
   // deletion of previous file usages are necessary.
   if (!empty($entity->revision)) {
     foreach ($items as $item) {
-      file_usage_add(file_load($item['fid']), 'file', $entity_type, $id);
+      if ($file = file_load($item['fid'])) {
+        file_usage_add($file, 'file', $entity_type, $id);
+      }
     }
     return;
   }
@@ -264,7 +273,9 @@ function file_field_update($entity_type, $entity, $field, $instance, $langcode, 
       $original_fids[] = $original_item['fid'];
       if (isset($original_item['fid']) && !in_array($original_item['fid'], $current_fids)) {
         // Decrement the file usage count by 1.
-        file_usage_delete(file_load($original_item['fid']), 'file', $entity_type, $id);
+        if ($file = file_load($original_item['fid'])) {
+          file_usage_delete($file, 'file', $entity_type, $id);
+        }
       }
     }
   }
@@ -272,7 +283,9 @@ function file_field_update($entity_type, $entity, $field, $instance, $langcode, 
   // Add new usage entries for newly added files.
   foreach ($items as $item) {
     if (!in_array($item['fid'], $original_fids)) {
-      file_usage_add(file_load($item['fid']), 'file', $entity_type, $id);
+      if ($file = file_load($item['fid'])) {
+        file_usage_add($file, 'file', $entity_type, $id);
+      }
     }
   }
 }
@@ -285,7 +298,9 @@ function file_field_delete($entity_type, $entity, $field, $instance, $langcode, 
 
   // Delete all file usages within this entity.
   foreach ($items as $delta => $item) {
-    file_usage_delete(file_load($item['fid']), 'file', $entity_type, $id, 0);
+    if ($file = file_load($item['fid'])) {
+      file_usage_delete($file, 'file', $entity_type, $id, 0);
+    }
   }
 }
 
@@ -296,7 +311,9 @@ function file_field_delete_revision($entity_type, $entity, $field, $instance, $l
   list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
   foreach ($items as $delta => $item) {
     // Decrement the file usage count by 1.
-    file_usage_delete(file_load($item['fid']), 'file', $entity_type, $id);
+    if ($file = file_load($item['fid'])) {
+      file_usage_delete($file, 'file', $entity_type, $id);
+    }
   }
 }
 
@@ -566,7 +583,7 @@ function file_field_widget_process($element, &$form_state, $form) {
   $element['#theme'] = 'file_widget';
 
   // Add the display field if enabled.
-  if (!empty($field['settings']['display_field']) && $item['fid']) {
+  if (!empty($field['settings']['display_field'])) {
     $element['display'] = array(
       '#type' => empty($item['fid']) ? 'hidden' : 'checkbox',
       '#title' => t('Include file in display'),

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Bartik's theme implementation to display a node.
@@ -25,11 +24,11 @@
  *   CSS. The default values can be one or more of the following:
  *   - node: The current template type; for example, "theming hook".
  *   - node-[type]: The current node type. For example, if the node is a
- *     "Article" it would result in "node-article". Note that the machine
+ *     "Post" it would result in "node-post". Note that the machine
  *     name will often be in a short form of the human readable label.
  *   - view-mode-[view_mode]: The View Mode of the node e.g. teaser or full.
  *   The following are controlled through the node publishing options.
- *   - promoted: Nodes promoted to the front page.
+ *   - promoted: Nodes that are promoted.
  *   - sticky: Nodes ordered above other non-sticky nodes in teaser
  *     listings.
  *   - unpublished: Unpublished nodes visible only to administrators.
@@ -44,7 +43,7 @@
  *
  * Other variables:
  * - $node: Full node entity. Contains data that may not be safe.
- * - $type: Node type; for example, article, basic page, blog, etc.
+ * - $type: Node type; for example, post, page, blog, etc.
  * - $comment_count: Number of comments attached to the node.
  * - $uid: User ID of the node author.
  * - $created: Time the node was published formatted in Unix timestamp.
@@ -56,7 +55,7 @@
  * - $view_mode: View mode; for example, "full", "teaser".
  * - $teaser: Flag for the teaser state (shortcut for $view_mode == 'teaser').
  * - $page: Flag for the full page state.
- * - $promote: Flag for front page promotion state.
+ * - $promote: Flag for promotion state.
  * - $sticky: Flags for sticky post setting.
  * - $status: Flag for published status.
  * - $comment: State of comment settings for the node.
@@ -77,11 +76,12 @@
  * @see template_preprocess_node()
  */
 ?>
-<article id="node-<?php print $node->nid; ?>" class="<?php print implode(' ', $classes); ?> clearfix"<?php print backdrop_attributes($attributes); ?> role="article">
+<article id="node-<?php print $node->nid; ?>" class="<?php print implode(' ', $classes); ?> clearfix"<?php print backdrop_attributes($attributes); ?>>
 
+  <?php if (!$page || $display_submitted): ?>
   <header>
     <?php print render($title_prefix); ?>
-    <?php if (!$page): ?>
+    <?php if (!$page && !empty($title)): ?>
       <h2><a href="<?php print $node_url; ?>"><?php print $title; ?></a></h2>
     <?php endif; ?>
     <?php print render($title_suffix); ?>
@@ -93,6 +93,7 @@
       </div>
     <?php endif; ?>
   </header>
+  <?php endif; ?>
 
   <div class="content clearfix"<?php print backdrop_attributes($content_attributes); ?>>
     <?php
@@ -103,7 +104,7 @@
   </div>
 
   <?php
-    // Remove the "Add new comment" link on the teaser page or if the comment
+    // Remove the "Add comment" link on the teaser page or if the comment
     // form is being displayed on the same page.
     if ($teaser || !empty($comments['comment_form'])) {
       unset($content['links']['comment']['#links']['comment-add']);
@@ -117,15 +118,15 @@
     </footer>
   <?php endif; ?>
 
-  <?php if ($page && !empty($comments)): ?>
-    <section class="comments">  
+  <?php if ($page && isset($comments['comments'])): ?>
+    <section class="comments">
       <?php if ($comments['comments']): ?>
         <h2 class="title"><?php print t('Comments'); ?></h2>
         <?php print render($comments['comments']); ?>
       <?php endif; ?>
 
       <?php if ($comments['comment_form']): ?>
-        <h2 class="title comment-form"><?php print t('Add new comment'); ?></h2>
+        <h2 class="title comment-form"><?php print t('Add comment'); ?></h2>
         <?php print render($comments['comment_form']); ?>
       <?php endif; ?>
     </section>

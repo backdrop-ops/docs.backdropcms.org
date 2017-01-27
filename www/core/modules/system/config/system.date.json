@@ -2,24 +2,24 @@
     "_config_name": "system.date",
     "first_day": 0,
     "default_country": "",
-    "default_timezone": "",
+    "default_timezone": "UTC",
     "user_timezone_configurable": 1,
     "user_timezone_default": 0,
     "user_timezone_warn": 0,
     "formats": {
         "long": {
             "label": "Long Date",
-            "pattern": "l, F j, Y - H:i",
+            "pattern": "l, F j, Y - g:ia",
             "module": "system"
         },
         "medium": {
             "label": "Medium Date",
-            "pattern": "D, m/d/Y - H:i",
+            "pattern": "D, m/d/Y - g:ia",
             "module": "system"
         },
         "short":{
             "label": "Short Date",
-            "pattern": "m/d/Y - H:i",
+            "pattern": "m/d/Y - g:ia",
             "module": "system"
         },
         "html_datetime": {

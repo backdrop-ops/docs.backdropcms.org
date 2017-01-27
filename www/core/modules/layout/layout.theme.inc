@@ -9,6 +9,7 @@
  */
 function theme_layout_reorder_layouts($variables) {
   $element = $variables['element'];
+  $rows = array();
 
   // Assemble the data for a table from everything in $form['handlers']
   foreach (element_children($element) as $layout_name) {
@@ -46,25 +47,69 @@ function theme_layout_reorder_layouts($variables) {
  */
 function theme_layout_info($variables) {
   $layout = $variables['layout'];
+  $info = layout_get_layout_template_info($layout->layout_template);
+
+  // Build template thumbnail preview
+  $preview_path = $info['path'] . '/' . $info['preview'];
+  $preview_img = theme('image', array('uri' => $preview_path));
+  $preview = l($preview_img, 'admin/structure/layouts/manage/' . $layout->name, array('html' => TRUE));
+
+  // Create a link to the settings page
+  $template = l($info['title'], 'admin/structure/layouts/manage/' . $layout->name . '/configure');
+
   $output = '';
-  $output .= '<div class="layout-title">' . check_plain($layout->title) . '</div>';
+  $output .= '<div class="layout-info">';
+  $output .= $preview;
+  $output .= '<div class="layout-detail">';
+  $output .= '  <div class="layout-title">' . check_plain($layout->title) . '</div>';
+  $output .= '  <div class="layout-template description">' . t('<span class="priority-low">Template: </span>!title', array('!title' => $template)) . '</div>';
+  $output .= '</div></div>';
+
+  return $output;
+}
+
+/**
+ * Outputs a list of conditions for a layout. Used in the layout listing page.
+ *
+ * @param $variables
+ *   An array with a single value: "layout", which contains the layout object.
+ *
+ * @return string
+ */
+function theme_layout_condition_info($variables) {
+  /* @var Layout $layout */
+  $layout = $variables['layout'];
+  // Build a list of visibility conditions on this layout
+  $conditions = array();
+  foreach ($layout->conditions as $access_key => $layout_access) {
+    $conditions[] = $layout_access->summary();
+  }
+  $output  = '<div class="layout-conditions-list">';
+  if (empty($conditions)) {
+    $output .= t('No conditions set.');
+  }
+  else {
+    $output .= theme('item_list', array('items' => $conditions));
+  }
+  $output .= '</div>';
+
   return $output;
 }
 
 /**
  * Outputs an individual option label for selecting a layout.
  */
-function theme_layout_option($variables) {
-  $layout_info = $variables['layout_info'];
-  $icon_path = $layout_info['path'] . '/' . $layout_info['preview'];
+function theme_layout_template_option($variables) {
+  $template_info = $variables['template_info'];
+  $icon_path = $template_info['path'] . '/' . $template_info['preview'];
 
   $output = '';
   $output .= '<div class="layout-icon">';
   $output .= theme('image', array(
     'uri' => $icon_path,
-    'attributes' => array('title' => $layout_info['title']),
+    'attributes' => array('title' => $template_info['title']),
   ));
-  $output .= '<div class="caption">' . check_plain($layout_info['title']) . '</div>';
+  $output .= '<div class="layout-caption">' . check_plain($template_info['title']) . '</div>';
   $output .= '</div>';
   return $output;
 }
@@ -123,6 +168,33 @@ function theme_layout_settings_context_table($variables) {
 }
 
 /**
+ * Output the list of visibility conditions for layouts.
+ */
+function theme_layout_conditions($variables) {
+  $element = $variables['element'];
+
+  $output = '<ul>';
+  foreach (element_children($element) as $key) {
+    $output .= '<li>' . backdrop_render($element[$key]) . '</li>';
+  }
+  $output .= '</ul>';
+  return $output;
+}
+
+/**
+ * Output region content wrapped by tag specified in layout UI.
+ */
+function theme_layout_region_inner($variables) {
+  $tag = $variables['tag'];
+  $attributes['class'] = $variables['classes'];
+
+  if ($tag != '') {
+    return '<' . $tag . backdrop_attributes($attributes) . '>' . implode('', $variables['blocks']) . '</' . $tag . '>';
+  }
+  return implode('', $variables['blocks']);
+}
+
+/**
  * Prepares variables for layout templates.
  *
  * This uses [module_name]_preprocess_layout() instead of
@@ -144,7 +216,7 @@ function layout_preprocess_layout(&$variables) {
       if ($settings['title_display'] === LAYOUT_TITLE_NONE) {
         $variables['title'] = NULL;
       }
-      elseif ($settings['title_display'] === LAYOUT_TITLE_CUSTOM) {
+      elseif ($settings['title_display'] === LAYOUT_TITLE_CUSTOM || ($settings['title_display'] === LAYOUT_TITLE_BLOCK && !empty($settings['title']))) {
         $variables['title'] = check_plain(t($settings['title']));
         backdrop_set_title(t($settings['title']));
       }
@@ -160,7 +232,7 @@ function layout_preprocess_layout(&$variables) {
     }
   }
   else {
-    $variables['title'] = t('Page title');
+    $variables['title'] = $variables['content']['title'];
   }
 
   if (!$variables['admin']) {
@@ -178,8 +250,23 @@ function template_preprocess_block(&$variables) {
   $style = $block->style;
 
   $variables['classes'] = array();
+  $variables['attributes'] = array();
   $variables['title_prefix'] = '';
   $variables['title_suffix'] = '';
+
+  // Add the hero background image inline. This could also be added in a
+  // specific template_preprocess_block__layout__hero() function, but we add
+  // it here just to cut down on unnecessary separation.
+  if (get_class($block) == 'BlockHero') {
+    $variables['classes'][] = 'block-hero';
+    if (isset($block->settings['image_path'])) {
+      $variables['attributes']['style'] = 'background-image:url(' . $block->settings['image_path'] . ');';
+      $variables['classes'][] = 'block-hero-image';
+    }
+    else {
+      $variables['classes'][] = 'block-hero-no-image';
+    }
+  }
 
   if (module_exists('contextual') && user_access('access contextual links')) {
     $links = array();
@@ -194,6 +281,7 @@ function template_preprocess_block(&$variables) {
       $element = array(
         '#type' => 'contextual_links',
         '#contextual_links' => $content->content['#contextual_links'],
+        '#element' => $content->content,
       );
       unset($content->content['#contextual_links']);
 
@@ -219,7 +307,7 @@ function template_preprocess_block(&$variables) {
 
   // Basic classes.
   $variables['classes'][] = 'block';
-  $variables['classes'][] = backdrop_html_class('block-' . $block->module . '-' . $block->delta);
+  $variables['classes'][] = backdrop_html_class('block-' . $block->module . '-' . (isset($block->childDelta) ? $block->childDelta : $block->delta));
 
   // Add custom classes if sent in.
   if (!empty($style->settings['classes'])) {
@@ -233,7 +321,7 @@ function template_preprocess_block(&$variables) {
   // Add template file suggestion for content type and sub-type.
   $variables['theme_hook_suggestions'][] = $base . $delimiter . strtr($block->plugin, '-', '_');
 
-  $variables['title'] = !empty($content->title) ? check_plain($content->title) : '';
+  $variables['title'] = !empty($content->title) ? $content->title : '';
   $variables['content'] = !empty($content->content) ? $content->content : '';
 }
 
@@ -249,7 +337,6 @@ function template_preprocess_block_dynamic(&$variables) {
 
   // Classes for the wrapper set in template_preprocess_block().
   $variables['wrapper_tag'] = $style->settings['wrapper_tag'];
-  $variables['attributes'] = array();
 
   // Title tag and classes.
   $variables['title_tag'] = $style->settings['title_tag'];

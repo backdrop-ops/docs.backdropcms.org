@@ -344,7 +344,7 @@ class SearchQuery extends SelectQueryExtender {
     $this->parseSearchExpression();
 
     if (count($this->words) == 0) {
-      form_set_error('keys', format_plural(config_get('search.settings', 'search_minimum_word_size'), 'You must include at least one positive keyword with 1 character or more.', 'You must include at least one positive keyword with @count characters or more.'));
+      form_set_error('keys', format_plural(config_get('search.settings', 'search_minimum_word_size'), 'You must include at least one keyword to match in the content. Keyword must be at least 1 character, and punctuation is ignored.', 'You must include at least one keyword to match in the content. Keywords must be at least @count characters, and punctuation is ignored.'));
       return FALSE;
     }
     if ($this->expressionsIgnored) {
@@ -398,10 +398,10 @@ class SearchQuery extends SelectQueryExtender {
    * used. However, if at least one call to addScore() has taken place, the
    * keyword relevance score is not automatically added.
    *
-   * Also note that if you call orderBy() directly on the query, search scores
-   * will not automatically be used to order search results. Your orderBy()
-   * expression can reference 'calculated_score', which will be the total
-   * calculated score value.
+   * Note that you must use this method to add ordering to your searches, and
+   * not call orderBy() directly, when using the SearchQuery extender. This is
+   * because of the two-pass system the SearchQuery class uses to normalize
+   * scores.
    *
    * @param $score
    *   The score expression, which should evaluate to a number between 0 and 1.

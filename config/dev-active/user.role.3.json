@@ -64,6 +64,7 @@
         "synchronize configuration",
         "access contextual links",
         "administer layouts",
-        "administer API reference"
+        "administer API reference",
+        "administer fields"
     ]
 }

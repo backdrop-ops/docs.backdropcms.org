@@ -423,7 +423,7 @@ Backdrop.ajax.prototype.beforeSend = function (jqXHR, options) {
 
   // Disable the element that received the change to prevent user interface
   // interaction while the Ajax request is in progress.
-  if (options.disable !== false) {
+  if (this.disable !== false) {
     $(this.element).addClass('progress-disabled').prop('disabled', true);
   }
 
@@ -502,7 +502,9 @@ Backdrop.ajax.prototype.cleanUp = function (jqXHR) {
   }
 
   // Reactivate the triggering element.
-  $(this.element).removeClass('progress-disabled').prop('disabled', false);
+  if (this.disable !== false) {
+    $(this.element).removeClass('progress-disabled').prop('disabled', false);
+  }
 };
 
 /**
@@ -566,7 +568,7 @@ Backdrop.ajax.prototype.commands = {
     // response.data contains top-level text nodes, they get lost with either
     // $(response.data) or $('<div></div>').replaceWith(response.data).
     var new_content_wrapped = $('<div></div>').html(response.data.replace(/^\s+|\s+$/g, ''));
-    var new_content = new_content_wrapped.contents();
+    var new_content = new_content_wrapped.children();
 
     // For legacy reasons, the effects processing code assumes that new_content
     // consists of a single top-level element. Also, it has not been

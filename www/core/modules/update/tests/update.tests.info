@@ -6,18 +6,17 @@ file = update.test
 
 [UpdateTestContribCase]
 name = Update contrib functionality
-description = Tests how the update module handles contributed modules and themes in a series of functional tests using mock XML data.
-group = Update
-file = update.test
-
-[UpdateTestUploadCase]
-name = Upload and extract module functionality
-description = Tests the update module's upload and extraction functionality.
+description = Tests how the update module handles contributed modules, themes, and layouts in a series of functional tests using mock XML data.
 group = Update
 file = update.test
 
 [UpdateCoreUnitTestCase]
 name = Unit tests
-description = Test update funcionality unrelated to the database.
+description = Test update functionality unrelated to the database.
 group = Update
 file = update.test
+
+; Added by Backdrop CMS packaging script on 2017-01-15
+project = backdrop
+version = 1.6.0
+timestamp = 1484537173

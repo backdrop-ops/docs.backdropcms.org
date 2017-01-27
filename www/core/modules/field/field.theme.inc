@@ -11,11 +11,11 @@
  * Theme developers who are comfortable with overriding theme functions may do
  * so in order to customize this markup. This function can be overridden with
  * varying levels of specificity. For example, for a field named 'body'
- * displayed on the 'article' content type, any of the following functions will
+ * displayed on the 'post' content type, any of the following functions will
  * override this default implementation. The first of these functions that
  * exists is used:
- * - THEMENAME_field__body__article()
- * - THEMENAME_field__article()
+ * - THEMENAME_field__body__post()
+ * - THEMENAME_field__post()
  * - THEMENAME_field__body()
  * - THEMENAME_field()
  *
@@ -28,15 +28,15 @@
  * displayed on a page, this can result in a noticeable slowdown of the website.
  * For these websites, developers are discouraged from placing a field.tpl.php
  * file into the theme's folder, but may customize templates for specific
- * fields. For example, for a field named 'body' displayed on the 'article'
+ * fields. For example, for a field named 'body' displayed on the 'post'
  * content type, any of the following templates will override this default
  * implementation. The first of these templates that exists is used:
- * - field--body--article.tpl.php
- * - field--article.tpl.php
+ * - field--body--post.tpl.php
+ * - field--post.tpl.php
  * - field--body.tpl.php
  * - field.tpl.php
- * So, if the body field on the article content type needs customization, a
- * field--body--article.tpl.php file can be added within the theme's folder.
+ * So, if the body field on the post content type needs customization, a
+ * field--body--post.tpl.php file can be added within the theme's folder.
  * Because it's a template, it will result in slightly more time needed to
  * display that field, but it will not impact other fields, and therefore,
  * is unlikely to cause a noticeable change in website performance. A very rough
@@ -170,6 +170,8 @@ function theme_field_multiple_value_form($variables) {
 function template_preprocess_field(&$variables, $hook) {
   $element = $variables['element'];
   $variables['attributes'] = array();
+  $variables['content_attributes'] = array();
+  $variables['item_attributes'] = array();
 
   // There's some overhead in calling check_plain() so only call it if the label
   // variable is being displayed. Otherwise, set it to NULL to avoid PHP
@@ -189,6 +191,7 @@ function template_preprocess_field(&$variables, $hook) {
   foreach ($element['#items'] as $delta => $item) {
     if (!empty($element[$delta])) {
       $variables['items'][$delta] = $element[$delta];
+      $variables['item_attributes'][$delta] = array();
     }
   }
 

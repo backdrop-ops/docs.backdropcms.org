@@ -13,21 +13,16 @@
 /**
  * Attach behaviors to managed file element upload fields.
  */
-Backdrop.behaviors.fileValidateAutoAttach = {
+Backdrop.behaviors.fileChangeValidate = {
   attach: function (context, settings) {
-    if (settings.file && settings.file.elements) {
-      $.each(settings.file.elements, function(selector) {
-        var extensions = settings.file.elements[selector];
-        $(selector, context).bind('change', {extensions: extensions}, Backdrop.file.validateExtension);
-      });
-    }
+    $(context).find('input[data-file-extensions]').on('change', Backdrop.file.validateExtension);
+    $(context).find('input[data-file-auto-upload]').on('change', Backdrop.file.autoUpload).each(function() {
+      $(this).closest('.form-item').find('.file-upload-button').hide();
+    });
   },
   detach: function (context, settings) {
-    if (settings.file && settings.file.elements) {
-      $.each(settings.file.elements, function(selector) {
-        $(selector, context).unbind('change', Backdrop.file.validateExtension);
-      });
-    }
+    $(context).find('input[data-file-extensions]').off('change', Backdrop.file.validateExtension);
+    $(context).find('input[data-file-auto-upload]').off('change', Backdrop.file.autoUpload);
   }
 };
 
@@ -65,12 +60,13 @@ Backdrop.file = Backdrop.file || {
    * Client-side file input validation of file extensions.
    */
   validateExtension: function (event) {
-    // Remove any previous errors.
-    $('.file-upload-js-error').remove();
-
     // Add client side validation for the input[type=file].
-    var extensionPattern = event.data.extensions.replace(/,\s*/g, '|');
+    var extensionList = $(this).data('file-extensions');
+    var extensionPattern = extensionList.replace(/,\s*/g, '|');
     if (extensionPattern.length > 1 && this.value.length > 0) {
+      // Remove any previous errors.
+      $('.file-upload-js-error').remove();
+
       var acceptableMatch = new RegExp('\\.(' + extensionPattern + ')$', 'gi');
       if (!acceptableMatch.test(this.value)) {
         var error = Backdrop.t("The selected file %filename cannot be uploaded. Only files with the following extensions are allowed: %extensions.", {
@@ -86,8 +82,21 @@ Backdrop.file = Backdrop.file || {
         });
         $(this).closest('div.form-managed-file').prepend('<div class="messages error file-upload-js-error" aria-live="polite">' + error + '</div>');
         this.value = '';
+        event.filePreValidation = false;
         return false;
       }
+      else {
+        event.filePreValidation = true;
+      }
+    }
+  },
+  /**
+   * Automatically upload files by clicking the Upload button on file selection.
+   */
+  autoUpload: function (event) {
+    // This value is set in Backdrop.file.validateExtension().
+    if (event.filePreValidation === undefined || event.filePreValidation === true) {
+      $(this).closest('.form-item').find('.file-upload-button').trigger('mousedown').trigger('mouseup').trigger('click');
     }
   },
   /**

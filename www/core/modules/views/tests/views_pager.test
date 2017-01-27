@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Definition of ViewsPagerTest.
@@ -24,14 +23,12 @@ class ViewsPagerTest extends ViewsSqlTest {
     $admin_user = $this->backdropCreateUser(array('administer views', 'administer site configuration'));
     $this->backdropLogin($admin_user);
     // Test behaviour described in http://drupal.org/node/652712#comment-2354918.
-
-    $this->backdropGet('admin/structure/views/view/frontpage/edit');
-
+    $this->backdropGet('admin/structure/views/view/promoted/configure');
 
     $edit = array(
       'pager_options[items_per_page]' => 20,
     );
-    $this->backdropPost('admin/structure/views/nojs/display/frontpage/default/pager_options', $edit, t('Apply'));
+    $this->backdropPost('admin/structure/views/nojs/display/promoted/default/pager_options', $edit, t('Apply'));
     $this->assertText('20 items');
 
     // Change type and check whether the type is new type is stored.
@@ -39,23 +36,23 @@ class ViewsPagerTest extends ViewsSqlTest {
     $edit = array(
       'pager[type]' => 'mini',
     );
-    $this->backdropPost('admin/structure/views/nojs/display/frontpage/default/pager', $edit, t('Apply'));
-    $this->backdropGet('admin/structure/views/view/frontpage/edit');
+    $this->backdropPost('admin/structure/views/nojs/display/promoted/default/pager', $edit, t('Apply'));
+    $this->backdropGet('admin/structure/views/view/promoted/configure');
     $this->assertText('Mini', 'Changed pager plugin, should change some text');
 
     // Test behaviour described in http://drupal.org/node/652712#comment-2354400
     $view = $this->viewsStorePagerSettings();
-    // Make it editable in the admin interface.
+    // Make it configurable in the admin interface.
     $view->save();
 
-    $this->backdropGet('admin/structure/views/view/test_store_pager_settings/edit');
+    $this->backdropGet('admin/structure/views/view/test_store_pager_settings/configure');
 
     $edit = array();
     $edit = array(
       'pager[type]' => 'full',
     );
     $this->backdropPost('admin/structure/views/nojs/display/test_store_pager_settings/default/pager', $edit, t('Apply'));
-    $this->backdropGet('admin/structure/views/view/test_store_pager_settings/edit');
+    $this->backdropGet('admin/structure/views/view/test_store_pager_settings/configure');
     $this->assertText('Full');
 
     $edit = array(
@@ -67,7 +64,7 @@ class ViewsPagerTest extends ViewsSqlTest {
     // add new display and test the settings again, by override it.
     $edit = array( );
     // Add a display and override the pager settings.
-    $this->backdropPost('admin/structure/views/view/test_store_pager_settings/edit', $edit, t('Add Page'));
+    $this->backdropPost('admin/structure/views/view/test_store_pager_settings/configure', $edit, t('Add Page'));
     $edit = array(
       'override[dropdown]' => 'page_1',
     );
@@ -77,7 +74,7 @@ class ViewsPagerTest extends ViewsSqlTest {
       'pager[type]' => 'mini',
     );
     $this->backdropPost('admin/structure/views/nojs/display/test_store_pager_settings/page_1/pager', $edit, t('Apply'));
-    $this->backdropGet('admin/structure/views/view/test_store_pager_settings/edit');
+    $this->backdropGet('admin/structure/views/view/test_store_pager_settings/configure');
     $this->assertText('Mini', 'Changed pager plugin, should change some text');
 
     $edit = array(
@@ -116,7 +113,7 @@ class ViewsPagerTest extends ViewsSqlTest {
   public function testNoLimit() {
     // Create 11 nodes and make sure that everyone is returned.
     // We create 11 nodes, because the default pager plugin had 10 items per page.
-    for ($i = 0; $i < 11; $i++) {
+    for ($i = 0; $i < 9; $i++) {
       $this->backdropCreateNode();
     }
     $view = $this->viewsPagerNoLimit();
@@ -177,7 +174,7 @@ class ViewsPagerTest extends ViewsSqlTest {
     $view->set_display('default');
     $this->executeView($view);
 
-    $this->assertEqual($view->total_rows, 23, "'total_rows' is calculated when pager type is 'none' and 'get_total_rows' is TRUE.");
+    $this->assertEqual($view->total_rows, 25, "'total_rows' is calculated when pager type is 'none' and 'get_total_rows' is TRUE.");
   }
 
   public function createNodes($count) {
@@ -194,7 +191,7 @@ class ViewsPagerTest extends ViewsSqlTest {
   public function testLimit() {
     // Create 11 nodes and make sure that everyone is returned.
     // We create 11 nodes, because the default pager plugin had 10 items per page.
-    for ($i = 0; $i < 11; $i++) {
+    for ($i = 0; $i < 9; $i++) {
       $this->backdropCreateNode();
     }
     $view = $this->viewsPagerLimit();
@@ -253,7 +250,7 @@ class ViewsPagerTest extends ViewsSqlTest {
   public function testNormalPager() {
     // Create 11 nodes and make sure that everyone is returned.
     // We create 11 nodes, because the default pager plugin had 10 items per page.
-    for ($i = 0; $i < 11; $i++) {
+    for ($i = 0; $i < 9; $i++) {
       $this->backdropCreateNode();
     }
     $view = $this->viewsPagerFull();

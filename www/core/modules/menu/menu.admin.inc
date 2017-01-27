@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Administrative page callbacks for menu module.
@@ -18,16 +17,16 @@ function menu_overview_page() {
     $row[] = theme('menu_admin_overview', array('title' => $menu['title'], 'name' => $menu['menu_name'], 'description' => $menu['description']));
     $links = array();
     $links['list'] = array(
-      'title' => t('List links'),
+      'title' => t('Edit links'),
       'href' => 'admin/structure/menu/manage/' . $menu['menu_name'],
-    );
-    $links['edit'] = array(
-      'title' => t('Edit menu'),
-      'href' => 'admin/structure/menu/manage/' . $menu['menu_name'] . '/edit',
     );
     $links['add'] = array(
       'title' => t('Add link'),
       'href' => 'admin/structure/menu/manage/' . $menu['menu_name'] . '/add',
+    );
+    $links['configure'] = array(
+      'title' => t('Configure'),
+      'href' => 'admin/structure/menu/manage/' . $menu['menu_name'] . '/configure',
     );
     $row[] = array(
       'data' => array(
@@ -228,6 +227,7 @@ function menu_edit_item($form, &$form_state, $type, $item, $menu) {
     backdrop_set_breadcrumb($breadcrumb);
   }
   $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save'));
   $form['link_title'] = array(
     '#type' => 'textfield',
     '#title' => t('Menu link title'),
@@ -249,13 +249,14 @@ function menu_edit_item($form, &$form_state, $type, $item, $menu) {
   if (isset($item['options']['fragment'])) {
     $path .= '#' . $item['options']['fragment'];
   }
+  $path_alias = backdrop_get_path_alias($path);
   if ($item['module'] == 'menu') {
     $form['link_path'] = array(
       '#type' => 'textfield',
       '#title' => t('Path'),
       '#maxlength' => 255,
-      '#default_value' => $path,
-      '#description' => t('The path for this menu link. This can be an internal Backdrop path such as %add-node or an external URL such as %external. Enter %front to link to the front page.', array('%front' => '<front>', '%add-node' => 'node/add', '%external' => 'http://backdropcms.org')),
+      '#default_value' => (!empty($path)) ? $path_alias : $path,
+      '#description' => t('The path for this menu link. This can be an internal site path such as %add-node or an external URL such as %external. Enter %front to link to the front page.', array('%front' => '<front>', '%add-node' => 'node/add', '%external' => 'http://example.com')),
       '#required' => TRUE,
     );
     $form['actions']['delete'] = array(
@@ -314,7 +315,6 @@ function menu_edit_item($form, &$form_state, $type, $item, $menu) {
     '#default_value' => $item['weight'],
     '#description' => t('Optional. In the menu, the heavier links will sink and the lighter links will be positioned nearer the top.'),
   );
-  $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save'));
 
   return $form;
 }
@@ -439,7 +439,7 @@ function menu_edit_menu($form, &$form_state, $type, $menu = array()) {
   $form['actions']['delete'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
-    '#access' => $type == 'edit' && !isset($system_menus[$menu['menu_name']]),
+    '#access' => $type == 'configure' && !isset($system_menus[$menu['menu_name']]),
     '#submit' => array('menu_custom_delete_submit'),
   );
 
@@ -559,7 +559,7 @@ function menu_edit_menu_submit($form, &$form_state) {
     }
   }
   backdrop_set_message(t('Your configuration has been saved.'));
-  $form_state['redirect'] = $path . $menu['menu_name'];
+  $form_state['redirect'] = 'admin/structure/menu';
 }
 
 /**
@@ -610,58 +610,4 @@ function menu_reset_item_confirm_submit($form, &$form_state) {
   $new_item = menu_reset_item($item);
   backdrop_set_message(t('The menu link was reset to its default settings.'));
   $form_state['redirect'] = 'admin/structure/menu/manage/' . $new_item['menu_name'];
-}
-
-/**
- * Menu callback; Build the form presenting menu configuration options.
- *
- * @ingroup forms
- * @see menu_configure_submit()
- */
-function menu_configure($form, &$form_state) {
-  $config = config('menu.settings');
-  $form['intro'] = array(
-    '#type' => 'item',
-    '#markup' => t('The menu module allows on-the-fly creation of menu links in the content authoring forms. To configure these settings for a particular content type, visit the <a href="@content-types">Content types</a> page, click the <em>edit</em> link for the content type, and go to the <em>Menu settings</em> section.', array('@content-types' => url('admin/structure/types'))),
-  );
-
-  $menu_options = menu_get_menus();
-
-  $main = $config->get('menu_main_links');
-  $form['menu_main_links_source'] = array(
-    '#type' => 'select',
-    '#title' => t('Source for the Main links'),
-    '#default_value' => $main,
-    '#empty_option' => t('No Main links'),
-    '#options' => $menu_options,
-    '#tree' => FALSE,
-    '#description' => t('Select what should be displayed as the Main links (typically at the top of the page).'),
-  );
-
-  $form['menu_secondary_links_source'] = array(
-    '#type' => 'select',
-    '#title' => t('Source for the Secondary links'),
-    '#default_value' => $config->get('menu_secondary_links'),
-    '#empty_option' => t('No Secondary links'),
-    '#options' => $menu_options,
-    '#tree' => FALSE,
-    '#description' => t('Select the source for the Secondary links. An advanced option allows you to use the same source for both Main links (currently %main) and Secondary links: if your source menu has two levels of hierarchy, the top level menu links will appear in the Main links, and the children of the active link will appear in the Secondary links.', array('%main' => $main ? $menu_options[$main] : t('none'))),
-  );
-
-  $form['actions']['#type'] = 'actions';
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save configuration')
-  );
-  return $form;
-}
-
-/**
- * Form submission handler for menu_configure().
- */
-function menu_configure_submit($form, &$form_state) {
-  config('menu.settings')
-    ->set('menu_main_links', $form_state['values']['menu_main_links_source'])
-    ->set('menu_secondary_links', $form_state['values']['menu_secondary_links_source'])
-    ->save();
 }

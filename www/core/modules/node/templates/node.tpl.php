@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Default theme implementation to display a node.
@@ -22,12 +21,12 @@
  *   CSS. The default values can be one or more of the following:
  *   - node: The current template type; for example, "theming hook".
  *   - node-[type]: The current node type. For example, if the node is a
- *     "Article" it would result in "node-article". Note that the machine
+ *     "Post" it would result in "node-post". Note that the machine
  *     name will often be in a short form of the human readable label.
  *   - view-mode-[view_mode]: The View Mode of the node e.g. teaser or full.
  *   - preview: Nodes in preview mode.
  *   The following are controlled through the node publishing options.
- *   - promoted: Nodes promoted to the front page.
+ *   - promoted: Nodes that are promoted.
  *   - sticky: Nodes ordered above other non-sticky nodes in teaser
  *     listings.
  *   - unpublished: Unpublished nodes visible only to administrators.
@@ -42,7 +41,7 @@
  *
  * Other variables:
  * - $node: Full node entity. Contains data that may not be safe.
- * - $type: Node type; for example, article, basic page, blog, etc.
+ * - $type: Node type; for example, post, page, blog, etc.
  * - $uid: User ID of the node author.
  * - $created: Time the node was published formatted in Unix timestamp.
  * - $zebra: Outputs either "even" or "odd". Useful for zebra striping in
@@ -88,7 +87,7 @@
 <article id="node-<?php print $node->nid; ?>" class="<?php print implode(' ', $classes); ?> clearfix"<?php print backdrop_attributes($attributes); ?>>
 
   <?php print render($title_prefix); ?>
-  <?php if (!$page): ?>
+  <?php if (!$page && !empty($title)): ?>
     <h2><a href="<?php print $node_url; ?>" rel="bookmark"><?php print $title; ?></a></h2>
   <?php endif; ?>
   <?php print render($title_suffix); ?>
@@ -110,15 +109,15 @@
 
   <?php print render($content['links']); ?>
 
-  <?php if ($page && !empty($comments)): ?>
-    <section class="comments">  
+  <?php if ($page && isset($comments['comments'])): ?>
+    <section class="comments" id="comments">
       <?php if ($comments['comments']): ?>
         <h2 class="title"><?php print t('Comments'); ?></h2>
         <?php print render($comments['comments']); ?>
       <?php endif; ?>
 
       <?php if ($comments['comment_form']): ?>
-        <h2 class="title comment-form"><?php print t('Add new comment'); ?></h2>
+        <h2 class="title comment-form"><?php print t('Add comment'); ?></h2>
         <?php print render($comments['comment_form']); ?>
       <?php endif; ?>
     </section>

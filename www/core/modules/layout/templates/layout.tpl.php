@@ -20,13 +20,13 @@
  *   - $content['footer']
  */
 ?>
-<div class="layout--one-column <?php print implode(' ', $classes); ?>"<?php print backdrop_attributes($attributes); ?>>
+<div class="layout--one-column layout-legacy <?php print implode(' ', $classes); ?>"<?php print backdrop_attributes($attributes); ?>>
   <div id="skip-link">
     <a href="#main-content" class="element-invisible element-focusable"><?php print t('Skip to main content'); ?></a>
   </div>
 
   <?php if ($content['header']): ?>
-    <header class="l-header" role="banner" aria-label="<?php print t('Site header'); ?>"><div class="section clearfix">
+    <header class="l-header" role="banner" aria-label="<?php print t('Site header'); ?>">
       <?php print $content['header']; ?>
     </header>
   <?php endif; ?>
@@ -48,7 +48,7 @@
       <a id="main-content"></a>
       <?php print render($title_prefix); ?>
       <?php if ($title): ?>
-        <h1 class="title" id="page-title">
+        <h1 class="page-title">
           <?php print $title; ?>
         </h1>
       <?php endif; ?>

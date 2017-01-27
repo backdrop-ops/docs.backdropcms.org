@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Callbacks for adding, editing, and deleting content and managing revisions.
@@ -32,9 +31,10 @@ function node_add_page() {
   // Only use node types to which the user has access.
   foreach (node_type_get_types() as $node_type) {
     if (node_access('create', $node_type->type)) {
+      $href_url_friendly = str_replace('_', '-', $node_type->type);
       $content[$node_type->type] = array(
         'title' => t($node_type->name),
-        'href'=>'node/add/' . $node_type->type,
+        'href'=>'node/add/' . $href_url_friendly,
         'localized_options' => array('html' => TRUE),
         'description' => t($node_type->description),
       );
@@ -69,7 +69,7 @@ function node_add($type) {
     'type' => $type,
     'langcode' => LANGUAGE_NONE,
   ));
-  backdrop_set_title(t('Create @name', array('@name' => $types[$type]->name)), PASS_THROUGH);
+  backdrop_set_title(t('Create @name', array('@name' => t($types[$type]->name))), PASS_THROUGH);
   $output = backdrop_get_form($type . '_node_form', $node);
 
   return $output;
@@ -293,7 +293,7 @@ function node_form($form, &$form_state, Node $node) {
   );
   $form['options']['promote'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Promoted to front page'),
+    '#title' => t('Promoted'),
     '#default_value' => $node->promote,
     '#access' => $node_type->settings['promote_enabled'],
   );
@@ -306,10 +306,10 @@ function node_form($form, &$form_state, Node $node) {
 
   // Prepare cancel link.
   if (isset($_GET['destination'])) {
-    $path = urldecode($_GET['destination']);
+    $path = $_GET['destination'];
   }
   elseif (isset($_SERVER['HTTP_REFERER'])) {
-    $path = urldecode($_SERVER['HTTP_REFERER']);
+    $path = $_SERVER['HTTP_REFERER'];
   }
   elseif (isset($node->nid)) {
     $path = 'node/' . $node->nid;
@@ -627,4 +627,103 @@ function node_revision_delete_confirm_submit($form, &$form_state) {
   if (db_query('SELECT COUNT(vid) FROM {node_revision} WHERE nid = :nid', array(':nid' => $node_revision->nid))->fetchField() > 1) {
     $form_state['redirect'] .= '/revisions';
   }
+}
+
+/**
+ * Autocomplete callback for nodes by title.
+ *
+ * Searches for a node by title, but then identifies it by nid, so the actual
+ * returned value can be used later by the form.
+ *
+ * The returned $matches array has
+ * - key: The title, with the identifying nid in brackets, like "Some node
+ *   title [3325]"
+ * - value: the title which will is displayed in the autocomplete pulldown.
+ *
+ * Note that we must use a key style that can be parsed successfully and
+ * unambiguously. For example, if we might have node titles that could have
+ * [3325] in them, then we'd have to use a more restrictive token.
+ *
+ * @param string $string
+ *   The string that will be searched.
+ */
+function node_autocomplete($string = '') {
+  $matches = array();
+  if ($string) {
+    if (is_numeric($string)) {
+      $result = db_select('node')
+        ->fields('node', array('nid', 'title'))
+        ->condition('nid', $string)
+        ->addTag('node_access')
+        ->execute();
+      foreach ($result as $node) {
+        $matches[$node->title . " [$node->nid]"] = check_plain($node->title) . ' [' .$node->nid . ']';
+      }
+    }
+    $result = db_select('node')
+      ->fields('node', array('nid', 'title'))
+      ->condition('title', db_like($string) . '%', 'LIKE')
+      ->addTag('node_access')
+      ->range(0, 10)
+      ->execute();
+    foreach ($result as $node) {
+      $matches[$node->title . " [$node->nid]"] = check_plain($node->title) . ' [' .$node->nid . ']';
+    }
+  }
+
+  backdrop_json_output($matches);
+}
+
+/**
+ * Node title validation handler.
+ *
+ * Validate handler to convert our string like "Some node title [3325]" into a
+ * nid.
+ *
+ * In case the user did not actually use the autocomplete or have a valid string
+ * there, we'll try to look up a result anyway giving it our best guess.
+ *
+ * Since the user chose a unique node, we must now use the same one in our
+ * submit handler, which means we need to look in the string for the nid.
+ *
+ * @param $string
+ *   The string to validate.
+ * @return $nid
+ *   A node ID if matched, or NULL if no match.
+ *
+ * @see node_autocomplete()
+ */
+function node_autocomplete_validate($string) {
+  $matches = array();
+  $nid = 0;
+
+  // This preg_match() looks for the last pattern like [33334] and if found
+  // extracts the numeric portion.
+  $result = preg_match('/\[([0-9]+)\]$/', $string, $matches);
+  if ($result > 0) {
+    // If $result is nonzero, we found a match and can use it as the index into
+    // $matches.
+    $nid = $matches[$result];
+    // Verify that it's a valid nid.
+    $node = node_load($nid);
+    if (empty($node)) {
+      return NULL;
+    }
+  }
+  // If the input was numeric, check that it matches a node.
+  elseif (is_numeric($string) && node_load($string)) {
+    $nid = (int) $string;
+  }
+  // Check that the user may have directly entered a node title.
+  else {
+    $nid = db_select('node')
+      ->fields('node', array('nid'))
+      ->condition('title', db_like($string) . '%', 'LIKE')
+      ->addTag('node_access')
+      ->range(0, 1)
+      ->execute()
+      ->fetchField();
+  }
+
+  return (!empty($nid)) ? $nid : NULL;
 }

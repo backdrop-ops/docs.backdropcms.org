@@ -9,3 +9,8 @@ name = Menu settings for nodes
 description = Add, edit, and delete a node with menu link.
 group = Menu
 file = menu.test
+
+; Added by Backdrop CMS packaging script on 2017-01-15
+project = backdrop
+version = 1.6.0
+timestamp = 1484537173

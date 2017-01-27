@@ -82,6 +82,13 @@ class TaxonomyTerm extends Entity {
   }
 
   /**
+   * Implements EntityInterface::bundle().
+   */
+  public function bundle() {
+    return $this->vocabulary;
+  }
+
+  /**
    * Implements EntityInterface::entityType().
    */
   public function entityType() {
@@ -127,7 +134,7 @@ class TaxonomyTermController extends EntityDatabaseStorageController {
   protected function buildQuery($ids, $conditions = array(), $revision_id = FALSE) {
     $query = parent::buildQuery($ids, $conditions, $revision_id);
     $query->addTag('translatable');
-    $query->addTag('term_access');
+    $query->addTag('taxonomy_term_access');
     // When name is passed as a condition use LIKE.
     if (isset($conditions['name'])) {
       $query_conditions = &$query->conditions();
@@ -158,6 +165,9 @@ class TaxonomyTermController extends EntityDatabaseStorageController {
 
   /**
    * Overrides EntityDatabaseStorageController::postDelete().
+   *
+   * @param TaxonomyTerm[] $entities
+   *   An array of term entities that were just deleted.
    */
   protected function postDelete($entities) {
     // See if any of the term's children are about to be become orphans.
@@ -189,6 +199,9 @@ class TaxonomyTermController extends EntityDatabaseStorageController {
 
   /**
    * Overrides EntityDatabaseStorageController::postSave().
+   *
+   * @param TaxonomyTerm $entity
+   *   The term entity that was just saved.
    */
   protected function postSave(EntityInterface $entity, $update) {
     if (isset($entity->parent)) {

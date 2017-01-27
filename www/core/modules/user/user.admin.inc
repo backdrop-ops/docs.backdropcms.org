@@ -64,9 +64,9 @@ function user_multiple_cancel_confirm($form, &$form_state) {
   // Allow to send the account cancellation confirmation mail.
   $form['user_cancel_confirm'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Require e-mail confirmation to cancel account.'),
+    '#title' => t('Require email confirmation to cancel account.'),
     '#default_value' => FALSE,
-    '#description' => t('When enabled, the user must confirm the account cancellation via e-mail.'),
+    '#description' => t('When enabled, the user must confirm the account cancellation via email.'),
   );
   // Also allow to send account canceled notification mail, if enabled.
   $form['user_cancel_notify'] = array(
@@ -74,7 +74,7 @@ function user_multiple_cancel_confirm($form, &$form_state) {
     '#title' => t('Notify user when account is canceled.'),
     '#default_value' => FALSE,
     '#access' => config_get('system.core', 'user_mail_status_canceled_notify'),
-    '#description' => t('When enabled, the user will receive an e-mail notification after the account has been cancelled.'),
+    '#description' => t('When enabled, the user will receive an email notification after the account has been cancelled.'),
   );
 
   $confirm_question = format_plural(count($accounts), 'Are you sure you want to cancel this user account?', 'Are you sure you want to cancel these user accounts?');
@@ -119,46 +119,30 @@ function user_multiple_cancel_confirm_submit($form, &$form_state) {
  */
 function user_admin_settings($form, &$form_state) {
   $config = config('system.core');
-  $mail_config = config('user.mail');
+  $form['#config'] = 'system.core';
 
-  // Settings for anonymous users.
-  $form['anonymous_settings'] = array(
+  // User login settings.
+  $form['user_login'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Anonymous users'),
+    '#title' => t('User log in'),
+    '#weight' => -2,
   );
-  $form['anonymous_settings']['anonymous'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Name'),
-    '#default_value' => $config->get('anonymous'),
-    '#description' => t('The name used to indicate anonymous users.'),
-    '#required' => TRUE,
-  );
-
-  // Administrative role option.
-  $form['admin_role'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Administrator role'),
-  );
-
-  // Do not allow users to set the anonymous or authenticated user roles as the
-  // administrator role.
-  $roles = user_roles();
-  unset($roles[BACKDROP_ANONYMOUS_ROLE]);
-  unset($roles[BACKDROP_AUTHENTICATED_ROLE]);
-  $roles[0] = t('disabled');
-
-  $form['admin_role']['user_admin_role'] = array(
-    '#type' => 'select',
-    '#title' => t('Administrator role'),
-    '#default_value' => $config->get('user_admin_role'),
-    '#options' => $roles,
-    '#description' => t('This role will be automatically assigned new permissions whenever a module is enabled. Changing this setting will not affect existing permissions.'),
+  $form['user_login']['user_login_method'] = array(
+    '#type' => 'radios',
+    '#title' => t('Users may log in using'),
+    '#options' => array(
+      USER_LOGIN_USERNAME_OR_EMAIL => t('Username or email address'),
+      USER_LOGIN_USERNAME_ONLY => t('Username'),
+      USER_LOGIN_EMAIL_ONLY => t('Email address'),
+    ),
+    '#default_value' => $config->get('user_login_method'),
   );
 
   // User registration settings.
   $form['registration_cancellation'] = array(
     '#type' => 'fieldset',
     '#title' => t('Registration and cancellation'),
+    '#weight' => -4,
   );
 
   $form['registration_cancellation']['user_register'] = array(
@@ -173,9 +157,14 @@ function user_admin_settings($form, &$form_state) {
   );
   $form['registration_cancellation']['user_email_verification'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Require e-mail verification when a visitor creates an account.'),
+    '#title' => t('Require email verification when a visitor creates an account.'),
     '#default_value' => $config->get('user_email_verification'),
-    '#description' => t('New users will be required to validate their e-mail address prior to logging into the site, and will be assigned a system-generated password. With this setting disabled, users will be logged in immediately upon registering, and may select their own passwords during registration.')
+    '#description' => t('New users will be required to validate their email address prior to logging into the site, and will be assigned a system-generated password. With this setting disabled, users will be logged in immediately upon registering, and may select their own passwords during registration.')
+  );
+  $form['registration_cancellation']['user_email_match'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('When an email address is used as username, require a matching email address.'),
+    '#default_value' => $config->get('user_email_match'),
   );
   module_load_include('inc', 'user', 'user.pages');
   $form['registration_cancellation']['user_cancel_method'] = array(
@@ -200,6 +189,7 @@ function user_admin_settings($form, &$form_state) {
   $form['personalization'] = array(
     '#type' => 'fieldset',
     '#title' => t('Personalization'),
+    '#weight' => 2,
   );
   $form['personalization']['user_signatures'] = array(
     '#type' => 'checkbox',
@@ -281,263 +271,6 @@ function user_admin_settings($form, &$form_state) {
     '#description' => t("This text is displayed at the picture upload form in addition to the default guidelines. It's useful for helping or instructing your users."),
   );
 
-  $form['email_title'] = array(
-    '#type' => 'item',
-    '#title' => t('E-mails'),
-  );
-  $form['email'] = array(
-    '#type' => 'vertical_tabs',
-  );
-
-  // Add a link to browse available tokens.
-  $email_token_link = theme('token_tree_link', array(
-    'token_types' => array('user'),
-    'show_restricted' => TRUE,
-  ));
-
-  $form['email_admin_created'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Welcome (new user created by administrator)'),
-    '#collapsible' => TRUE,
-    '#collapsed' => ($config->get('user_register') != USER_REGISTER_ADMINISTRATORS_ONLY),
-    '#description' => t('Edit the welcome e-mail messages sent to new member accounts created by an administrator.') . ' ' . $email_token_link,
-    '#group' => 'email',
-  );
-  $form['email_admin_created']['user_mail_register_admin_created_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject'),
-    '#default_value' => $mail_config->get('register_admin_created_subject'),
-    '#maxlength' => 180,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-  $form['email_admin_created']['user_mail_register_admin_created_body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Body'),
-    '#default_value' => $mail_config->get('register_admin_created_body'),
-    '#rows' => 15,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-
-  $form['email_pending_approval'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Welcome (awaiting approval)'),
-    '#collapsible' => TRUE,
-    '#collapsed' => ($config->get('user_register') != USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL),
-    '#description' => t('Edit the welcome e-mail messages sent to new members upon registering, when administrative approval is required.') . ' ' . $email_token_link,
-    '#group' => 'email',
-  );
-  $form['email_pending_approval']['user_mail_register_pending_approval_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject'),
-    '#default_value' => $mail_config->get('register_pending_approval_subject'),
-    '#maxlength' => 180,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-  $form['email_pending_approval']['user_mail_register_pending_approval_body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Body'),
-    '#default_value' => $mail_config->get('register_pending_approval_body'),
-    '#rows' => 8,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-
-  $form['email_no_approval_required'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Welcome (no approval required)'),
-    '#collapsible' => TRUE,
-    '#collapsed' => ($config->get('user_register') != USER_REGISTER_VISITORS),
-    '#description' => t('Edit the welcome e-mail messages sent to new members upon registering, when no administrator approval is required.') . ' ' . $email_token_link,
-    '#group' => 'email',
-  );
-  $form['email_no_approval_required']['user_mail_register_no_approval_required_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject'),
-    '#default_value' => $mail_config->get('register_no_approval_required_subject'),
-    '#maxlength' => 180,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-  $form['email_no_approval_required']['user_mail_register_no_approval_required_body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Body'),
-    '#default_value' => $mail_config->get('register_no_approval_required_body'),
-    '#rows' => 15,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-
-  $form['email_password_reset'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Password recovery'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#description' => t('Edit the e-mail messages sent to users who request a new password.') . ' ' . $email_token_link,
-    '#group' => 'email',
-    '#weight' => 10,
-  );
-  $form['email_password_reset']['user_mail_password_reset_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject'),
-    '#default_value' => $mail_config->get('password_reset_subject'),
-    '#maxlength' => 180,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-  $form['email_password_reset']['user_mail_password_reset_body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Body'),
-    '#default_value' => $mail_config->get('password_reset_body'),
-    '#rows' => 12,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-
-  $form['email_activated'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Account activation'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#description' => t('Enable and edit e-mail messages sent to users upon account activation (when an administrator activates an account of a user who has already registered, on a site where administrative approval is required).') . ' ' . $email_token_link,
-    '#group' => 'email',
-  );
-  $form['email_activated']['user_mail_status_activated_notify'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Notify user when account is activated.'),
-    '#default_value' => $config->get('user_mail_status_activated_notify'),
-  );
-  $form['email_activated']['settings'] = array(
-    '#type' => 'container',
-    '#states' => array(
-      // Hide the additional settings when this email is disabled.
-      'invisible' => array(
-        'input[name="user_mail_status_activated_notify"]' => array('checked' => FALSE),
-      ),
-    ),
-  );
-  $form['email_activated']['settings']['user_mail_status_activated_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject'),
-    '#default_value' => $mail_config->get('status_activated_subject'),
-    '#maxlength' => 180,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-  $form['email_activated']['settings']['user_mail_status_activated_body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Body'),
-    '#default_value' => $mail_config->get('status_activated_body'),
-    '#rows' => 15,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-
-  $form['email_blocked'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Account blocked'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#description' => t('Enable and edit e-mail messages sent to users when their accounts are blocked.') . ' ' . $email_token_link,
-    '#group' => 'email',
-  );
-  $form['email_blocked']['user_mail_status_blocked_notify'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Notify user when account is blocked.'),
-    '#default_value' => $config->get('user_mail_status_blocked_notify'),
-  );
-  $form['email_blocked']['settings'] = array(
-    '#type' => 'container',
-    '#states' => array(
-      // Hide the additional settings when the blocked email is disabled.
-      'invisible' => array(
-        'input[name="user_mail_status_blocked_notify"]' => array('checked' => FALSE),
-      ),
-    ),
-  );
-  $form['email_blocked']['settings']['user_mail_status_blocked_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject'),
-    '#default_value' => $mail_config->get('status_blocked_subject'),
-    '#maxlength' => 180,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-  $form['email_blocked']['settings']['user_mail_status_blocked_body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Body'),
-    '#default_value' => $mail_config->get('status_blocked_body'),
-    '#rows' => 3,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-
-  $form['email_cancel_confirm'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Account cancellation confirmation'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#description' => t('Edit the e-mail messages sent to users when they attempt to cancel their accounts.') . ' ' . $email_token_link,
-    '#group' => 'email',
-  );
-  $form['email_cancel_confirm']['user_mail_cancel_confirm_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject'),
-    '#default_value' => $mail_config->get('cancel_confirm_subject'),
-    '#maxlength' => 180,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-  $form['email_cancel_confirm']['user_mail_cancel_confirm_body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Body'),
-    '#default_value' => $mail_config->get('cancel_confirm_body'),
-    '#rows' => 3,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-
-  $form['email_canceled'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Account canceled'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#description' => t('Enable and edit e-mail messages sent to users when their accounts are canceled.') . ' ' . $email_token_link,
-    '#group' => 'email',
-  );
-  $form['email_canceled']['user_mail_status_canceled_notify'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Notify user when account is canceled.'),
-    '#default_value' => $config->get('user_mail_status_canceled_notify'),
-  );
-  $form['email_canceled']['settings'] = array(
-    '#type' => 'container',
-    '#states' => array(
-      // Hide the settings when the cancel notify checkbox is disabled.
-      'invisible' => array(
-        'input[name="user_mail_status_canceled_notify"]' => array('checked' => FALSE),
-      ),
-    ),
-  );
-  $form['email_canceled']['settings']['user_mail_status_canceled_subject'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Subject'),
-    '#default_value' => $mail_config->get('status_canceled_subject'),
-    '#maxlength' => 180,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-  $form['email_canceled']['settings']['user_mail_status_canceled_body'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Body'),
-    '#default_value' => $mail_config->get('status_canceled_body'),
-    '#rows' => 3,
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('user'),
-  );
-
   $form['actions']['#type'] = 'actions';
   $form['actions']['submit'] = array(
     '#type' => 'submit',
@@ -550,51 +283,9 @@ function user_admin_settings($form, &$form_state) {
  * Form submission handler for user_admin_settings().
  */
 function user_admin_settings_submit($form, &$form_state) {
-  $values = $form_state['values'];
-  $config = config('system.core');
-  $config->set('anonymous', $values['anonymous']);
-  $config->set('user_admin_role', $values['user_admin_role']);
-  $config->set('user_cancel_method', $values['user_cancel_method']);
-  $config->set('user_register', $values['user_register']);
-  $config->set('user_email_verification', $values['user_email_verification']);
-  $config->set('user_signatures', $values['user_signatures']);
-  $config->set('user_pictures', $values['user_pictures']);
-  $config->set('user_picture_path', $values['user_picture_path']);
-  $config->set('user_picture_default', $values['user_picture_default']);
-  if (isset($values['user_picture_style'])) {
-    $config->set('user_picture_style', $values['user_picture_style']);
-  }
-  $config->set('user_picture_dimensions', $values['user_picture_dimensions']);
-  $config->set('user_picture_file_size', $values['user_picture_file_size']);
-  $config->set('user_picture_guidelines', $values['user_picture_guidelines']);
-  $config->set('user_mail_status_activated_notify', $values['user_mail_status_activated_notify']);
-  $config->set('user_mail_status_blocked_notify', $values['user_mail_status_blocked_notify']);
-  $config->set('user_mail_status_canceled_notify', $values['user_mail_status_canceled_notify']);
-  $config->save();
-
-  $config = config('user.mail');
-  $config->set('cancel_confirm_body', $values['user_mail_cancel_confirm_body']);
-  $config->set('cancel_confirm_subject', $values['user_mail_cancel_confirm_subject']);
-  $config->set('password_reset_body', $values['user_mail_password_reset_body']);
-  $config->set('password_reset_subject', $values['user_mail_password_reset_subject']);
-  $config->set('register_admin_created_body', $values['user_mail_register_admin_created_body']);
-  $config->set('register_admin_created_subject', $values['user_mail_register_admin_created_subject']);
-  $config->set('register_no_approval_required_body', $values['user_mail_register_no_approval_required_body']);
-  $config->set('register_no_approval_required_subject', $values['user_mail_register_no_approval_required_subject']);
-  $config->set('register_pending_approval_body', $values['user_mail_register_pending_approval_body']);
-  $config->set('register_pending_approval_subject', $values['user_mail_register_pending_approval_subject']);
-  $config->set('status_activated_body', $values['user_mail_status_activated_body']);
-  $config->set('status_activated_subject', $values['user_mail_status_activated_subject']);
-  $config->set('status_blocked_body', $values['user_mail_status_blocked_body']);
-  $config->set('status_blocked_subject', $values['user_mail_status_blocked_subject']);
-  $config->set('status_canceled_body', $values['user_mail_status_canceled_body']);
-  $config->set('status_canceled_subject', $values['user_mail_status_canceled_subject']);
-  $config->save();
-
+  system_settings_form_submit($form, $form_state);
   // Clear the token cache.
   token_cache_clear();
-
-  backdrop_set_message(t('The configuration options have been saved.'));
 }
 
 /**
@@ -699,12 +390,49 @@ function user_admin_permissions_submit($form, &$form_state) {
  * @see theme_user_admin_roles()
  */
 function user_admin_roles($form, $form_state) {
-  $roles = user_roles(FALSE, NULL, TRUE);
+  $system_config = config('system.core');
+
+  // Administrative role option.
+  $form['admin_role'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Administrator role'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => -20,
+  );
+  // Do not allow the anonymous or authenticated user roles as administrator.
+  $roles = user_roles();
+  unset($roles[BACKDROP_ANONYMOUS_ROLE]);
+  unset($roles[BACKDROP_AUTHENTICATED_ROLE]);
+  $roles[0] = t('disabled');
+  $form['admin_role']['user_admin_role'] = array(
+    '#type' => 'select',
+    '#title' => t('The role that will be automatically assigned new permissions whenever a module is enabled:'),
+    '#default_value' => $system_config->get('user_admin_role'),
+    '#options' => $roles,
+    '#description' => t('Changing this setting will not affect existing permissions.'),
+  );
+
+  // Settings for anonymous users.
+  $form['anonymous_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Anonymous visitors'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => -10,
+  );
+  $form['anonymous_settings']['anonymous'] = array(
+    '#type' => 'textfield',
+    '#title' => t('The name you would like used for anonymous visitors to your site:'),
+    '#default_value' => $system_config->get('anonymous'),
+    '#required' => TRUE,
+  );
 
   $form['roles'] = array(
     '#tree' => TRUE,
   );
   $order = 0;
+  $roles = user_roles(FALSE, NULL, TRUE);
   foreach ($roles as $role_name => $role) {
     $form['roles'][$role_name]['#role'] = $role;
     $form['roles'][$role_name]['#weight'] = $order;
@@ -743,7 +471,7 @@ function user_admin_roles($form, $form_state) {
 
   $form['label'] = array(
     '#type' => 'textfield',
-    '#title' => t('Add new role'),
+    '#title' => t('Add role'),
     '#title_display' => 'invisible',
     '#required' => TRUE,
     '#size' => 32,
@@ -758,7 +486,6 @@ function user_admin_roles($form, $form_state) {
       'source' => array('label'),
       'exists' => 'user_role_load',
       'standalone' => TRUE,
-      'label' => '',
     ),
     '#description' => t('A unique machine-readable name for this role. It must only contain lowercase letters, numbers, and underscores.'),
   );
@@ -770,8 +497,8 @@ function user_admin_roles($form, $form_state) {
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Save order'),
-    '#limit_validation_errors' => array(array('roles')),
+    '#value' => t('Save roles'),
+    '#limit_validation_errors' => array(array('roles'), array('user_admin_role'), array('anonymous')),
     '#submit' => array('user_admin_roles_order_submit'),
   );
 
@@ -782,6 +509,13 @@ function user_admin_roles($form, $form_state) {
  * Form submit function. Update the role weights.
  */
 function user_admin_roles_order_submit($form, &$form_state) {
+  // Save admin role and anon name.
+  $config = config('system.core');
+  $config->set('anonymous', $form_state['values']['anonymous']);
+  $config->set('user_admin_role', $form_state['values']['user_admin_role']);
+  $config->save();
+
+  // Save roles.
   foreach ($form_state['values']['roles'] as $role_name => $role_values) {
     $role = $form['roles'][$role_name]['#role'];
     $role->weight = $role_values['weight'];
@@ -799,7 +533,7 @@ function user_admin_roles_add_submit($form, &$form_state) {
     'label' => $form_state['values']['label'],
   );
   user_role_save($role);
-  backdrop_set_message(t('The role has been added.'));
+  backdrop_set_message(t('The %role role has been added.', array('%role' => $role->label)));
   $form_state['redirect'] = 'admin/config/people/roles';
 }
 
@@ -809,7 +543,7 @@ function user_admin_roles_add_submit($form, &$form_state) {
  * @ingroup forms
  * @see user_admin_role_submit()
  */
-function user_admin_role($form, $form_state, $role) {
+function user_admin_role($form, &$form_state, $role) {
   $form_state['role'] = $role;
 
   $form['label'] = array(
@@ -850,9 +584,11 @@ function user_admin_role($form, $form_state, $role) {
  */
 function user_admin_role_submit($form, &$form_state) {
   $role = $form_state['role'];
+  $old_role = $role->label;
   $role->label = $form_state['values']['label'];
   user_role_save($role);
-  backdrop_set_message(t('The role has been renamed.'));
+  $new_role = $role->label;
+  backdrop_set_message(t('The %old_role role has been renamed to %new_role.', array('%old_role' => $old_role, '%new_role' => $new_role)));
   $form_state['redirect'] = 'admin/config/people/roles';
 }
 
@@ -864,15 +600,323 @@ function user_admin_role_delete_confirm($form, &$form_state, $role) {
     '#type' => 'value',
     '#value' => $role->name,
   );
-  return confirm_form($form, t('Are you sure you want to delete the role %name ?', array('%name' => $role->label)), 'admin/people/roles', t('This action cannot be undone.'), t('Delete'));
+  return confirm_form($form, t('Are you sure you want to delete the %role role?', array('%role' => $role->label)), 'admin/config/people/roles', t('This action cannot be undone.'), t('Delete'));
 }
 
 /**
  * Form submit handler for user_admin_role_delete_confirm().
  */
 function user_admin_role_delete_confirm_submit($form, &$form_state) {
-  user_role_delete($form_state['values']['role_name']);
-  backdrop_set_message(t('The role has been deleted.'));
+  $role = $form_state['values']['role_name'];
+  user_role_delete($role);
+  backdrop_set_message(t('The %role role has been deleted.', array('%role' => $role)));
   $form_state['redirect'] = 'admin/config/people/roles';
 }
 
+/**
+ * Form builder; Configure user email settings for this site.
+ *
+ * @ingroup forms
+ */
+function user_settings_email($form, &$form_state) {
+  $config = config('system.core');
+  $mail_config = config('user.mail');
+  $form['email_title'] = array(
+    '#type' => 'item',
+    '#title' => t('Emails'),
+  );
+
+  $form['help'] = array(
+    '#markup' => '<p>' . t('Use this form to customize the emails sent by your website. Each template may use tokens to populate special values such as a user account name or the password reset link.') . '</p>',
+  );
+
+  // Add a link to browse available tokens.
+  $email_token_link = theme('token_tree_link', array(
+    'token_types' => array('user'),
+    'show_restricted' => TRUE,
+  ));
+
+  $form['email_admin_created'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Welcome (new user created by administrator)'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#description' => t('Edit the welcome email messages sent to new member accounts created by an administrator.') . ' ' . $email_token_link,
+    '#group' => 'email',
+  );
+  $form['email_admin_created']['user_mail_register_admin_created_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $mail_config->get('register_admin_created_subject'),
+    '#maxlength' => 180,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+  $form['email_admin_created']['user_mail_register_admin_created_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => $mail_config->get('register_admin_created_body'),
+    '#rows' => 15,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+
+  $form['email_pending_approval'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Welcome (awaiting approval)'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Edit the welcome email messages sent to new members upon registering, when administrative approval is required.') . ' ' . $email_token_link,
+    '#group' => 'email',
+  );
+  $form['email_pending_approval']['user_mail_register_pending_approval_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $mail_config->get('register_pending_approval_subject'),
+    '#maxlength' => 180,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+  $form['email_pending_approval']['user_mail_register_pending_approval_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => $mail_config->get('register_pending_approval_body'),
+    '#rows' => 8,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+
+  $form['email_no_approval_required'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Welcome (no approval required)'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Edit the welcome email messages sent to new members upon registering, when no administrator approval is required.') . ' ' . $email_token_link,
+    '#group' => 'email',
+  );
+  $form['email_no_approval_required']['user_mail_register_no_approval_required_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $mail_config->get('register_no_approval_required_subject'),
+    '#maxlength' => 180,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+  $form['email_no_approval_required']['user_mail_register_no_approval_required_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => $mail_config->get('register_no_approval_required_body'),
+    '#rows' => 15,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+
+  $form['email_password_reset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Password recovery'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Edit the email messages sent to users who request a new password.') . ' ' . $email_token_link,
+    '#group' => 'email',
+    '#weight' => 10,
+  );
+  $form['email_password_reset']['user_mail_password_reset_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $mail_config->get('password_reset_subject'),
+    '#maxlength' => 180,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+  $form['email_password_reset']['user_mail_password_reset_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => $mail_config->get('password_reset_body'),
+    '#rows' => 12,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+
+  $form['email_activated'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Account activation'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Enable and edit email messages sent to users upon account activation (when an administrator activates an account of a user who has already registered, on a site where administrative approval is required).') . ' ' . $email_token_link,
+    '#group' => 'email',
+  );
+  $form['email_activated']['user_mail_status_activated_notify'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Notify user when account is activated.'),
+    '#default_value' => $config->get('user_mail_status_activated_notify'),
+  );
+  $form['email_activated']['settings'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      // Hide the additional settings when this email is disabled.
+      'invisible' => array(
+        'input[name="user_mail_status_activated_notify"]' => array('checked' => FALSE),
+      ),
+    ),
+  );
+  $form['email_activated']['settings']['user_mail_status_activated_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $mail_config->get('status_activated_subject'),
+    '#maxlength' => 180,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+  $form['email_activated']['settings']['user_mail_status_activated_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => $mail_config->get('status_activated_body'),
+    '#rows' => 15,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+
+  $form['email_blocked'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Account blocked'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Enable and edit email messages sent to users when their accounts are blocked.') . ' ' . $email_token_link,
+    '#group' => 'email',
+  );
+  $form['email_blocked']['user_mail_status_blocked_notify'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Notify user when account is blocked.'),
+    '#default_value' => $config->get('user_mail_status_blocked_notify'),
+  );
+  $form['email_blocked']['settings'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      // Hide the additional settings when the blocked email is disabled.
+      'invisible' => array(
+        'input[name="user_mail_status_blocked_notify"]' => array('checked' => FALSE),
+      ),
+    ),
+  );
+  $form['email_blocked']['settings']['user_mail_status_blocked_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $mail_config->get('status_blocked_subject'),
+    '#maxlength' => 180,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+  $form['email_blocked']['settings']['user_mail_status_blocked_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => $mail_config->get('status_blocked_body'),
+    '#rows' => 3,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+
+  $form['email_cancel_confirm'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Account cancellation confirmation'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Edit the email messages sent to users when they attempt to cancel their accounts.') . ' ' . $email_token_link,
+    '#group' => 'email',
+  );
+  $form['email_cancel_confirm']['user_mail_cancel_confirm_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $mail_config->get('cancel_confirm_subject'),
+    '#maxlength' => 180,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+  $form['email_cancel_confirm']['user_mail_cancel_confirm_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => $mail_config->get('cancel_confirm_body'),
+    '#rows' => 3,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+
+  $form['email_canceled'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Account canceled'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Enable and edit email messages sent to users when their accounts are canceled.') . ' ' . $email_token_link,
+    '#group' => 'email',
+  );
+  $form['email_canceled']['user_mail_status_canceled_notify'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Notify user when account is canceled.'),
+    '#default_value' => $config->get('user_mail_status_canceled_notify'),
+  );
+  $form['email_canceled']['settings'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      // Hide the settings when the cancel notify checkbox is disabled.
+      'invisible' => array(
+        'input[name="user_mail_status_canceled_notify"]' => array('checked' => FALSE),
+      ),
+    ),
+  );
+  $form['email_canceled']['settings']['user_mail_status_canceled_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => $mail_config->get('status_canceled_subject'),
+    '#maxlength' => 180,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+  $form['email_canceled']['settings']['user_mail_status_canceled_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => $mail_config->get('status_canceled_body'),
+    '#rows' => 3,
+    '#element_validate' => array('token_element_validate'),
+    '#token_types' => array('user'),
+  );
+
+  $form['actions']['#type'] = 'actions';
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration')
+  );
+  return $form;
+}
+
+/**
+ * Form submission handler for user_settings_email().
+ */
+function user_settings_email_submit($form, &$form_state) {
+  $values = $form_state['values'];
+
+  $config = config('system.core');
+  $config->set('user_mail_status_activated_notify', $values['user_mail_status_activated_notify']);
+  $config->set('user_mail_status_blocked_notify', $values['user_mail_status_blocked_notify']);
+  $config->set('user_mail_status_canceled_notify', $values['user_mail_status_canceled_notify']);
+  $config->save();
+
+  $config = config('user.mail');
+  $config->set('cancel_confirm_body', $values['user_mail_cancel_confirm_body']);
+  $config->set('cancel_confirm_subject', $values['user_mail_cancel_confirm_subject']);
+  $config->set('password_reset_body', $values['user_mail_password_reset_body']);
+  $config->set('password_reset_subject', $values['user_mail_password_reset_subject']);
+  $config->set('register_admin_created_body', $values['user_mail_register_admin_created_body']);
+  $config->set('register_admin_created_subject', $values['user_mail_register_admin_created_subject']);
+  $config->set('register_no_approval_required_body', $values['user_mail_register_no_approval_required_body']);
+  $config->set('register_no_approval_required_subject', $values['user_mail_register_no_approval_required_subject']);
+  $config->set('register_pending_approval_body', $values['user_mail_register_pending_approval_body']);
+  $config->set('register_pending_approval_subject', $values['user_mail_register_pending_approval_subject']);
+  $config->set('status_activated_body', $values['user_mail_status_activated_body']);
+  $config->set('status_activated_subject', $values['user_mail_status_activated_subject']);
+  $config->set('status_blocked_body', $values['user_mail_status_blocked_body']);
+  $config->set('status_blocked_subject', $values['user_mail_status_blocked_subject']);
+  $config->set('status_canceled_body', $values['user_mail_status_canceled_body']);
+  $config->set('status_canceled_subject', $values['user_mail_status_canceled_subject']);
+  $config->save();
+
+  backdrop_set_message(t('The configuration options have been saved.'));
+}

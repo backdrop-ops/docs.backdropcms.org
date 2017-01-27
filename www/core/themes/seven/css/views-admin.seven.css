@@ -78,12 +78,6 @@ fieldset.fieldset-no-legend {
   line-height: 36px;
 }
 
-/* Override for a button on the edit display screen */
-#edit-displays-preview-controls .form-submit {
-  display: inline-block;
-  margin-right: 1em;
-}
-
 .form-item,
 .form-item .form-item {
   margin-bottom: 0;
@@ -227,7 +221,7 @@ table th {
  */
 
 .views-ui-display-tab-bucket h3 {
-  font-size: 12px;
+  font-size: 14px;
   text-transform: uppercase;
 }
 
@@ -320,11 +314,11 @@ table th {
 }
 
 .views-ui-dialog fieldset.collapsible {
-  padding-top: 1.5em;
+  padding-top: 2.5em;
 }
 
 .views-ui-dialog fieldset.collapsed {
-  padding-top: 2.5em;
+  padding-top: 1.5em;
 }
 
 .filterable-option .form-item.form-type-checkbox {

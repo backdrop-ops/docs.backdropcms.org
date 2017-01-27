@@ -87,8 +87,10 @@ function update_prepare_bootstrap() {
 
   // Check whether settings.php needs to be rewritten.
   $settings_exist = !empty($GLOBALS['config_directories']);
+  $active_config = config_get_config_storage('active');
+  $staging_config = config_get_config_storage('staging');
 
-  if (!$settings_exist || !is_dir(config_get_config_directory('active')) || !is_dir(config_get_config_directory('staging'))) {
+  if (!$settings_exist || !$active_config->isInitialized() || !$staging_config->isInitialized()) {
     backdrop_install_config_directories();
   }
 
@@ -107,7 +109,7 @@ function update_prepare_bootstrap() {
       $requirements['settings file'] += array(
         'value' => 'settings.php is not writable.',
         'severity' => REQUIREMENT_ERROR,
-        'description' => 'Backdrop CMS requires write permissions to <em>' . $settings_file . '</em> during the update process. If you are unsure how to grant file permissions, consult the <a href="http://backdropcms.org/guide/installation">online handbook</a>.',
+        'description' => 'Backdrop CMS requires write permissions to <em>' . $settings_file . '</em> during the update process. If you are unsure how to grant file permissions, consult the <a href="https://backdropcms.org/installation">Installation Instructions</a> page.',
       );
     }
     update_extra_requirements($requirements);
@@ -365,7 +367,7 @@ function update_module_enable(array $modules) {
 /**
  * Gets the value of a variable from the database during update hooks.
  *
- * Use this during the Drupal 7 upgrade path instead of variable_get().
+ * Use this during the upgrade path instead of variable_get().
  *
  * @param string $name
  *   The name of the variable.
@@ -385,7 +387,7 @@ function update_variable_get($name, $default = NULL) {
 /**
  * Sets a persistent variable during update hooks.
  *
- * Use this during the Drupal 7 upgrade path instead of variable_set().
+ * Use this during the upgrade path instead of variable_set().
  *
  * @param string $name
  *   The name of the variable.
@@ -406,7 +408,7 @@ function update_variable_set($name, $value) {
 /**
  * Delete a variable from the database during update hooks.
  *
- * Use this during the Drupal 7 upgrade path instead of variable_del().
+ * Use this during the upgrade path instead of variable_del().
  *
  * @param string $name
  *   The name of the variable to delete.
@@ -662,7 +664,7 @@ function update_get_update_list() {
         $comparison_schema_version += 7000;
       }
       if ($comparison_schema_version < $last_removed) {
-        $ret[$module]['warning'] = '<em>' . $module . '</em> module can not be updated. Its schema version is ' . $schema_version . '. Updates up to and including ' . $last_removed . ' have been removed in this release. In order to update <em>' . $module . '</em> module, you will first <a href="http://backdropcms.org/upgrade">need to upgrade</a> to the last version in which these updates were available.';
+        $ret[$module]['warning'] = '<em>' . $module . '</em> module can not be updated. Its schema version is ' . $schema_version . '. Updates up to and including ' . $last_removed . ' have been removed in this release. In order to update <em>' . $module . '</em> module, you will first <a href="https://backdropcms.org/upgrade">need to upgrade</a> to the last version in which these updates were available.';
         continue;
       }
 

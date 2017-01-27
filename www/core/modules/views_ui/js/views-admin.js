@@ -28,8 +28,6 @@ Backdrop.behaviors.viewsUiEditView = {
 Backdrop.behaviors.viewsUiAddView = {
   attach: function (context) {
     var $context = $(context);
-    // Set up regular expressions to allow only numbers, letters, and dashes.
-    var exclude = new RegExp('[^a-z0-9\\-]+', 'g');
     var replace = '-';
     var suffix;
 
@@ -53,7 +51,7 @@ Backdrop.behaviors.viewsUiAddView = {
     var $pathField = $context.find('[id^="edit-page-path"]');
     if ($pathField.length) {
       if (!this.pathFiller) {
-        this.pathFiller = new Backdrop.viewsUi.FormFieldFiller($pathField, exclude, replace);
+        this.pathFiller = new Backdrop.viewsUi.FormFieldFiller($pathField, replace);
       }
       else {
         this.pathFiller.rebind($pathField);
@@ -65,7 +63,7 @@ Backdrop.behaviors.viewsUiAddView = {
     if ($feedField.length) {
       if (!this.feedFiller) {
         suffix = '.xml';
-        this.feedFiller = new Backdrop.viewsUi.FormFieldFiller($feedField, exclude, replace, suffix);
+        this.feedFiller = new Backdrop.viewsUi.FormFieldFiller($feedField, replace, suffix);
       }
       else {
         this.feedFiller.rebind($feedField);
@@ -81,21 +79,26 @@ Backdrop.behaviors.viewsUiAddView = {
  *
  * @param $target
  *   A jQuery object representing the form field to prepopulate.
- * @param exclude
- *   Optional. A regular expression representing characters to exclude from the
- *   target field.
  * @param replace
  *   Optional. A string to use as the replacement value for disallowed
  *   characters.
  * @param suffix
  *   Optional. A suffix to append at the end of the target field content.
  */
-Backdrop.viewsUi.FormFieldFiller = function ($target, exclude, replace, suffix) {
+Backdrop.viewsUi.FormFieldFiller = function ($target, replace, suffix) {
   this.source = $('#edit-human-name');
   this.target = $target;
-  this.exclude = exclude || false;
   this.replace = replace || '';
   this.suffix = suffix || '';
+
+  // Copy the transliteration options from the machine name element.
+  var machineNameData = $('[data-machine-name]').data('machine-name');
+  this.transliterationOptions = {
+    replace: machineNameData.replace,
+    replace_pattern: machineNameData.replace_pattern,
+    replace_token: machineNameData.replace_token,
+    langcode: machineNameData.langcode
+  };
 
   // Create bound versions of this instance's object methods to use as event
   // handlers. This will let us easily unbind those specific handlers later on.
@@ -126,19 +129,32 @@ $.extend(Backdrop.viewsUi.FormFieldFiller.prototype, {
    * Get the source form field value as altered by the passed-in parameters.
    */
   getTransliterated: function () {
-    var from = this.source.val();
-    if (this.exclude) {
-      from = from.toLowerCase().replace(this.exclude, this.replace);
-    }
-    return from + this.suffix;
+    var self = this;
+    return $.ajax({
+      url: Backdrop.settings.basePath + "?q=" + Backdrop.encodePath("system/transliterate/" + self.source.val().toLowerCase()),
+      data: self.transliterationOptions,
+      dataType: "text"
+    });
   },
   
   /**
-   * Populate the target form field with the altered source field value.
+   * Use the title for populating the fields, or send a request
+   * for a translitarated version of the source field value when needed.
    */
   _populate: function () {
-    var transliterated = this.getTransliterated();
-    this.target.val(transliterated);
+    if (this.replace == '') {
+      this.target.val(this.source.val() + this.suffix);
+    }
+    else {
+      var transliterated = this.getTransliterated();
+      var self = this;
+      transliterated.done(function(machine) {
+        // Replace the machine name placeholder with the specific one for this
+        // field. e.g. A hyphen instead of an underscore for the path.
+        machine = machine.replace(new RegExp(self.transliterationOptions.replace,  'g'), self.replace);
+        self.target.val(machine + self.suffix);
+      });
+    }
   },
   
   /**
@@ -167,7 +183,7 @@ Backdrop.behaviors.addItemForm = {
       new Backdrop.viewsUi.AddItemForm($form);
     });
   }
-}
+};
 
 Backdrop.viewsUi.AddItemForm = function ($form) {
   $form.on('click', '.views-filterable-options :checkbox', $.proxy(this.handleCheck, this));
@@ -177,7 +193,7 @@ Backdrop.viewsUi.AddItemForm = function ($form) {
   this.$selected_div = this.$form.find('.views-selected-options').parent();
   this.$selected_div.hide();
   this.checkedItems = [];
-}
+};
 
 Backdrop.viewsUi.AddItemForm.prototype.handleCheck = function (event) {
   var $target = $(event.target);
@@ -203,7 +219,7 @@ Backdrop.viewsUi.AddItemForm.prototype.handleCheck = function (event) {
     }
   }
   this.refreshCheckedItems();
-}
+};
 
 /**
  * Refresh the display of the checked items.
@@ -213,7 +229,7 @@ Backdrop.viewsUi.AddItemForm.prototype.refreshCheckedItems = function () {
   this.$selected_div.find('.views-selected-options')
     .html(this.checkedItems.join(', '))
     .trigger('dialogContentResize');
-}
+};
 
 /**
  * The input field items that add displays must be rendered as <input> elements.

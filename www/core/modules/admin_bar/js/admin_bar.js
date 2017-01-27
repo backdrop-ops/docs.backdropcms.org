@@ -26,7 +26,7 @@ Backdrop.behaviors.adminBar = {
     if (settings.admin_bar.suppress) {
       return;
     }
-    var $adminBar = $('#admin-bar', context);
+    var $adminBar = $('#admin-bar');
     // Client-side caching; if administration bar is not in the output, it is
     // fetched from the server and cached in the browser.
     if (!$adminBar.length && settings.admin_bar.hash) {
@@ -163,7 +163,9 @@ Backdrop.adminBar.behaviors.positionFixed = function (context, settings, $adminB
  */
 Backdrop.adminBar.behaviors.replacements = function (context, settings, $adminBar) {
   for (var item in settings.admin_bar.replacements) {
-    $(item, $adminBar).html(settings.admin_bar.replacements[item]);
+    if (settings.admin_bar.replacements.hasOwnProperty(item)) {
+      $(item, $adminBar).html(settings.admin_bar.replacements[item]);
+    }
   }
 };
 
@@ -187,7 +189,6 @@ Backdrop.adminBar.behaviors.collapseWidth = function (context, settings, $adminB
   var menuWidth;
   var extraWidth;
   var availableWidth;
-  var resizeTimeout;
 
   var adjustItems = function () {
     // Expand the menu items to their full width to check their size.
@@ -198,7 +199,12 @@ Backdrop.adminBar.behaviors.collapseWidth = function (context, settings, $adminB
 
     menuWidth = $menu.width();
     extraWidth = $extra.width();
-    availableWidth = $adminBar.width() - $adminBar.find('#admin-bar-icon').width();
+
+    // Available width is anything except the menus that may be collapsed.
+    availableWidth = $adminBar.width();
+    $adminBar.children().children().not($menu).not($extra).each(function() {
+      availableWidth -= $(this).width();
+    });
 
     // Collapse the extra items first if needed.
     if (availableWidth - menuWidth - extraWidth < 20) {
@@ -212,14 +218,12 @@ Backdrop.adminBar.behaviors.collapseWidth = function (context, settings, $adminB
     $adminBar.trigger('afterResize');
   };
 
-  // Adjust items once now.
+
   adjustItems();
-  // Re-adjust items when window is resized.
-  $(window).on('resize.adminBar', function (event) {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(adjustItems, 50);
-  });
-}
+  // Adjust items when window is resized.
+  Backdrop.optimizedResize.add(adjustItems);
+
+};
 
 /**
  * Apply JavaScript-based hovering behaviors.
@@ -241,7 +245,7 @@ Backdrop.adminBar.behaviors.hover = function (context, settings, $adminBar) {
     // The touchstart event fires before all other events, including mouseenter,
     // allowing us to check the expanded state consistently across devices.
     if (e.type === 'touchstart') {
-      touchElement = e.target
+      touchElement = e.target;
       needsExpanding = $(this).siblings('ul').length > 0 && !$(this).siblings('ul').hasClass('expanded');
     }
     // If clicking on a not-yet-expanded item, expand it and suppress the click.
@@ -314,7 +318,7 @@ Backdrop.adminBar.behaviors.search = function (context, settings, $adminBar) {
    * Executes the search upon user input.
    */
   function keyupHandler(e) {
-    var matches, $html, $hideItems, value = $(this).val();
+    var matches, $html, value = $(this).val();
 
     // Only proceed if the search needle has changed.
     if (value !== needle || e.type === 'focus') {
@@ -382,9 +386,9 @@ Backdrop.adminBar.behaviors.search = function (context, settings, $adminBar) {
       var result = this.text;
       var $element = $(this.element);
 
-      // Check whether there is a top-level category that can be prepended.
-      var $category = $element.closest('#admin-bar-menu > li > ul > li');
-      var categoryText = $category.find('> a').text()
+      // Check whether there is a parent category that can be prepended.
+      var $category = $element.parent().parent().parent();
+      var categoryText = $category.find('> a').text();
       if ($category.length && categoryText) {
         result = categoryText + ': ' + result;
       }
@@ -440,11 +444,11 @@ Backdrop.adminBar.behaviors.search = function (context, settings, $adminBar) {
   }
 
   function resetSearchDisplay(e) {
-    $hideItems = $adminBar.find('#admin-bar-extra > li > ul > li:not(li.admin-bar-search)').css('display', '');
+    $adminBar.find('#admin-bar-extra > li > ul > li:not(li.admin-bar-search)').css('display', '');
   }
   function updateSearchDisplay(e) {
     // Build the list of extra items to be hidden if in small window mode.
-    $hideItems = $adminBar.find('#admin-bar-extra > li > ul > li:not(li.admin-bar-search)').css('display', '');
+    var $hideItems = $adminBar.find('#admin-bar-extra > li > ul > li:not(li.admin-bar-search)').css('display', '');
     if ($results.children().length) {
       if ($adminBar.find('#admin-bar-extra').hasClass('dropdown')) {
         $hideItems.css('display', 'none');
@@ -459,7 +463,7 @@ Backdrop.adminBar.behaviors.search = function (context, settings, $adminBar) {
   // Attach hover/active highlight behavior to search result entries.
   $adminBar.on('showPath hidePath', '.admin-bar-search-results li', highlightPathHandler);
   // Show/hide the extra parts of the menu on resize.
-  $adminBar.on('beforeResize', resetSearchDisplay)
+  $adminBar.on('beforeResize', resetSearchDisplay);
   $adminBar.on('afterResize searchChanged', updateSearchDisplay);
   // Attach the search input event handler.
   $input.bind('focus keyup search', keyupHandler);

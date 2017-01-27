@@ -286,7 +286,7 @@ description = Test the ability of the views wizard to create views with a jump m
 group = Views UI
 file = views_ui.test
 
-[ViewsUIWizardOverrideDisplaysTestCase]
+[ViewsUIWizardDisplaysTestCase]
 name = Views UI overridden displays
 description = Test that displays can be correctly overridden via the user interface.
 group = Views UI
@@ -303,3 +303,8 @@ name = Test the view class
 description = Tests some  functionality of the view class.
 group = Views
 file = views_view.test
+
+; Added by Backdrop CMS packaging script on 2017-01-15
+project = backdrop
+version = 1.6.0
+timestamp = 1484537173

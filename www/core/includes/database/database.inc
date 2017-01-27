@@ -652,10 +652,10 @@ abstract class DatabaseConnection extends PDO {
    *   An associative array of options to control how the query is run. See
    *   the documentation for DatabaseConnection::defaultOptions() for details.
    *
-   * @return DatabaseStatementInterface
+   * @return DatabaseStatementInterface|DatabaseStatementBase|DatabaseStatementPrefetch|stdClass[]
    *   This method will return one of: the executed statement, the number of
    *   rows affected by the query (not the number matched), or the generated
-   *   insert IT of the last query, depending on the value of
+   *   insert ID of the last query, depending on the value of
    *   $options['return']. Typically that value will be set by default or a
    *   query builder and should not be set by a user. If there is an error,
    *   this method will return NULL and may throw an exception if
@@ -693,7 +693,7 @@ abstract class DatabaseConnection extends PDO {
         case Database::RETURN_INSERT_ID:
           return $this->lastInsertId();
         case Database::RETURN_NULL:
-          return;
+          return NULL;
         default:
           throw new PDOException('Invalid return directive: ' . $options['return']);
       }
@@ -800,7 +800,7 @@ abstract class DatabaseConnection extends PDO {
    * @param $options
    *   An array of options on the query.
    *
-   * @return SelectQueryInterface
+   * @return SelectQuery|stdClass[]
    *   An appropriate SelectQuery object for this database connection. Note that
    *   it may be a driver-specific subclass of SelectQuery, depending on the
    *   driver.
@@ -1025,13 +1025,16 @@ abstract class DatabaseConnection extends PDO {
    *   The name of the savepoint. The default, 'backdrop_transaction', will roll
    *   the entire transaction back.
    *
+   * @return NULL
+   *
    * @throws DatabaseTransactionNoActiveException
+   * @throws DatabaseTransactionOutOfOrderException
    *
    * @see DatabaseTransaction::rollback()
    */
   public function rollback($savepoint_name = 'backdrop_transaction') {
     if (!$this->supportsTransactions()) {
-      return;
+      return NULL;
     }
     if (!$this->inTransaction()) {
       throw new DatabaseTransactionNoActiveException();
@@ -1059,7 +1062,7 @@ abstract class DatabaseConnection extends PDO {
         if ($rolled_back_other_active_savepoints) {
           throw new DatabaseTransactionOutOfOrderException();
         }
-        return;
+        return NULL;
       }
       else {
         $rolled_back_other_active_savepoints = TRUE;
@@ -1173,7 +1176,7 @@ abstract class DatabaseConnection extends PDO {
    * @param $options
    *   An array of options on the query.
    *
-   * @return DatabaseStatementInterface
+   * @return DatabaseStatementInterface|DatabaseStatementBase|DatabaseStatementPrefetch
    *   A database query result resource, or NULL if the query was not executed
    *   correctly.
    */
@@ -1311,6 +1314,28 @@ abstract class DatabaseConnection extends PDO {
    *   also larger than the $existing_id if one was passed in.
    */
   abstract public function nextId($existing_id = 0);
+
+  /**
+   * Checks whether utf8mb4 support is currently active.
+   *
+   * @return bool
+   */
+  public function utf8mb4IsActive() {
+    // Since 4 byte UTF-8 is not supported by default, there is nothing to
+    // activate.
+    return FALSE;
+  }
+
+  /**
+   * Checks whether utf8mb4 support is available on the current database system.
+   *
+   * @return bool
+   */
+  public function utf8mb4IsSupported() {
+    // By default we assume that the database backend may not support 4 byte
+    // UTF-8.
+    return FALSE;
+  }
 }
 
 /**
@@ -1410,13 +1435,16 @@ abstract class Database {
       // Every target already active for this connection key needs to have the
       // logging object associated with it.
       if (!empty(self::$connections[$key])) {
+        /* @var DatabaseConnection $connection */
         foreach (self::$connections[$key] as $connection) {
           $connection->setLogger(self::$logs[$key]);
         }
       }
     }
 
-    self::$logs[$key]->start($logging_key);
+    /* @var DatabaseLog $logger */
+    $logger = self::$logs[$key];
+    $logger->start($logging_key);
     return self::$logs[$key];
   }
 
@@ -1442,8 +1470,11 @@ abstract class Database {
     if (empty(self::$logs[$key])) {
       return NULL;
     }
-    $queries = self::$logs[$key]->get($logging_key);
-    self::$logs[$key]->end($logging_key);
+
+    /* @var DatabaseLog $logger */
+    $logger = self::$logs[$key];
+    $queries = $logger->get($logging_key);
+    $logger->end($logging_key);
     return $queries;
   }
 
@@ -1496,7 +1527,7 @@ abstract class Database {
   /**
    * Sets the active connection to the specified key.
    *
-   * @return
+   * @return string|NULL
    *   The previous database connection key.
    */
   final public static function setActiveConnection($key = 'default') {
@@ -1509,6 +1540,7 @@ abstract class Database {
       self::$activeKey = $key;
       return $old_key;
     }
+    return NULL;
   }
 
   /**
@@ -1590,6 +1622,9 @@ abstract class Database {
    *
    * @param $connection
    *   The connection key for which we want information.
+   *
+   * @return array|NULL
+   *   The array of connection info if the $key is found. NULL if it is missing.
    */
   final public static function getConnectionInfo($key = 'default') {
     if (empty(self::$databaseInfo)) {
@@ -1599,6 +1634,7 @@ abstract class Database {
     if (!empty(self::$databaseInfo[$key])) {
       return self::$databaseInfo[$key];
     }
+    return NULL;
   }
 
   /**
@@ -1662,6 +1698,9 @@ abstract class Database {
    * @param $target
    *   The database target to open.
    *
+   * @return DatabaseConnection
+   *   The created database connection object.
+   *
    * @throws DatabaseConnectionNotDefinedException
    * @throws DatabaseDriverNotSpecifiedException
    */
@@ -1680,10 +1719,10 @@ abstract class Database {
       throw new DatabaseDriverNotSpecifiedException('Driver not specified for this database connection: ' . $key);
     }
 
-    // We cannot rely on the registry yet, because the registry requires an
-    // open database connection.
     $driver_class = 'DatabaseConnection_' . $driver;
     require_once BACKDROP_ROOT . '/core/includes/database/' . $driver . '/database.inc';
+
+    /* @var DatabaseConnection $new_connection */
     $new_connection = new $driver_class(self::$databaseInfo[$key][$target]);
     $new_connection->setTarget($target);
     $new_connection->setKey($key);
@@ -2335,7 +2374,7 @@ class DatabaseStatementEmpty implements Iterator, DatabaseStatementInterface {
  * @param $options
  *   An array of options to control how the query operates.
  *
- * @return DatabaseStatementInterface
+ * @return DatabaseStatementInterface|DatabaseStatementBase|DatabaseStatementPrefetch|stdClass[]
  *   A prepared statement object, already executed.
  *
  * @see DatabaseConnection::defaultOptions()
@@ -2367,7 +2406,7 @@ function db_query($query, array $args = array(), array $options = array()) {
  * @param $options
  *   An array of options to control how the query operates.
  *
- * @return DatabaseStatementInterface
+ * @return DatabaseStatementInterface|DatabaseStatementBase|DatabaseStatementPrefetch|stdClass[]
  *   A prepared statement object, already executed.
  *
  * @see DatabaseConnection::defaultOptions()
@@ -2720,7 +2759,7 @@ function db_condition($conjunction) {
  *   A Schema API table definition array.
  */
 function db_create_table($name, $table) {
-  return Database::getConnection()->schema()->createTable($name, $table);
+  Database::getConnection()->schema()->createTable($name, $table);
 }
 
 /**

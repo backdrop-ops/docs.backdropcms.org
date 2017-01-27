@@ -64,8 +64,8 @@ function backdrop_lookup_path($action, $path = '', $langcode = NULL) {
 
   // If no language is explicitly specified we default to the current URL
   // language. If we used a language different from the one conveyed by the
-  // requested URL, we might end up being unable to check if there is a path
-  // alias matching the URL path.
+  // requested URL, we might end up being unable to check if there is a URL
+  // alias matching the system path.
   $langcode = $langcode ? $langcode : $language_url->langcode;
 
   if ($action == 'wipe') {
@@ -142,7 +142,6 @@ function backdrop_lookup_path($action, $path = '', $langcode = NULL) {
     // isn't a path that has this alias
     elseif ($action == 'source' && !isset($cache['no_source'][$langcode][$path])) {
       // Look for the value $path within the cached $map
-      $source = FALSE;
       if (!isset($cache['map'][$langcode]) || !($source = array_search($path, $cache['map'][$langcode]))) {
         $args = array(
           ':alias' => $path,
@@ -332,7 +331,8 @@ function backdrop_match_path($path, $patterns) {
  * backdrop_bootstrap(BACKDROP_BOOTSTRAP_FULL) makes this function available.
  *
  * @return
- *   The current Backdrop URL path.
+ *   The current Backdrop URL path. The path is untrusted user input and must be
+ *   treated as such.
  *
  * @see request_path()
  */
@@ -399,12 +399,15 @@ function path_load($conditions) {
  *   An array of the loaded paths, keyed by the $field parameter values.
  */
 function path_load_multiple(array $keys, $field, $langcode) {
-  $paths = db_select('url_alias')
-    ->fields('url_alias')
+  $subquery = db_select('url_alias')
     ->condition($field, $keys, 'IN')
     ->condition('langcode', $langcode)
-    ->orderBy('pid', 'DESC')
-    ->groupBy($field)
+    ->groupBy($field);
+  $subquery->addExpression('MAX(pid)', 'pid');
+
+  $paths = db_select('url_alias')
+    ->fields('url_alias')
+    ->condition('pid', $subquery, 'IN')
     ->execute()
     ->fetchAllAssoc($field, PDO::FETCH_ASSOC);
 
@@ -460,14 +463,12 @@ function path_delete($criteria) {
   if (!is_array($criteria)) {
     $criteria = array('pid' => $criteria);
   }
-  $path = path_load($criteria);
-  $query = db_delete('url_alias');
-  foreach ($criteria as $field => $value) {
-    $query->condition($field, $value);
+  // Load and then delete each path until there are no more aliases left.
+  while ($path = path_load($criteria)) {
+    module_invoke_all('path_delete', $path);
+    backdrop_clear_path_cache($path['source']);
+    db_delete('url_alias')->condition('pid', $path['pid'])->execute();
   }
-  $query->execute();
-  module_invoke_all('path_delete', $path);
-  backdrop_clear_path_cache($path['source']);
 }
 
 /**

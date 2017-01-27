@@ -19,6 +19,13 @@ class DatabaseConnection_mysql extends DatabaseConnection {
    */
   protected $needsCleanup = FALSE;
 
+  /**
+   * Flag set in utf8mb4IsSupported().
+   *
+   * @var boolean
+   */
+  protected $utf8mb4Supported;
+
   public function __construct(array $connection_options = array()) {
     // This driver defaults to transaction support, except if explicitly passed FALSE.
     $this->transactionSupport = !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
@@ -27,6 +34,12 @@ class DatabaseConnection_mysql extends DatabaseConnection {
     $this->transactionalDDLSupport = FALSE;
 
     $this->connectionOptions = $connection_options;
+
+    $charset = 'utf8';
+    // Check if the charset is overridden to utf8mb4 in settings.php.
+    if ($this->utf8mb4IsActive()) {
+      $charset = 'utf8mb4';
+    }
 
     // The DSN should use either a socket or a host/port.
     if (isset($connection_options['unix_socket'])) {
@@ -39,7 +52,7 @@ class DatabaseConnection_mysql extends DatabaseConnection {
     // Character set is added to dsn to ensure PDO uses the proper character
     // set when escaping. This has security implications. See
     // https://www.drupal.org/node/1201452 for further discussion.
-    $dsn .= ';charset=utf8';
+    $dsn .= ';charset=' . $charset;
     $dsn .= ';dbname=' . $connection_options['database'];
     // Allow PDO options to be overridden.
     $connection_options += array(
@@ -55,6 +68,11 @@ class DatabaseConnection_mysql extends DatabaseConnection {
       // Because MySQL's prepared statements skip the query cache, because it's dumb.
       PDO::ATTR_EMULATE_PREPARES => TRUE,
     );
+    if (defined('PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
+      // An added connection option in PHP 5.5.21+ to optionally limit SQL to a
+      // single statement like mysqli.
+      $connection_options['pdo'] += array(PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE);
+    }
 
     parent::__construct($dsn, $connection_options['username'], $connection_options['password'], $connection_options['pdo']);
 
@@ -62,10 +80,10 @@ class DatabaseConnection_mysql extends DatabaseConnection {
     // certain one has been set; otherwise, MySQL defaults to 'utf8_general_ci'
     // for UTF-8.
     if (!empty($connection_options['collation'])) {
-      $this->exec('SET NAMES utf8 COLLATE ' . $connection_options['collation']);
+      $this->exec('SET NAMES ' . $charset . ' COLLATE ' . $connection_options['collation']);
     }
     else {
-      $this->exec('SET NAMES utf8');
+      $this->exec('SET NAMES ' . $charset);
     }
 
     // Set MySQL init_commands if not already defined.  Default Backdrop's MySQL
@@ -77,10 +95,12 @@ class DatabaseConnection_mysql extends DatabaseConnection {
       'init_commands' => array(),
     );
     $connection_options['init_commands'] += array(
-      'sql_mode' => "SET sql_mode = 'ANSI,STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER'",
+      'sql_mode' => "SET sql_mode = 'REAL_AS_FLOAT,PIPES_AS_CONCAT,ANSI_QUOTES,IGNORE_SPACE,STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER'",
     );
-    // Set connection options.
-    $this->exec(implode('; ', $connection_options['init_commands']));
+    // Execute initial commands.
+    foreach ($connection_options['init_commands'] as $sql) {
+      $this->exec($sql);
+    }
   }
 
   public function __destruct() {
@@ -199,6 +219,45 @@ class DatabaseConnection_mysql extends DatabaseConnection {
         }
       }
     }
+  }
+
+  public function utf8mb4IsActive() {
+    return isset($this->connectionOptions['charset']) && $this->connectionOptions['charset'] === 'utf8mb4';
+  }
+
+  public function utf8mb4IsSupported() {
+    // Caching if this method is called multiple times in the same request.
+    if (isset($this->utf8mb4Supported)) {
+      return $this->utf8mb4Supported;
+    }
+
+    // Ensure that the MySQL driver supports utf8mb4 encoding.
+    $version = $this->getAttribute(PDO::ATTR_CLIENT_VERSION);
+
+    if (strpos($version, 'mysqlnd') !== FALSE) {
+      // The mysqlnd driver supports utf8mb4 starting at version 5.0.9.
+      $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);
+      if (version_compare($version, '5.0.9', '<')) {
+        return FALSE;
+      }
+    }
+    else {
+      // The libmysqlclient driver supports utf8mb4 starting at version 5.5.3.
+      if (version_compare($version, '5.5.3', '<')) {
+        return FALSE;
+      }
+    }
+
+    // Ensure that the MySQL server supports large prefixes and utf8mb4.
+    try {
+      $this->query("DROP TABLE IF EXISTS {backdrop_utf8mb4_test}");
+      $this->query("CREATE TABLE {backdrop_utf8mb4_test} (id VARCHAR(255), PRIMARY KEY(id(255))) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci ROW_FORMAT=DYNAMIC ENGINE=INNODB");
+    }
+    catch (Exception $e) {
+      return FALSE;
+    }
+    $this->query("DROP TABLE {backdrop_utf8mb4_test}");
+    return TRUE;
   }
 }
 

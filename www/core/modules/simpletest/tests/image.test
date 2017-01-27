@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Tests for core image handling API.
@@ -207,13 +206,13 @@ class ImageToolkitGdTestCase extends BackdropWebTestCase {
   protected $height = 20;
 
   protected function checkRequirements() {
+    $errors = parent::checkRequirements();
+
     image_get_available_toolkits();
     if (!function_exists('image_gd_check_settings') || !image_gd_check_settings()) {
-      return array(
-        'Image manipulations for the GD toolkit cannot run because the GD toolkit is not available.',
-      );
+      $errors[] = 'Image manipulations for the GD toolkit cannot run because the GD toolkit is not available.';
     }
-    return parent::checkRequirements();
+    return $errors;
   }
 
   /**
@@ -323,7 +322,7 @@ class ImageToolkitGdTestCase extends BackdropWebTestCase {
       $operations += array(
         'rotate_5' => array(
           'function' => 'rotate',
-          'arguments' => array(5, 0xFF00FF), // Fuchsia background.
+          'arguments' => array(5, 'FF00FF'), // Fuchsia background.
           'width' => 42,
           'height' => 24,
           'corners' => array_fill(0, 4, $this->fuchsia),
@@ -403,6 +402,17 @@ class ImageToolkitGdTestCase extends BackdropWebTestCase {
         $correct_dimensions_object = TRUE;
         $correct_colors = TRUE;
 
+        // PHP 5.5 GD bug: https://bugs.php.net/bug.php?id=65148. PHP 5.5 GD
+        // rotates differently then it did in PHP 5.4 resulting in different
+        // dimensions. For the test images, the dimensions will be 1 pixel
+        // smaller in both dimensions (though other tests have shown a
+        // difference of 0 to 3 pixels in both dimensions.
+        // @todo: Add an upper limit version check if this is fixed in PHP.
+        if (version_compare(PHP_VERSION, '5.5', '>=') && $values['function'] === 'rotate' && $values['arguments'][0] % 90 != 0) {
+          $values['height']--;
+          $values['width']--;
+        }
+
         // Check the real dimensions of the image first.
         if (imagesy($image->resource) != $values['height'] || imagesx($image->resource) != $values['width']) {
           $correct_dimensions_real = FALSE;
@@ -449,7 +459,6 @@ class ImageToolkitGdTestCase extends BackdropWebTestCase {
         }
       }
     }
-
   }
 }
 

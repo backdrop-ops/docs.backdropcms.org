@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Provide views data and handlers for node.module.
@@ -177,8 +176,8 @@ function node_views_data() {
 
   // promote status
   $data['node']['promote'] = array(
-    'title' => t('Promoted to front page'),
-    'help' => t('Whether or not the content is promoted to the front page.'),
+    'title' => t('Promoted'),
+    'help' => t('Whether or not the content is promoted.'),
     'field' => array(
       'handler' => 'views_handler_field_boolean',
       'click sortable' => TRUE,
@@ -188,7 +187,7 @@ function node_views_data() {
     ),
     'filter' => array(
       'handler' => 'views_handler_filter_boolean_operator',
-      'label' => t('Promoted to front page'),
+      'label' => t('Promoted'),
       'type' => 'yes-no',
     ),
     'sort' => array(
@@ -737,6 +736,7 @@ function node_views_query_substitutions() {
   return array(
     '***ADMINISTER_NODES***' => intval(user_access('administer nodes')),
     '***VIEW_OWN_UNPUBLISHED_NODES***' => intval(user_access('view own unpublished content')),
+    '***VIEW_ANY_UNPUBLISHED_NODES***' => intval(user_access('view any unpublished content')),
     '***BYPASS_NODE_ACCESS***' =>  intval(user_access('bypass node access')),
   );
 }

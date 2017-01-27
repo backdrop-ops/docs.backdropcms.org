@@ -445,9 +445,8 @@ interface EntityStorageControllerInterface extends EntityControllerInterface {
    * @param EntityInterface $entity
    *   The entity to save.
    *
-   * @return
-   *   SAVED_NEW or SAVED_UPDATED is returned depending on the operation
-   *   performed.
+   * @return int
+   *   Either SAVED_NEW or SAVED_UPDATED depending on the operation performed.
    *
    * @throws EntityStorageException
    *   In case of failures, an exception is thrown.
@@ -508,7 +507,7 @@ class EntityDatabaseStorageController extends DefaultEntityController implements
     catch (Exception $e) {
       $transaction->rollback();
       watchdog_exception($this->entityType, $e);
-      throw new EntityStorageException($e->getMessage, (int) $e->getCode(), $e);
+      throw new EntityStorageException($e->getMessage(), (int) $e->getCode(), $e);
     }
   }
 

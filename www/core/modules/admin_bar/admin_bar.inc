@@ -63,6 +63,11 @@ function admin_bar_output($complete = FALSE) {
       $content['menu']['menu']['#title'] = t('Admin bar');
     }
 
+    // Check for status report errors.
+    if (user_access('administer site configuration')) {
+      $content['alert'] = admin_bar_links_alert();
+    }
+
     // Add menu additions.
     $content['extra']['extra'] = array();
     if (in_array('admin_bar.icon', $components) || $complete) {
@@ -654,10 +659,51 @@ function admin_bar_links_search() {
 }
 
 /**
+ * Build alert indicator.
+ */
+function admin_bar_links_alert() {
+  $alert = array();
+  // Check requirements.
+  include_once BACKDROP_ROOT . '/core/includes/install.inc';
+  $requirements = system_get_requirements();
+  if (backdrop_requirements_severity($requirements) == REQUIREMENT_ERROR) {
+    // Count the errors.
+    $count = 0;
+    foreach ($requirements as $requirement) {
+      if (isset($requirement['severity']) && $requirement['severity'] == REQUIREMENT_ERROR) {
+        $count++;
+      }
+    }
+    $alert = array(
+      '#theme' => 'admin_bar_links',
+      '#wrapper_attributes' => array(
+        'id' => 'admin-bar-alert',
+      ),
+      '#weight' => 20,
+    );
+
+    // Add a link to the status report.
+    $alert['alert'] = array(
+      '#title' => '<span class="error-label">' . t('Site status') . '</span><span class="error-count">' . $count . '</span>',
+      '#attributes' => array(
+        'title' => format_plural($count, 'One problem was detected with your Backdrop installation.', 'Several problems were detected with your Backdrop installation.'),
+        'class' => array('admin-bar-alert', 'admin-bar-alert-error'),
+      ),
+      '#href' => 'admin/reports/status',
+      '#access' => user_access('administer site configuration'),
+      '#options' => array('html' => TRUE),
+    );
+  }
+
+  return $alert;
+}
+
+/**
  * Form builder function for module settings.
  */
 function admin_bar_theme_settings() {
   $config = config('admin_bar.settings');
+  $form['#config'] = 'admin_bar.settings';
   $form['margin_top'] = array(
     '#type' => 'checkbox',
     '#title' => t('Adjust top margin'),
@@ -693,18 +739,7 @@ function admin_bar_theme_settings() {
     '#value' => t('Save configuration'),
   );
 
-  return $form;
-}
-
-/**
- * Submit handler for admin_bar_theme_settings().
- */
-function admin_bar_theme_settings_submit($form, $form_state) {
-  $config = config('admin_bar.settings');
-  $config->set('margin_top', $form_state['values']['margin_top']);
-  $config->set('position_fixed', $form_state['values']['position_fixed']);
-  $config->set('components', array_values(array_filter($form_state['values']['components'])));
-  $config->save();
+  return system_settings_form($form);
 }
 
 /**

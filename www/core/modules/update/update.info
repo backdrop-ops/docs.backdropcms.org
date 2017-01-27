@@ -1,6 +1,12 @@
 name = Update Manager
-description = Checks for available updates, and can securely install or update modules and themes via a web interface.
+description = Checks for available updates.
 version = BACKDROP_VERSION
+type = module
 package = Development
 backdrop = 1.x
 configure = admin/reports/updates/settings
+
+; Added by Backdrop CMS packaging script on 2017-01-15
+project = backdrop
+version = 1.6.0
+timestamp = 1484537173

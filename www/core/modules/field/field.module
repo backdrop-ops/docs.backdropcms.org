@@ -36,18 +36,18 @@ require_once BACKDROP_ROOT . '/core/modules/field/field.form.inc';
  * of fields that are treated as a group by the Field Attach API and
  * is related to a single fieldable entity type.
  *
- * For example, suppose a site administrator wants Article nodes to
+ * For example, suppose a site administrator wants Post nodes to
  * have a subtitle and photo. Using the Field API or Field UI module,
  * the administrator creates a field named 'subtitle' of type 'text'
  * and a field named 'photo' of type 'image'. The administrator
  * (again, via a UI) creates two Field Instances, one attaching the
- * field 'subtitle' to the 'node' bundle 'article' and one attaching
- * the field 'photo' to the 'node' bundle 'article'. When the node
- * system uses the Field Attach API to load all fields for an Article
+ * field 'subtitle' to the 'node' bundle 'post' and one attaching
+ * the field 'photo' to the 'node' bundle 'post'. When the node
+ * system uses the Field Attach API to load all fields for an Post
  * node, it passes the node's entity type (which is 'node') and
- * content type (which is 'article') as the node's bundle.
+ * content type (which is 'post') as the node's bundle.
  * field_attach_load() then loads the 'subtitle' and 'photo' fields
- * because they are both attached to the 'node' bundle 'article'.
+ * because they are both attached to the 'node' bundle 'post'.
  *
  * Field definitions are represented as an array of key/value pairs.
  *
@@ -263,6 +263,21 @@ define('FIELD_LOAD_CURRENT', 'FIELD_LOAD_CURRENT');
 define('FIELD_LOAD_REVISION', 'FIELD_LOAD_REVISION');
 
 /**
+ * Implements hook_permission().
+ */
+function field_permission() {
+  return array(
+    'administer fields' => array(
+      'title' => t('Administer fields'),
+      'description' => t('Additional permissions are required based on what the fields are attached to (for example, <a href="@url">administer content types</a> to manage fields attached to content).', array(
+        '@url' => '#module-node',
+      )),
+      'restrict access' => TRUE,
+    ),
+  );
+}
+
+/**
  * Implements hook_theme().
  */
 function field_theme() {
@@ -347,6 +362,7 @@ function field_autoload_info() {
     'FieldException' => 'field.exceptions.inc',
     'FieldUpdateForbiddenException' => 'field.exceptions.inc',
     'FieldValidationException' => 'field.exceptions.inc',
+    'FieldBlock' => 'field.block.inc',
     // Views handlers.
     'views_handler_field_field' => 'views/views_handler_field_field.inc',
     'views_handler_relationship_entity_reverse' => 'views/views_handler_relationship_entity_reverse.inc',
@@ -1226,6 +1242,138 @@ function field_field_display_alter(&$display, $context) {
       $display['settings'] = isset($formatter_info['settings']) ? $formatter_info['settings'] : array();
       $display['settings']['label'] = 'hidden';
       $display['module'] = $formatter_info['module'];
+    }
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function field_block_info() {
+  $blocks['field_block'] = array(
+    'info' => t('Field block'),
+    'description' => 'Displays a field from a referenced entity.',
+    'class' => 'FieldBlock',
+    'required contexts' => array('entity' => 'entity'),
+  );
+
+  return $blocks;
+}
+
+/**
+ * Helper function to build a list of fields that have been made available as
+ * a block.
+ * @return array
+ *   An array with all entity fields with known instances.
+ */
+function field_get_block_list() {
+  $types = &backdrop_static(__FUNCTION__, array());
+  if (!empty($types)) {
+    return $types;
+  }
+
+  $cache_key = 'field_block_list';
+  if ($cache = cache_get($cache_key)) {
+    $types = $cache->data;
+    if (!empty($types)) {
+      return $types;
+    }
+  }
+
+  // This will hold all the individual field content types.
+  $all_entity_info = entity_get_info();
+  $all_fields = array();
+  foreach ($all_entity_info as $entity_type => $entity_info) {
+    $description = t('Field from the available @type content.', array('@type' => backdrop_strtolower($entity_info['label'])));
+    foreach ($entity_info['bundles'] as $type => $bundle) {
+      foreach (field_info_instances($entity_type, $type) as $field_name => $field) {
+        // Build an array of fields to run through entity_blocks_fields_get_field_formatter_info()
+        // to get formatters.
+        $field_info = field_info_field($field_name);
+        $all_fields[$field_name] = $field_info;
+        if (!isset($types[$entity_type . '-' . $field_name])) {
+          $label = t($field['label']);
+          $types[$entity_type . '-' . $field_name] = array(
+            'info' => t('Field: @widget_label (@field_name)', array('@widget_label' => $label, '@field_name' => $field_name)),
+            'description' => $description,
+            'required contexts' => array($entity_type => $entity_type),
+          );
+        }
+      }
+    }
+  }
+
+  cache_set($cache_key, $types);
+
+  return $types;
+}
+
+/**
+ * Implements hook_entity_view_mode_insert().
+ */
+function field_entity_view_mode_insert($view_mode, $entity_type) {
+  field_entity_view_mode_update($view_mode, $entity_type);
+}
+
+/**
+ * Implements hook_entity_view_mode_update().
+ */
+function field_entity_view_mode_update($view_mode, $entity_type) {
+  module_load_include('inc', 'field_ui', 'field_ui.admin');
+  $entity_info = entity_get_info($entity_type);
+  $view_mode_name = $view_mode['machine_name'];
+
+  if (!empty($view_mode['enabled_bundles'])) {
+    foreach ($view_mode['enabled_bundles'] as $bundle => $value) {
+      $bundle_settings = field_bundle_settings($entity_type, $bundle);
+
+      // Display a message for each view mode newly configured to use custom
+      // settings.
+      $view_mode_settings = field_view_mode_settings($entity_type, $bundle);
+      if (!empty($value) && empty($view_mode_settings[$view_mode_name]['custom_settings'])) {
+        $path = _field_ui_bundle_admin_path($entity_type, $bundle) . "/display/$view_mode_name";
+        backdrop_set_message(t('The %view_mode @entity_type @bundle view mode now uses custom display settings copied from the default view mode. You might want to <a href="@url">configure them</a>.', array(
+          '%view_mode' => $view_mode['label'],
+          '@entity_type' => $entity_info['label'],
+          '@bundle' => $entity_info['bundles'][$bundle]['label'],
+          '@url' => url($path, array('query' => backdrop_get_destination())),
+        )));
+        // Initialize the newly customized view mode with the display settings
+        // from the default view mode.
+        _field_ui_add_default_view_mode_settings($entity_type, $bundle, $view_mode_name, $bundle_settings);
+      }
+
+      // Save updated bundle settings.
+      $bundle_settings['view_modes'][$view_mode_name]['custom_settings'] = !empty($value);
+      field_bundle_settings($entity_type, $bundle, $bundle_settings);
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_view_mode_delete().
+ */
+function field_entity_view_mode_delete($view_mode, $entity_type) {
+  $entity_info = entity_get_info($entity_type);
+  $view_mode_name = $view_mode['machine_name'];
+
+  foreach (array_keys($entity_info['bundles']) as $bundle) {
+    // Remove all field bundle settings for the deleted view mode.
+    $settings = field_bundle_settings($entity_type, $bundle);
+    if (isset($settings['view_modes'][$view_mode_name]) || isset($settings['extra_fields']['display'][$view_mode_name])) {
+      unset($settings['view_modes'][$view_mode_name]);
+      unset($settings['extra_fields']['display'][$view_mode_name]);
+      field_bundle_settings($entity_type, $bundle, $settings);
+    }
+
+    // Remove all field instance display settings for the deleted view mode.
+    $instances = field_read_instances(array('entity_type' => $entity_type, 'bundle' => $bundle));
+    foreach ($instances as $instance) {
+      // Remove the view mode settings from all configured field instances.
+      if (isset($instance['display'][$view_mode_name])) {
+        unset($instance['display'][$view_mode_name]);
+        field_update_instance($instance);
+      }
     }
   }
 }

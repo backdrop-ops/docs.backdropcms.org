@@ -162,7 +162,7 @@ function _backdrop_session_write($sid, $value) {
   try {
     if (!backdrop_save_session()) {
       // We don't have anything to do if we are not allowed to save the session.
-      return;
+      return TRUE;
     }
 
     // Check whether $_SESSION has been changed in this request.
@@ -302,7 +302,7 @@ function backdrop_session_commit() {
 
   if (!backdrop_save_session()) {
     // We don't have anything to do if we are not allowed to save the session.
-    return;
+    return TRUE;
   }
 
   if (empty($user->uid) && empty($_SESSION)) {
@@ -327,6 +327,7 @@ function backdrop_session_commit() {
     // Write the session data.
     session_write_close();
   }
+  return TRUE;
 }
 
 /**
@@ -349,7 +350,7 @@ function backdrop_session_regenerate() {
   global $user, $is_https;
   // Nothing to do if we are not allowed to change the session.
   if (!backdrop_save_session()) {
-    return;
+    return TRUE;
   }
 
   if ($is_https && settings_get('https', FALSE)) {
@@ -408,6 +409,7 @@ function backdrop_session_regenerate() {
     $user = $account;
   }
   date_default_timezone_set(backdrop_get_user_timezone());
+  return TRUE;
 }
 
 /**
@@ -417,13 +419,16 @@ function backdrop_session_regenerate() {
  *
  * @param $sid
  *   Session ID.
+ *
+ * @return TRUE
+ *   The session destroy handler must always return TRUE.
  */
 function _backdrop_session_destroy($sid) {
   global $user, $is_https;
 
   // Nothing to do if we are not allowed to change the session.
   if (!backdrop_save_session()) {
-    return;
+    return TRUE;
   }
 
   // Delete session data.
@@ -444,6 +449,7 @@ function _backdrop_session_destroy($sid) {
   elseif (settings_get('https', FALSE)) {
     _backdrop_session_delete_cookie('S' . session_name(), TRUE);
   }
+  return TRUE;
 }
 
 /**
@@ -491,6 +497,9 @@ function backdrop_session_destroy_uid($uid) {
  * @param $lifetime
  *   The value of session.gc_maxlifetime, passed by PHP.
  *   Sessions not updated for more than $lifetime seconds will be removed.
+ *
+ * @return TRUE
+ *   The garbage collection handler must always return TRUE.
  */
 function _backdrop_session_garbage_collection($lifetime) {
   // Be sure to adjust 'php_value session.gc_maxlifetime' to a large enough

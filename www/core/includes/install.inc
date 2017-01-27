@@ -254,11 +254,6 @@ function backdrop_load_database_driver() {
   // for the driver explicitly.
   require_once BACKDROP_ROOT . '/core/includes/database/database.inc';
 
-  $driver = array(
-    'name' => 'mysql',
-    'mysql' => BACKDROP_ROOT . '/core/includes/database/mysql',
-  );
-
   $installer = db_installer_object('mysql');
   if ($installer->installable()) {
     return $installer;
@@ -405,7 +400,7 @@ abstract class DatabaseTasks {
       }
     }
     if (!empty($message)) {
-      $message .= '<p>For more help with configuring your database server, see the <a href="http://backdropcms.org/guide/installation">installation handbook</a>.</p>';
+      $message .= '<p>For more help with configuring your database server, see the <a href="https://backdropcms.org/installation">Installation Instructions</a> page.</p>';
       throw new DatabaseTaskException($message);
     }
   }
@@ -436,6 +431,7 @@ abstract class DatabaseTasks {
     try {
       db_query($query);
       $this->pass(st($pass));
+      return NULL;
     }
     catch (Exception $e) {
       $this->fail(st($fail, array('%query' => $query, '%error' => $e->getMessage(), '%name' => $this->name())));
@@ -570,8 +566,11 @@ class DatabaseTaskException extends Exception {
  *
  * @param $settings
  *   An array of settings that need to be updated.
+ *
  * @return bool
  *   TRUE if the settings file was rewritten successfully. FALSE otherwise.
+ *
+ * @throws Exception
  */
 function backdrop_rewrite_settings($settings = array()) {
   backdrop_static_reset('conf_path');
@@ -706,19 +705,22 @@ function backdrop_install_config_directories() {
     // public files directory, which has already been verified to be writable
     // itself. But if it somehow fails anyway, the installation cannot proceed.
     // Bail out using a similar error message as in system_requirements().
-    $config_directory = config_get_config_directory($config_type);
-    if (!file_prepare_directory($config_directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
-      throw new Exception(format_string('The directory %directory could not be created or could not be made writable. To proceed with the installation, either create the directory and modify its permissions manually or ensure that the installer has the permissions to create it automatically. For more information, see the <a href="@handbook_url">online handbook</a>.', array(
-        '%directory' => $config_directory,
-        '@handbook_url' => 'http://backdropcms.org/guide/installation',
-      )));
+   $config_storage = config_get_config_storage($config_type);
+    try {
+      $config_storage->initializeStorage();
+    }
+    catch (\ConfigStorageException $e) {
+      throw new Exception(format_string('@storage_error.  To proceed with the installation, either create the directory and modify its permissions manually or ensure that the installer has the permissions to create it automatically. For more information, see the <a href="@handbook_url">Installation Instructions</a> page.', array(
+          '@storage_error' => $e->getMessage(),
+          '@handbook_url' => 'https://backdropcms.org/installation',
+        )), 0, $e);
     }
 
     // Check that the directories are entirely empty. Disallowing installation
     // over existing config directories.
-    if (count(file_scan_directory($config_directory, '/.*/')) > 0) {
-      throw new Exception(format_string('The directory %directory must be completely empty to proceed with installation.', array(
-        '%directory' => $config_directory,
+    if (count($config_storage->listAll()) > 0) {
+      throw new Exception(format_string('The %directory configuration must be completely empty to proceed with installation.', array(
+        '%directory' => config_get_config_directory($config_type),
       )));
     }
 
@@ -742,7 +744,10 @@ make this configuration active, see admin/config/development/configuration/sync.
 ');
     }
 
-    file_put_contents($config_directory . '/README.md', $text);
+    // Only write the README.md to a file storage directory.
+    if (is_a($config_storage, 'ConfigFileStorage')) {
+      file_put_contents(config_get_config_directory($config_type) . '/README.md', $text);
+    }
   }
 }
 
@@ -754,6 +759,8 @@ make this configuration active, see admin/config/development/configuration/sync.
  *
  * @return
  *   The list of modules to install.
+ *
+ * @throws Exception
  */
 function backdrop_verify_profile($install_state) {
   $profile = $install_state['parameters']['profile'];
@@ -849,6 +856,7 @@ function backdrop_install_system() {
  *   included in $module_list).
  *
  * @see module_disable()
+ * @see module_enable()
  */
 function backdrop_uninstall_modules($module_list = array(), $uninstall_dependents = TRUE) {
   if ($uninstall_dependents) {
@@ -1163,8 +1171,11 @@ function st($string, array $args = array(), array $options = array()) {
  *
  * @param $profile
  *   Name of installation profile to check.
+ *
  * @return
  *   Array of the installation profile's requirements.
+ *
+ * @throws Exception
  */
 function backdrop_check_profile($profile) {
   include_once BACKDROP_ROOT . '/core/includes/file.inc';
@@ -1193,11 +1204,12 @@ function backdrop_check_profile($profile) {
  * Extracts the highest severity from the requirements array.
  *
  * @param $requirements
- *   An array of requirements, in the same format as is returned by
- *   hook_requirements().
+ *   An array of requirements as returned by system_get_requirements().
  *
  * @return
  *   The highest severity in the array.
+ *
+ * @see system_get_requirements().
  */
 function backdrop_requirements_severity(&$requirements) {
   $severity = REQUIREMENT_OK;
@@ -1207,6 +1219,23 @@ function backdrop_requirements_severity(&$requirements) {
     }
   }
   return $severity;
+}
+
+/**
+ * Get run-time requirements and status information.
+ *
+ * @return
+ *   An array of requirements in the same format as is returned by
+ *   hook_requirements().
+ */
+function system_get_requirements() {
+  backdrop_load_updates();
+
+  // Check run-time requirements and status information.
+  $requirements = module_invoke_all('requirements', 'runtime');
+  usort($requirements, '_system_sort_requirements');
+
+  return $requirements;
 }
 
 /**
@@ -1327,8 +1356,11 @@ function db_run_tasks($driver) {
 /**
  * Returns a database installer object.
  *
- * @param $driver
+ * @param string $driver
  *   The name of the driver.
+ *
+ * @return DatabaseTasks
+ *   The database tasks object for the given driver.
  */
 function db_installer_object($driver) {
   Database::loadDriverFile($driver, array('install.inc'));

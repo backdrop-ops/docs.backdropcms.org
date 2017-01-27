@@ -2,6 +2,12 @@ name = Locale
 description = Provides language negotiation functionality and user interface translation to languages other than English.
 package = Translation
 version = BACKDROP_VERSION
+type = module
 backdrop = 1.x
 dependencies[] = language
 
+
+; Added by Backdrop CMS packaging script on 2017-01-15
+project = backdrop
+version = 1.6.0
+timestamp = 1484537173
