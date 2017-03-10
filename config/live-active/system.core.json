@@ -70,5 +70,20 @@
     "user_picture_file_size": "30",
     "user_picture_guidelines": "",
     "user_mail_status_cancelled_notify": 0,
-    "canonical_secure": 0
+    "canonical_secure": 0,
+    "file_transliterate_lowercase": false,
+    "file_transliterate_uploads": true,
+    "file_transliterate_uploads_display_name": false,
+    "maintenance_page_maximum_age": 10,
+    "page_cache_background_fetch": 1,
+    "page_cache_keep_stale_age": 172800,
+    "watchdog_enabled_severity_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+    ]
 }

@@ -72,6 +72,7 @@
         "delete any api content",
         "administer path patterns",
         "notify of path changes",
-        "use text format code"
+        "use text format code",
+        "administer fields"
     ]
 }
