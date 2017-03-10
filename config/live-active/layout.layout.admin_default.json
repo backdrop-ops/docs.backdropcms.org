@@ -1,37 +1,84 @@
 {
     "_config_name": "layout.layout.admin_default",
-    "path": null,
+    "path": "",
     "name": "admin_default",
     "title": "Default Administrative Layout",
     "description": null,
     "module": "layout",
     "weight": 1,
-    "layout": "one_column",
-    "settings": [],
+    "storage": 2,
+    "layout_template": "boxton",
+    "disabled": false,
+    "settings": {
+        "title": "",
+        "title_display": "default",
+        "title_block": null
+    },
     "positions": {
+        "sidebar": [],
+        "sidebar2": [],
+        "third1": [],
+        "third2": [],
+        "third3": [],
+        "quarter1": [],
+        "quarter2": [],
+        "quarter3": [],
+        "quarter4": [],
+        "header": [],
+        "top": [
+            "55f542fe-0763-453b-ba3e-62677ea559e5"
+        ],
         "content": [
             "default"
         ],
-        "top": [
-            "55f542fe-0763-453b-ba3e-62677ea559e5"
-        ]
+        "footer": []
     },
     "content": {
         "55f542fe-0763-453b-ba3e-62677ea559e5": {
             "plugin": "system:breadcrumb",
             "data": {
                 "module": "system",
-                "delta": "breadcrumb"
-            },
-            "uuid": "55f542fe-0763-453b-ba3e-62677ea559e5"
+                "delta": "breadcrumb",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": []
+                },
+                "uuid": null,
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
         },
         "default": {
             "plugin": "system:main",
             "data": {
                 "module": "system",
-                "delta": "main"
-            },
-            "uuid": "default"
+                "delta": "main",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": []
+                },
+                "uuid": null,
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
         }
     }
 }

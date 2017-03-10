@@ -7,7 +7,7 @@
     "module": "layout",
     "weight": 0,
     "storage": 2,
-    "layout": "two_column",
+    "layout_template": "moscone_flipped",
     "disabled": false,
     "settings": {
         "title": "",
@@ -15,6 +15,18 @@
         "title_block": null
     },
     "positions": {
+        "sidebar": [
+            "93d3082e-7750-495e-8b21-33dc02c1eb55",
+            "8c98048d-abc2-48dc-b700-af6ce8c2ebeb"
+        ],
+        "sidebar2": [],
+        "third1": [],
+        "third2": [],
+        "third3": [],
+        "quarter1": [],
+        "quarter2": [],
+        "quarter3": [],
+        "quarter4": [],
         "header": [
             "84c43df4-1165-4faf-8700-c362a7153c0b"
         ],
@@ -23,10 +35,6 @@
         ],
         "content": [
             "default"
-        ],
-        "sidebar": [
-            "93d3082e-7750-495e-8b21-33dc02c1eb55",
-            "8c98048d-abc2-48dc-b700-af6ce8c2ebeb"
         ],
         "footer": [
             "cb1c88c0-80f1-4664-a302-2e21c8cd79f0"
@@ -139,7 +147,13 @@
                     "title_display": "none",
                     "title": "",
                     "style": "default",
-                    "block_settings": [],
+                    "block_settings": {
+                        "menu_name": "main-menu",
+                        "style": "tree",
+                        "level": "1",
+                        "depth": "0",
+                        "toggle": 1
+                    },
                     "contexts": []
                 },
                 "uuid": "8c98048d-abc2-48dc-b700-af6ce8c2ebeb",
