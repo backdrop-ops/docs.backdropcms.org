@@ -1733,7 +1733,7 @@ function template_preprocess_menu_tree(&$variables) {
  * @ingroup themeable
  */
 function theme_menu_tree($variables) {
-  return '<ul ' . backdrop_attributes($variables['attributes']) . '>' . $variables['tree'] . '</ul>';
+  return '<ul' . backdrop_attributes($variables['attributes']) . '>' . $variables['tree'] . '</ul>';
 }
 
 /**
@@ -1852,11 +1852,11 @@ function theme_menu_toggle($variables) {
   $output = '';
   if ($variables['enabled']) {
     $id = $variables['id'];
-    $output  = '<input id="' . $id . '" class="menu-toggle-state element-invisible" type="checkbox"  aria-controls="' . $id . '" />';
+    $output  = '<input id="' . $id . '" class="menu-toggle-state element-invisible" type="checkbox" aria-controls="' . $id . '" />';
     $output .= '<label class="menu-toggle-button" for="' . $id . '">';
-    $output .= '  <span class="menu-toggle-button-icon"></span>';
-    $output .= '  <span class="menu-toggle-button-text">' . $variables['text'] . '</span>';
-    $output .= '  <span class="menu-toggle-assistive-text element-invisible">' . t('Toggle menu visibility') . '</span>';
+    $output .= '<span class="menu-toggle-button-icon"></span>';
+    $output .= '<span class="menu-toggle-button-text">' . $variables['text'] . '</span>';
+    $output .= '<span class="menu-toggle-assistive-text element-invisible">' . t('Toggle menu visibility') . '</span>';
     $output .= '</label>';
   }
   return $output;
@@ -2516,7 +2516,7 @@ function menu_set_active_trail($new_trail = NULL) {
           // argument placeholders (%). Such links are not contained in regular
           // menu trees, and have only been loaded for the additional
           // translation that happens here, so as to be able to display them in
-          // the breadcumb for the current page.
+          // the breadcrumb for the current page.
           // @see _menu_tree_check_access()
           // @see _menu_link_translate()
           if (strpos($link['href'], '%') !== FALSE) {

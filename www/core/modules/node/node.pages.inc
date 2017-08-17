@@ -40,8 +40,14 @@ function node_add_page() {
       );
     }
   }
-  // Bypass the node/add listing if only one content type is available.
-  if (count($content) == 1) {
+  // If there is more than one content type, sort them by title instead of
+  // machine name before displaying the list of links...
+  if (count($content) !== 1) {
+    backdrop_sort($content, array('title'));
+  }
+  // ...otherwise bypass the node/add listing and go directly to the
+  // node/add/[type] page of the single content type.
+  else {
     $item = array_shift($content);
     backdrop_goto($item['href']);
   }
@@ -122,6 +128,13 @@ function node_form($form, &$form_state, Node $node) {
   // Override the default CSS class name, since the user-defined node type name
   // in 'TYPE-node-form' potentially clashes with third-party class names.
   $form['#attributes']['class'][0] = backdrop_html_class('node-' . $node->type . '-form');
+
+  $form['help'] = array(
+    '#type' => 'help',
+    '#markup' => filter_xss_admin($node_type->help),
+    '#access' => !empty($node_type->help),
+    '#weight' => -500,
+  );
 
   // Basic node information.
   // These elements are just values so they are not even sent to the client.
