@@ -1,7 +1,7 @@
 {
     "_config_name": "user.role.3",
     "name": "3",
-    "label": "Admin",
+    "label": "Developer",
     "weight": "3",
     "permissions": [
         "access administration menu",
@@ -73,6 +73,8 @@
         "administer path patterns",
         "notify of path changes",
         "use text format code",
-        "administer fields"
+        "administer fields",
+        "administer bakery",
+        "bypass bakery"
     ]
 }
