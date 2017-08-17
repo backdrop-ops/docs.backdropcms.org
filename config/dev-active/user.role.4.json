@@ -26,6 +26,8 @@
         "view revisions",
         "access administration bar",
         "flush caches",
-        "access contextual links"
+        "access contextual links",
+        "use text format code",
+        "view any unpublished content"
     ]
 }

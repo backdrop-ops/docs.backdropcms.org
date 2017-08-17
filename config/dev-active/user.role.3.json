@@ -1,7 +1,7 @@
 {
     "_config_name": "user.role.3",
     "name": "3",
-    "label": "Admin",
+    "label": "Developer",
     "weight": "3",
     "permissions": [
         "access administration menu",
@@ -65,6 +65,16 @@
         "access contextual links",
         "administer layouts",
         "administer API reference",
-        "administer fields"
+        "create api content",
+        "edit own api content",
+        "edit any api content",
+        "delete own api content",
+        "delete any api content",
+        "administer path patterns",
+        "notify of path changes",
+        "use text format code",
+        "administer fields",
+        "administer bakery",
+        "bypass bakery"
     ]
 }

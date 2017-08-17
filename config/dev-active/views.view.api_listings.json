@@ -186,12 +186,47 @@
                     "filters": false
                 },
                 "filters": {
-                    "class_did": {
-                        "id": "class_did",
+                    "did": {
+                        "id": "did",
                         "table": "api_documentation",
-                        "field": "class_did",
+                        "field": "did",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "operator": "!=",
                         "value": {
+                            "min": "",
+                            "max": "",
                             "value": "0"
+                        },
+                        "group": 1,
+                        "exposed": false,
+                        "expose": {
+                            "operator_id": false,
+                            "label": "",
+                            "description": "",
+                            "use_operator": false,
+                            "operator": "",
+                            "identifier": "",
+                            "required": false,
+                            "remember": false,
+                            "multiple": false,
+                            "remember_roles": {
+                                "authenticated": "authenticated"
+                            }
+                        },
+                        "is_grouped": false,
+                        "group_info": {
+                            "label": "",
+                            "description": "",
+                            "identifier": "",
+                            "optional": true,
+                            "widget": "select",
+                            "multiple": false,
+                            "remember": 0,
+                            "default_group": "All",
+                            "default_group_multiple": [],
+                            "group_items": []
                         }
                     },
                     "object_name": {
@@ -203,7 +238,7 @@
                         "ui_name": "",
                         "operator": "contains",
                         "value": "",
-                        "group": "1",
+                        "group": 1,
                         "exposed": true,
                         "expose": {
                             "operator_id": "object_name_op",
@@ -245,7 +280,7 @@
                         "ui_name": "",
                         "operator": "contains",
                         "value": "",
-                        "group": "1",
+                        "group": 1,
                         "exposed": true,
                         "expose": {
                             "operator_id": "summary_op",
@@ -277,6 +312,12 @@
                             "default_group_multiple": [],
                             "group_items": []
                         }
+                    }
+                },
+                "filter_groups": {
+                    "operator": "AND",
+                    "groups": {
+                        "1": "AND"
                     }
                 }
             }

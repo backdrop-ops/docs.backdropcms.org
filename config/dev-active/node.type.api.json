@@ -19,8 +19,8 @@
         "menu_parent": "main-menu:0",
         "node_submitted": true,
         "node_user_picture": true,
-        "node_type_language": 0,
-        "node_permissions": true
+        "node_permissions": true,
+        "language": 0
     },
     "base": "api",
     "module": "api",

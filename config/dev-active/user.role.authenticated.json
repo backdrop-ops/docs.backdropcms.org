@@ -15,6 +15,7 @@
         "use text format fix_html",
         "view own unpublished content",
         "access API reference",
+        "use text format code",
         "upload editor images"
     ]
 }

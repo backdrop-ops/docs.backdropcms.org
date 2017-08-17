@@ -1,5 +1,7 @@
 {
     "_config_name": "field.bundle.node.changenotice",
+    "entity_type": "node",
+    "bundle": "changenotice",
     "view_modes": {
         "teaser": {
             "custom_settings": false

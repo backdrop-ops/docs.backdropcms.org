@@ -32,7 +32,7 @@
                         "expose_sort_order": 1,
                         "sort_asc_label": "Asc",
                         "sort_desc_label": "Desc",
-                        "autosubmit": 1,
+                        "autosubmit": 0,
                         "autosubmit_hide": 1
                     }
                 },

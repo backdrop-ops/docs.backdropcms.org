@@ -7,5 +7,7 @@
     "opensearch_name": "Backdrop API",
     "opensearch_description": "Backdrop API documentation",
     "reference_limit": 5,
-    "search_core_compatibilities": "1"
+    "search_core_compatibilities": "1",
+    "breaks_where": "/ :: \\",
+    "breaks_tag": "<wbr />"
 }
