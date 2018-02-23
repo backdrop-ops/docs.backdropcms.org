@@ -1,26 +1,20 @@
 {
-    "_config_name": "filter.format.fix_html",
-    "format": "fix_html",
-    "name": "Standard",
+    "_config_name": "filter.format.full_html",
+    "format": "full_html",
+    "name": "HTML code",
     "cache": true,
     "status": "1",
-    "weight": "0",
+    "weight": "1",
     "roles": {
-        "authenticated": "authenticated",
+        "4": "4",
         "3": "3",
         "anonymous": 0,
-        "4": 0
+        "authenticated": 0
     },
     "filters": {
-        "api_filter": {
-            "status": 0,
-            "weight": -44,
-            "module": "api",
-            "settings": []
-        },
         "codefilter": {
             "status": 1,
-            "weight": -47,
+            "weight": 0,
             "settings": {
                 "nowrap_expand": 0
             },
@@ -33,14 +27,14 @@
             "settings": []
         },
         "filter_autop": {
-            "status": 1,
-            "weight": -48,
+            "status": 0,
+            "weight": 1,
             "module": "filter",
             "settings": []
         },
         "filter_url": {
             "status": 1,
-            "weight": -46,
+            "weight": 0,
             "settings": {
                 "filter_url_length": "72"
             },
@@ -48,13 +42,13 @@
         },
         "filter_htmlcorrector": {
             "status": 1,
-            "weight": -45,
+            "weight": 10,
             "module": "filter",
             "settings": []
         },
         "filter_html_escape": {
             "status": 0,
-            "weight": -50,
+            "weight": -10,
             "module": "filter",
             "settings": []
         },
@@ -65,11 +59,11 @@
             "settings": []
         },
         "filter_html": {
-            "status": 1,
-            "weight": -49,
+            "status": 0,
+            "weight": -10,
             "settings": {
-                "allowed_html": "<a> <em> <strong> <cite> <blockquote> <code> <ul> <ol> <li> <dl> <dt> <dd> <br> <div> <p> <pre> <span> <table> <thead> <tbody> <td> <tr> <th> <h1> <h2> <h3> <h4>",
-                "filter_html_help": 0,
+                "allowed_html": "<a> <em> <strong> <cite> <blockquote> <code> <ul> <ol> <li> <dl> <dt> <dd>",
+                "filter_html_help": 1,
                 "filter_html_nofollow": 0
             },
             "module": "filter"

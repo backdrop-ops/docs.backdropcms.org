@@ -2,7 +2,12 @@
     "_config_name": "system.core",
     "_config_static": true,
     "action_recursion_limit": 35,
-    "active_menus_default": [],
+    "active_menus_default": {
+        "0": "main-menu",
+        "1": "management",
+        "3": "user-menu",
+        "4": "menu-footer-menu"
+    },
     "admin_theme": "seven",
     "anonymous": "Anonymous",
     "cache": 0,
@@ -51,7 +56,7 @@
     "site_logo_path": "",
     "site_mail": "no-reply@backdropcms.org",
     "site_slogan": "Complete documentation for Backdrop CMS developers.",
-    "theme_default": "api_theme",
+    "theme_default": "api_borg",
     "theme_debug": false,
     "user_admin_role": "3",
     "user_cancel_method": "user_cancel_block",
