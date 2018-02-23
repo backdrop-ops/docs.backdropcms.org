@@ -28,6 +28,13 @@ function menu_overview_page() {
       'title' => t('Configure'),
       'href' => 'admin/structure/menu/manage/' . $menu['menu_name'] . '/configure',
     );
+    $system_menus = menu_list_system_menus();
+    if (!isset($system_menus[$menu['menu_name']])) {
+      $links['delete'] = array(
+        'title' => t('Delete'),
+        'href' => 'admin/structure/menu/manage/' . $menu['menu_name'] . '/delete',
+      );
+    }
     $row[] = array(
       'data' => array(
         '#type' => 'operations',
@@ -231,6 +238,7 @@ function menu_edit_item($form, &$form_state, $type, $item, $menu) {
   $form['link_title'] = array(
     '#type' => 'textfield',
     '#title' => t('Menu link title'),
+    '#maxlength' => 255,
     '#default_value' => $item['link_title'],
     '#description' => t('The text to be used for this link in the menu.'),
     '#required' => TRUE,

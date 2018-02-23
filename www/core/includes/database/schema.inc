@@ -156,6 +156,9 @@ require_once __DIR__ . '/query.inc';
  * @see backdrop_install_schema()
  */
 
+/**
+ * Base class for database schema definitions.
+ */
 abstract class DatabaseSchema implements QueryPlaceholderInterface {
 
   /**
@@ -259,7 +262,7 @@ abstract class DatabaseSchema implements QueryPlaceholderInterface {
    *
    * This prevents using {} around non-table names like indexes and keys.
    */
-  function prefixNonTable($table) {
+  public function prefixNonTable($table) {
     $args = func_get_args();
     $info = $this->getPrefixInfo($table);
     $args[0] = $info['table'];
