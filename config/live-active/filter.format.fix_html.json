@@ -1,7 +1,7 @@
 {
     "_config_name": "filter.format.fix_html",
     "format": "fix_html",
-    "name": "Fix HTML",
+    "name": "Standard",
     "cache": true,
     "status": "1",
     "weight": "0",
@@ -25,6 +25,12 @@
                 "nowrap_expand": 0
             },
             "module": "codefilter"
+        },
+        "filter_image_caption": {
+            "status": 0,
+            "weight": 4,
+            "module": "filter",
+            "settings": []
         },
         "filter_autop": {
             "status": 1,
@@ -52,6 +58,12 @@
             "module": "filter",
             "settings": []
         },
+        "filter_image_align": {
+            "status": 0,
+            "weight": 5,
+            "module": "filter",
+            "settings": []
+        },
         "filter_html": {
             "status": 1,
             "weight": -49,
@@ -62,5 +74,7 @@
             },
             "module": "filter"
         }
-    }
+    },
+    "editor": "",
+    "editor_settings": []
 }

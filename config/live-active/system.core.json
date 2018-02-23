@@ -2,7 +2,12 @@
     "_config_name": "system.core",
     "_config_static": true,
     "action_recursion_limit": 35,
-    "active_menus_default": [],
+    "active_menus_default": {
+        "0": "main-menu",
+        "1": "management",
+        "3": "user-menu",
+        "4": "menu-footer-menu"
+    },
     "admin_theme": "seven",
     "anonymous": "Anonymous",
     "cache": 0,
