@@ -1,0 +1,331 @@
+<?php
+/**
+ * @file
+ * Adds a block with a series of icons which link off-site to other web presences.
+ */
+
+/**
+ * Implements hook_config_info().
+ */
+function on_the_web_config_info() {
+  $prefixes['on_the_web.settings'] = array(
+    'label' => t('On The Web Settings'),
+    'group' => t('Configuration'),
+  );
+
+  return $prefixes;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function on_the_web_menu() {
+  $items['admin/config/services/on_the_web'] = array(
+    'title' => 'On The Web Settings',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('on_the_web_settings_form'),
+    'access arguments' => array('administer blocks'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'on_the_web.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function on_the_web_block_info() {
+  $blocks['social_links'] = array(
+    'info' => t('Social Media Icons'),
+    'description' => t('Icons that link to your social media presence On The Web.'),
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function on_the_web_block_configure($delta = 'social_links', $settings = array()) {
+  $form = array();
+  if ($delta == 'social_links') {
+
+    $form['services'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Display icons for the following services:'),
+      '#description' => t('The URL for each service must be entered on the OTW
+        <a href="!url">settings page</a>.', array('!url' => url('admin/config/services/on_the_web'))),
+    );
+
+    $form['services']['display'] = array(
+      '#type' => 'radios',
+      '#title' => t('Icon display'),
+      '#options' => array(
+        'auto' => t('Automatic'),
+        'manual' => t('Explicit'),
+      ),
+      '#default_value' => (isset($settings['display'])) ? $settings['display'] : 'auto',
+    );
+
+    // Add descriptions to the radio buttons.
+    $form['services']['display']['auto'] = array(
+      '#description' => t('Show all icons that have corresponding links entered.'),
+    );
+    $form['services']['display']['manual'] = array(
+      '#description' => t('Explicity choose icons here.'),
+    );
+
+    $services = on_the_web_get_services();
+    $options = array();
+    $defaults = array();
+    $config = config('on_the_web.settings');
+    foreach ($services as $service => $info) {
+      $info['page'] = $config->get($service . '_page');
+
+      // If the service has a URL provided...
+      if ($info['page'] != '') {
+        // Add the option
+        $options[$service] = $info;
+        // Check the box by default.
+        $defaults[$service] = $service;
+        // Get the weight so we can sort.
+        $info['weight'] = $config->get($service . '_weight');
+      }
+    }
+
+    // Sort the options on the block form to match weight.
+    backdrop_sort($options);
+    $sorted_options = array();
+    foreach ($options as $service => $info) {
+      $sorted_options[$service] = $info['name'];
+    }
+
+    if (!empty($options)) {
+      $form['services']['enabled'] = array(
+        '#type' => 'checkboxes',
+        '#title' => t('Icons'),
+        '#options' => $sorted_options,
+        '#default_value' => (isset($settings['enabled'])) ? $settings['enabled'] : $defaults,
+        '#description' => t('Please select the icons you would like displayed in this block.'),
+        '#states' => array(
+          'visible' => array(
+            ':input[name="block_settings[services][display]"]' => array('value' => 'manual'),
+          ),
+        ),
+      );
+    }
+    else {
+      $form['services']['none'] = array(
+        '#markup' => '<p class="warning">' . t('No services have been configured yet.') . '</p>',
+      );
+    }
+  }
+
+  return $form;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function on_the_web_block_view($delta = 'social_links', $settings = array(), $contexts = array()) {
+  $block = array(
+    'subject' => NULL,
+    'content' => on_the_web_display_block($delta, $settings, $contexts),
+  );
+
+  return $block;
+}
+
+/**
+ * Block Display
+ *
+ * @return
+ *    Content for block.
+ */
+function on_the_web_display_block($delta, $settings = array(), $contexts = array()) {
+  $config = config('on_the_web.settings');
+  $type = $config->get('type');
+  $output = '';
+
+  // Get the appropriate name to use in links.
+  if ($config->get('sitename') == 1) {
+    $name = config_get('system.core', 'site_name');
+  }
+  elseif ($config->get('sitename') == 0) {
+    $name = t('us');
+  }
+  elseif ($config->get('sitename') == 2) {
+    $name = t('me');
+  }
+
+  // Get the display style.
+  $display = $settings['services']['display'];
+  if ($display == 'manual') {
+    $enabled = $settings['services']['enabled'];
+  }
+
+  $services = on_the_web_get_services();
+
+  $links = array();
+  foreach ($services as $service => $info) {
+    $link = $config->get($service . '_page');
+
+    if (($display == 'auto' && ($link != '')) ||
+        ($display == 'manual' && array_key_exists($service, $enabled) && $enabled[$service] === $service)) {
+
+      if ($service != 'rss') {
+        $title = t('Find !us on !service', array('!us' => $name, '!service' => $info['name']));
+      }
+      else {
+        $title = t('!us RSS feed', array('!us' => $name));
+      }
+
+      $size = $config->get('size');
+      $classes = array('on-the-web', 'otw-' . $size, 'otw-' . $service);
+
+      $icon = $info['fa-icon'];
+      if ($config->get('type') == 'font' && $config->get('square') == TRUE) {
+        if (isset($info['fa-icon-square'])) {
+          $icon = $info['fa-icon-square'];
+        }
+      }
+
+      $links[] = array(
+        '#theme' => 'on_the_web_item',
+        '#service' => $service,
+        '#link' => $link,
+        '#icon' => $icon,
+        '#size' => $size,
+        '#title' => $title,
+        '#classes' => $classes,
+        '#weight' => $config->get($service . '_weight'),
+      );
+    }
+
+    if ($type == 'anchor') {
+      $links['#attached']['css'][] = backdrop_get_path('module', 'on_the_web') . '/css/on_the_web.css';
+    }
+    elseif ($type == 'font') {
+      if (!module_exists('font_awesome')) {
+        $links['#attached']['css']['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'] = array(
+          'type' => 'external',
+        );
+      }
+    }
+  }
+
+  // Add an alter here.
+  backdrop_alter('on_the_web_links', $links);
+
+  return backdrop_render($links);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function on_the_web_theme($existing, $type, $theme, $path) {
+  return array(
+    'on_the_web_item' => array(
+      'variables' => array(
+        'service' => NULL,
+        'link' => NULL,
+        'icon' => 'fa-fort-awesome',
+        'size' => 'sm',
+        'title' => NULL,
+        'classes' => array(),
+      ),
+      'file' => 'on_the_web.theme.inc',
+    ),
+
+    // Administration form.
+    'on_the_web_settings_form' => array(
+      'render element' => 'form',
+      'file' => 'on_the_web.theme.inc',
+    ),
+  );
+}
+
+/*******************************************************************************
+ * Untilty functions.
+*******************************************************************************/
+
+/**
+ * Gets the available services.
+ *
+ * @return array
+ *   List of services with icons.
+ */
+function on_the_web_get_services() {
+  $services = array(
+    'twitter' => array(
+      'name' => 'Twitter',
+      'fa-icon' => 'fa-twitter',
+      'fa-icon-square' => 'fa-twitter-square',
+    ),
+    'facebook' => array(
+      'name' => 'Facebook',
+      'fa-icon' => 'fa-facebook',
+      'fa-icon-square' => 'fa-facebook-square',
+    ),
+    'pinterest' => array(
+      'name' => 'Pinterest',
+      'fa-icon' => 'fa-pinterest',
+      'fa-icon-square' => 'fa-pinterest-square',
+    ),
+    'instagram' => array(
+      'name' => 'Instagram',
+      'fa-icon' => 'fa-instagram',
+    ),
+    'github' => array(
+      'name' => 'GitHub',
+      'fa-icon' => 'fa-github',
+      'fa-icon-square' => 'fa-github-square',
+    ),
+    'google' => array(
+      'name' => 'Google+',
+      'fa-icon' => 'fa-google-plus',
+      'fa-icon-square' => 'fa-google-plus-square',
+    ),
+    'youtube' => array(
+      'name' => 'YouTube',
+      'fa-icon' => 'fa-youtube',
+      'fa-icon-square' => 'fa-youtube-square',
+    ),
+    'flickr' => array(
+      'name' => 'Flickr',
+      'fa-icon' => 'fa-flickr',
+    ),
+    'linkedin' => array(
+      'name' => 'LinkedIn',
+      'fa-icon' => 'fa-linkedin',
+      'fa-icon-square' => 'fa-linkedin-square',
+    ),
+    'itunes' => array(
+      'name' => 'Podcast',
+      'fa-icon' => 'fa-apple',
+    ),
+    'delicious' => array(
+      'name' => 'Delicious',
+      'fa-icon' => 'fa-delicious',
+    ),
+    'lastfm' => array(
+      'name' => 'LastFM',
+      'fa-icon' => 'fa-lastfm',
+      'fa-icon-square' => 'fa-lastfm-square',
+    ),
+    'soundcloud' => array(
+      'name' => 'Soundcloud',
+      'fa-icon' => 'fa-soundcloud',
+    ),
+    'rss' => array(
+      'name' => 'RSS',
+      'fa-icon' => 'fa-rss',
+      'fa-icon-square' => 'fa-rss-square',
+    ),
+  );
+
+  backdrop_alter('on_the_web_get_services', $services);
+
+  return $services;
+}
