@@ -1,0 +1,58 @@
+/*******************************************************************************
+ * components-blocks.scss
+ *
+ * Contains styles for blocks components.
+ ******************************************************************************/
+
+/*******************************************************************************
+ * All sidebr blocks.
+ ******************************************************************************/
+.l-sidebar .block {
+  background-color: #F7F7F7;
+  padding: 15px 20px;
+  margin-bottom: 15px;
+}
+.l-sidebar .block ul {
+  padding-left: 1.5em;
+}
+
+/*******************************************************************************
+ * Search block.
+ ******************************************************************************/
+.block-search-form .form-item {
+  margin: 0;
+}
+.block-search-form .twitter-typeahead,
+.block-search-form .form-search {
+  width: 100%;
+}
+.block-search-form .form-search {
+  padding: 4px 8px 0 8px;
+}
+.block-search-form .form-actions {
+  display: none;
+}
+.block-search-form pre {
+  height: 0;
+  display: block;
+  padding: 0;
+}
+
+/*******************************************************************************
+ * Fancy autocomplete.
+ ******************************************************************************/
+.tt-dropdown-menu {
+  background: #fff;
+  border: 2px solid #E8E6E5;
+}
+.tt-suggestion {
+  padding: 2px 4px;
+}
+.tt-suggestion p {
+  margin: 0;
+  padding: 0;
+}
+/* Hover/selected state for typeahead suggestions. */
+.tt-cursor {
+  background: #E8E6E5;
+}

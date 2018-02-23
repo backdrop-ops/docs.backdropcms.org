@@ -1,0 +1,25 @@
+type = theme
+name = API BORG
+description = The API site has been asymiliated. This is a sub-theme of BORG.
+backdrop = 1.x
+
+base theme = borg
+
+; Overriding this one because of the header.
+stylesheets[screen][] = css/layout.css
+
+; These should be overridden in base themes:
+stylesheets[screen][] = css/components-nodes.css
+stylesheets[screen][] = css/components-styles.css
+stylesheets[screen][] = css/components-views.css
+
+; This one really exists.
+stylesheets[screen][] = css/components-blocks.css
+
+; But not this one, we need this for all Borg sites.
+;stylesheets[screen][] = css/components-menus.css
+
+
+; Added scripts for the API theme.
+scripts[] = js/typeahead.jquery.min.js
+scripts[] = js/api-theme.js
