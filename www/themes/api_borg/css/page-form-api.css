@@ -1,0 +1,44 @@
+/*******************************************************************************
+ * page-form-api.css
+ *
+ * Contains styles relating to the form_api page.
+ ******************************************************************************/
+
+article .field-name-body table.sticky-header a,
+article .field-name-body table.form-api a {
+  text-decoration: none;
+}
+article .field-name-body table.sticky-header a:hover,
+article .field-name-body table.form-api a:hover {
+  text-decoration: underline;
+}
+
+table.sticky-header,
+table.form-api {
+  border-collapse: collapse;
+}
+table.sticky-header th,
+table.form-api th {
+  border-bottom: 0;
+}
+table.sticky-header td,
+table.form-api td {
+  padding: .5em .75em;
+  border: 1px solid #E8E6E5;
+}
+
+table.form-api tr.rotate-processed,
+table.sticky-header {
+  border-bottom: 2px solid #E8E6E5;
+}
+tr.rotate-processed th {
+  position: relative;
+  bottom: 4px;
+  border: 0;
+}
+
+span.rotate1 {
+  position: relative;
+  top: -5px;
+  right: 5px;
+}
