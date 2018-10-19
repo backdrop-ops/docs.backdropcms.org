@@ -75,6 +75,7 @@
         "use text format code",
         "administer fields",
         "administer bakery",
-        "bypass bakery"
+        "bypass bakery",
+        "administer redirects"
     ]
 }

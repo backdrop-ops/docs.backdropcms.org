@@ -55,7 +55,7 @@
     "site_logo_theme": 1,
     "site_logo_path": "",
     "site_mail": "no-reply@backdropcms.org",
-    "site_slogan": "Complete documentation for Backdrop CMS developers.",
+    "site_slogan": "Documentation for Backdrop CMS developers.",
     "theme_default": "api_borg",
     "theme_debug": false,
     "user_admin_role": "3",

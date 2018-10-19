@@ -42,7 +42,7 @@
                         "items_per_page": ""
                     }
                 },
-                "style_plugin": "table",
+                "style_plugin": "list",
                 "row_plugin": "fields",
                 "fields": {
                     "field_github_issue": {
@@ -115,7 +115,7 @@
                         "relationship": "none",
                         "group_type": "group",
                         "ui_name": "",
-                        "label": "Change Record",
+                        "label": "",
                         "exclude": 0,
                         "alter": {
                             "alter_text": 0,
@@ -149,7 +149,7 @@
                         "element_class": "",
                         "element_label_type": "",
                         "element_label_class": "",
-                        "element_label_colon": 1,
+                        "element_label_colon": false,
                         "element_wrapper_type": "",
                         "element_wrapper_class": "",
                         "element_default_classes": 1,
@@ -166,7 +166,7 @@
                         "relationship": "none",
                         "group_type": "group",
                         "ui_name": "",
-                        "label": "Date",
+                        "label": "",
                         "exclude": 0,
                         "alter": {
                             "alter_text": 0,
@@ -200,7 +200,7 @@
                         "element_class": "",
                         "element_label_type": "",
                         "element_label_class": "",
-                        "element_label_colon": 1,
+                        "element_label_colon": false,
                         "element_wrapper_type": "",
                         "element_wrapper_class": "",
                         "element_default_classes": 1,
@@ -210,9 +210,9 @@
                         "hide_alter_empty": 1,
                         "date_format": "custom",
                         "custom_date_format": "M, j Y",
+                        "timezone": "",
                         "second_date_format_custom": "",
-                        "second_date_format": "long",
-                        "timezone": ""
+                        "second_date_format": "long"
                     }
                 },
                 "filters": {
@@ -357,45 +357,31 @@
                         }
                     }
                 },
-                "sorts": [],
+                "sorts": {
+                    "created": {
+                        "id": "created",
+                        "table": "node",
+                        "field": "created",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "order": "DESC",
+                        "exposed": false,
+                        "expose": {
+                            "label": ""
+                        },
+                        "granularity": "second"
+                    }
+                },
                 "title": "Change Records - All",
                 "style_options": {
                     "grouping": [],
                     "row_class": "",
-                    "default_row_class": 1,
-                    "row_class_special": 1,
-                    "override": 1,
-                    "sticky": 0,
-                    "caption": "",
-                    "summary": "",
-                    "columns": {
-                        "field_github_issue": "field_github_issue",
-                        "title": "title",
-                        "created": "created"
-                    },
-                    "info": {
-                        "field_github_issue": {
-                            "align": "",
-                            "separator": "",
-                            "empty_column": 0
-                        },
-                        "title": {
-                            "sortable": 0,
-                            "default_sort_order": "asc",
-                            "align": "",
-                            "separator": "",
-                            "empty_column": 0
-                        },
-                        "created": {
-                            "sortable": 1,
-                            "default_sort_order": "asc",
-                            "align": "",
-                            "separator": "",
-                            "empty_column": 0
-                        }
-                    },
-                    "default": "created",
-                    "empty_table": 0
+                    "default_row_class": 0,
+                    "row_class_special": 0,
+                    "type": "ul",
+                    "wrapper_class": "item-list",
+                    "class": ""
                 },
                 "use_ajax": false,
                 "filter_groups": {
@@ -403,6 +389,14 @@
                     "groups": {
                         "1": "AND"
                     }
+                },
+                "row_options": {
+                    "default_field_elements": 1,
+                    "inline": {
+                        "created": "created"
+                    },
+                    "separator": "",
+                    "hide_empty": 0
                 }
             }
         },

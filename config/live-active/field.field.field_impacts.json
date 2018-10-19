@@ -11,7 +11,7 @@
     "entity_types": [],
     "settings": {
         "allowed_values": {
-            "Site builders, administrators, editors": "Site builders, administrators, editors",
+            "Site builders, administrators, editors": "Architects, Administrators, Editors",
             "Module developers": "Module developers",
             "Themers": "Theme developers"
         },
