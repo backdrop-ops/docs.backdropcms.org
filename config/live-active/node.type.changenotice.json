@@ -12,7 +12,7 @@
     "disabled": false,
     "orig_type": "changenotice",
     "settings": {
-        "status_default": true,
+        "status_default": 1,
         "sticky_enabled": true,
         "sticky_default": false,
         "promote_enabled": true,
@@ -25,6 +25,7 @@
         "node_type_language": null,
         "menu_options": [],
         "menu_parent": "main-menu:0",
-        "node_permissions": true
+        "node_permissions": true,
+        "hidden_path": "0"
     }
 }
