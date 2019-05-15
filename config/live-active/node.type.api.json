@@ -4,7 +4,7 @@
     "name": "API",
     "description": "A hidden node type that is only created automatically by API module.",
     "settings": {
-        "status_default": true,
+        "status_default": 1,
         "promote_enabled": false,
         "promote_default": false,
         "sticky_enabled": false,
@@ -20,7 +20,9 @@
         "node_submitted": true,
         "node_user_picture": true,
         "node_permissions": true,
-        "language": 0
+        "language": 0,
+        "hidden_path": "0",
+        "node_preview": "1"
     },
     "base": "api",
     "module": "api",

@@ -101,5 +101,6 @@
     },
     "site_logo_upload": "",
     "site_favicon_upload": "",
-    "x_frame_options": "SAMEORIGIN"
+    "x_frame_options": "SAMEORIGIN",
+    "form_cache_expiration": 21600
 }
