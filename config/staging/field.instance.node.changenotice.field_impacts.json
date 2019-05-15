@@ -32,5 +32,6 @@
         "module": "options",
         "active": 1,
         "settings": []
-    }
+    },
+    "default_value_function": null
 }
