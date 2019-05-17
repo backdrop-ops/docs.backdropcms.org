@@ -1,5 +1,5 @@
 /*******************************************************************************
- * components-blocks.scss
+ * components-blocks.css
  *
  * Contains styles for blocks components.
  ******************************************************************************/
@@ -162,19 +162,49 @@ main.col-md-8 .backdrop-books figure {
 /*******************************************************************************
  * Newsletter block.
  ******************************************************************************/
-.block-block-newsletter,
-.block-block-3 {
-  padding-bottom: 30px;
+.l-footer .block-block-newsletter,
+.l-footer .block-block-3 {
+  background-color: #000;
+  color: #fff;
+  padding: 15px;
+  padding-bottom: 15px;
+}
+.block-block-newsletter h2.block-title,
+.block-block-3 h2.block-title {
+  font-size: 1.125em;
+  font-weight: bold;
+  letter-spacing: .4px;
 }
 .block-block-newsletter #mce-EMAIL,
 .block-block-3 #mce-EMAIL {
   margin-right: 5px;
   width: 100%;
 }
+.block-block-newsletter input[type="submit"],
+.block-block-3 input[type="submit"] {
+  background-color: #000;
+  color: #fff;
+  border: 1px solid #fff;
+  margin: 20px 20px 10px 0;
+}
+
+@media (min-width: 25em) { /* 400px @ 16px font size */
+  .l-footer .block-block-newsletter,
+  .l-footer .block-block-3 {
+    padding: 15px 30px;
+  }
+}
 @media (min-width: 34em) { /* 544px @ 16px font size -- SM */
-  .block-block-newsletter,
-  .block-block-3 {
-    padding-bottom: 0;
+  .l-footer .block-block-newsletter,
+  .l-footer .block-block-3 {
+    padding: 10px 20px;
+  }
+}
+@media (min-width: 48em) {  /* 768px @ 16px font size  -- MD */
+  .l-footer .block-block-newsletter,
+  .l-footer .block-block-3 {
+    padding: 50px;
+    padding-bottom: 50px;
   }
 }
 
@@ -182,8 +212,10 @@ main.col-md-8 .backdrop-books figure {
  * borg_project_metrics block
  ******************************************************************************/
 div.block-borg-project-metrics-backdrop-project-metrics {
+  background-color: #F7F7F7;
   padding: 30px 0;
-  border-bottom: 0;
+  border-top: 3px solid #E8E6E5;
+  border-bottom: 3px solid #E8E6E5;
   margin-bottom: 0;
 }
 .block-borg-project-metrics-backdrop-project-metrics .project-metrics div {
@@ -221,19 +253,8 @@ div.block-borg-project-metrics-backdrop-project-metrics {
   div.block-borg-project-metrics-backdrop-project-metrics {
     padding: 60px 0;
   }
-  .block-borg-project-metrics-backdrop-project-metrics .project-metrics div img {
-    max-width: 100px;
-  }
   .block-borg-project-metrics-backdrop-project-metrics .project-metrics div p {
     font-size: 1.5rem; /* 24px */
-  }
-}
-@media (min-width: 62em) { /* 992px @ 16px font size -- LG */
-  .block-borg-project-metrics-backdrop-project-metrics .project-metrics div img {
-    max-width: 120px;
-  }
-  .block-borg-project-metrics-backdrop-project-metrics .project-metrics div p {
-    font-size: 1.75rem; /* 28px */
   }
 }
 
@@ -247,6 +268,96 @@ div.block-borg-project-metrics-backdrop-project-metrics {
 .block-borg-blocks-rss a:hover {
   color: #000;
 }
+
+/*******************************************************************************
+ * Upgrade from Drupal block
+ ******************************************************************************/
+.block-borg-blocks-upgrade {
+  padding-top: 15px;
+  text-align: center;
+}
+.block-borg-blocks-upgrade h2.block-title {
+  margin-bottom: 0;
+}
+.block-borg-blocks-upgrade a.icon:hover {
+  color: #007CBA;
+}
+.block-borg-blocks-upgrade a.icon img {
+  max-width: 50px;
+  margin-top: 1.5em;
+}
+.block-borg-blocks-upgrade h3 {
+  font-weight: normal;
+  margin: 1em 0;
+}
+.block-borg-blocks-upgrade h3 a {
+  color: #fff;
+}
+.block-borg-blocks-upgrade h3 a:hover {
+  text-decoration: underline;
+}
+.block-borg-blocks-upgrade p {
+  text-align: center;
+}
+.upgrade-cta {
+  margin-top: 30px;
+  padding: 5px 0;
+  color: #000;
+  text-align: left;
+  background-color: #F7F7F7;
+  border-top: 3px solid #E8E6E5;
+  border-bottom: 3px solid #E8E6E5;
+}
+
+@media (min-width: 25em) { /* 400px @ 16px font size */
+  .block-borg-blocks-upgrade {
+
+  }
+}
+@media (min-width: 34em) { /* 544px @ 16px font size -- SM */
+  .block-borg-blocks-upgrade {
+    padding-top: 30px;
+  }
+  .block-borg-blocks-upgrade img.icon {
+    margin-top: 2.5em;
+  }
+  .block-borg-blocks-upgrade h3 {
+    font-size: 1.75em;
+    margin: .5em 0;
+  }
+  .block-borg-blocks-upgrade p {
+    font-size: 1.25em;
+  }
+  .upgrade-cta {
+    margin-top: 345px;
+    padding: 10px 0;
+  }
+}
+@media (min-width: 48em) {  /* 768px @ 16px font size  -- MD */
+  .block-borg-blocks-upgrade {
+    padding-top: 45px;
+  }
+  .block-borg-blocks-upgrade h3 {
+    font-size: 1.5rem;
+  }
+  .block-borg-blocks-upgrade p {
+    font-size: 1em;
+  }
+  .upgrade-cta {
+    margin-top: 60px;
+    padding: 15px 0;
+  }
+}
+@media (min-width: 62em) { /* 992px @ 16px font size -- LG */
+  .block-borg-blocks-upgrade h3 {
+    font-size: 1.75em;
+  }
+  .block-borg-blocks-upgrade p {
+    font-size: 1.25em;
+  }
+}
+
+
 
 /*******************************************************************************
  * Custom tagline block.

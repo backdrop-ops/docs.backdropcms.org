@@ -1,5 +1,5 @@
 /*******************************************************************************
- * components-nodes.scss
+ * components-nodes.css
  *
  * Contains styles for specific content types.
  ******************************************************************************/
@@ -37,6 +37,15 @@ article.node-post.view-mode-full .field-name-body {
 article.node-post.view-mode-teaser {
   position: relative;
 }
+
+/*******************************************************************************
+ * Node: Security Advisory
+ ******************************************************************************/
+.node-sa .field-name-field-sa-solution .field-label {
+  margin-bottom: 10px;
+  font-size: 1.333rem;
+}
+
 
 /*******************************************************************************
  * Node: Project
@@ -105,6 +114,19 @@ label.github-clone-label {
     text-align: left;
     margin-left: 0;
   }
+}
+
+/*******************************************************************************
+ * Project Placeholder
+ ******************************************************************************/
+.node-project-dummy .field-name-field-project-upgrade-info {
+  border-top: 1px solid #d4d6d6;
+  padding-top: 15px;
+}
+.node-project-dummy .field-name-field-project-upgrade-info .field-label {
+  text-transform: uppercase;
+  font-weight: 600; /* semi bold */
+  margin: 1em 0;
 }
 
 /*******************************************************************************
