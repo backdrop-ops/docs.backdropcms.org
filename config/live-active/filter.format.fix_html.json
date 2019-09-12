@@ -7,13 +7,13 @@
     "weight": "0",
     "roles": {
         "authenticated": "authenticated",
+        "4": "4",
         "3": "3",
-        "anonymous": 0,
-        "4": 0
+        "anonymous": 0
     },
     "filters": {
         "api_filter": {
-            "status": 0,
+            "status": 1,
             "weight": -44,
             "module": "api",
             "settings": []
@@ -27,7 +27,7 @@
             "module": "codefilter"
         },
         "filter_image_caption": {
-            "status": 0,
+            "status": 1,
             "weight": 4,
             "module": "filter",
             "settings": []
@@ -68,7 +68,7 @@
             "status": 1,
             "weight": -49,
             "settings": {
-                "allowed_html": "<a> <em> <strong> <cite> <blockquote> <code> <ul> <ol> <li> <dl> <dt> <dd> <br> <div> <p> <pre> <span> <table> <thead> <tbody> <td> <tr> <th> <h1> <h2> <h3> <h4>",
+                "allowed_html": "<a> <em> <strong> <cite> <blockquote> <code> <ul> <ol> <li> <br> <div> <p> <pre> <span> <table> <thead> <tbody> <td> <tr> <th> <h1> <h2> <h3> <h4> <img>",
                 "filter_html_help": 0,
                 "filter_html_nofollow": 0
             },
