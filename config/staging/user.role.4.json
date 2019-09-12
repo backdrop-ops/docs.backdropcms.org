@@ -28,6 +28,7 @@
         "flush caches",
         "access contextual links",
         "use text format code",
-        "view any unpublished content"
+        "view any unpublished content",
+        "use text format fix_html"
     ]
 }

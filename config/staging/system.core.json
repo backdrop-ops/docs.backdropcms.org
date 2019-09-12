@@ -8,7 +8,7 @@
         "3": "user-menu",
         "4": "menu-footer-menu"
     },
-    "admin_theme": "seven",
+    "admin_theme": "api_admin",
     "anonymous": "Anonymous",
     "cache": 1,
     "clean_url": "1",
