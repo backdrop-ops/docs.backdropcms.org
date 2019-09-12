@@ -49,14 +49,20 @@ file = simpletest.test
 [SimpleTestInstallationProfileModuleTestsTestCase]
 name = Installation profile module tests
 description = Verifies that tests bundled with installation profile modules are found.
-group = SimpleTest
+group = Installation profiles
 file = simpletest.test
 
 [SimpleTestOtherInstallationProfileModuleTestsTestCase]
 name = Other Installation profiles
 description = Verifies that tests in other installation profiles are not found.
-group = SimpleTest
+group = Installation profiles
 file = simpletest.test
+
+[StandardInstallTestCase]
+name = Standard Installation Tests
+description = Verifies configuration added by the Standard install profile.
+group = Installation profiles
+file = standard.test
 
 [ActionLoopTestCase]
 name = Actions executing in a potentially infinite loop
@@ -1342,7 +1348,7 @@ description = Test the file tokens.
 group = Token
 file = token.test
 
-; Added by Backdrop CMS packaging script on 2019-05-15
+; Added by Backdrop CMS packaging script on 2019-09-03
 project = backdrop
-version = 1.13.0
-timestamp = 1557969328
+version = 1.14.0-preview
+timestamp = 1567571810
