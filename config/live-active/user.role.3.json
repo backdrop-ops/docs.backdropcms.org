@@ -79,6 +79,7 @@
         "administer redirects",
         "access dashboard",
         "administer dashboard",
-        "use text format full_html"
+        "use text format full_html",
+        "view files"
     ]
 }

@@ -6,6 +6,7 @@
     "permissions": [
         "access content",
         "search content",
-        "access API reference"
+        "access API reference",
+        "view files"
     ]
 }
