@@ -871,13 +871,23 @@ function api_save_documentation($docblocks) {
       $docblock['parameters'] = $params;
 
       // Find return value definitions with @return.
-      $docblock['return_value'] = '';
+      $returns = '';
       preg_match_all('/' . API_RE_TAG_START . 'return\s(.*?)(?=\n' . API_RE_TAG_START . '|$)/s', $docblock['content'], $return_matches, PREG_SET_ORDER);
       foreach ($return_matches as $return_match) {
         $docblock['content'] = str_replace($return_match[0], '', $docblock['content']);
-        $docblock['return_value'] .= "\n\n" . $return_match[1];
+        // Add some formatting to the return value -- strong tag for everything
+        // that was on the @return line, and a colon after. Note that tags
+        // are stripped out below, so we use [strong] and then fix it later.
+        $this_return = $return_match[1];
+        $this_return = preg_replace('|^([^\n]+)|', '[strong]$1[/strong]:', $this_return);
+        $returns .= "\n\n" . $this_return;
       }
-      $docblock['return_value'] = api_format_documentation($docblock['return_value'], TRUE, $tmp);
+      // Format and then replace our fake tags with real ones.
+      $tmp = array();
+      $returns = api_format_documentation($returns, TRUE, $tmp);
+      $returns = str_replace('[strong]', '<strong>', $returns);
+      $returns = str_replace('[/strong]', '</strong>', $returns);
+      $docblock['return_value'] = $returns;
 
       // Find @see lines.
       $docblock['see'] = '';
