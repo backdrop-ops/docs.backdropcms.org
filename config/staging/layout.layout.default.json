@@ -4,7 +4,6 @@
     "name": "default",
     "title": "Default Layout",
     "description": null,
-    "renderer_name": "standard",
     "module": "layout",
     "weight": 0,
     "storage": 2,
@@ -182,7 +181,7 @@
                         "level": "1",
                         "depth": "0",
                         "expand_all": 0,
-                        "toggle": 0
+                        "toggle": 1
                     },
                     "contexts": []
                 },
@@ -194,7 +193,19 @@
                             "classes": ""
                         }
                     }
-                }
+                },
+                "conditions": [
+                    {
+                        "plugin": "path",
+                        "data": {
+                            "settings": {
+                                "visibility_setting": "0",
+                                "paths": "form_api",
+                                "load_condition_nojs": "Load condition"
+                            }
+                        }
+                    }
+                ]
             }
         },
         "2632c627-05f7-4280-9000-cdcc76bd7a68": {
