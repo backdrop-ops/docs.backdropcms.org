@@ -20,7 +20,7 @@
                         "distinct": true
                     }
                 },
-                "use_ajax": true,
+                "use_ajax": false,
                 "use_more_always": false,
                 "access": {
                     "type": "perm",
