@@ -3858,7 +3858,7 @@
 
 <h3><a id="access" name="access">#access</a></h3>
 
-<p><strong>Used by</strong>: All elements and forms</p>
+<p><strong>Used by</strong>: All elements and forms.</p>
 
 <p><strong>Description</strong>: Whether the element is accessible or not; when FALSE, the element is not rendered and the user submitted value is not taken into consideration.</p>
 
@@ -3880,7 +3880,7 @@
 
 <h3><a id="after_build" name="after_build">#after_build</a></h3>
 
-<p><strong>Used by</strong>: All elements and forms</p>
+<p><strong>Used by</strong>: All elements and forms.</p>
 
 <p><strong>Description</strong>: An array of function names which will be called after the form or element is built.</p>
 
@@ -3899,7 +3899,7 @@
 
 <h3><a id="ajax" name="ajax">#ajax</a></h3>
 
-<p><strong>Used by</strong>: <a href="#button">button</a>, <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#image_button">image button</a>, <a href="#password">password</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#submit">submit</a>, <a href="#tableselect">tableselect</a>, <a href="#textarea">textarea</a>, <a href="#text_format">text_format</a>, <a href="#textfield">textfield</a></p>
+<p><strong>Used by</strong>: <a href="#button">button</a>, <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#image_button">image button</a>, <a href="#password">password</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#submit">submit</a>, <a href="#tableselect">tableselect</a>, <a href="#textarea">textarea</a>, <a href="#text_format">text_format</a>, <a href="#textfield">textfield</a>, <a href="#url">url</a></p>
 
 <p>An array of elements whose values control the behavior of the element with respect to the <a href="https://api.backdropcms.org/api/backdrop/core!includes!ajax.inc/group/ajax/1">Backdrop AJAX framework</a>.</p>
 
@@ -4072,13 +4072,13 @@
 
 <h3><a id="array_parents" name="array_parents">#array_parents</a></h3>
 
-<p><strong>Used by</strong>: All form elements</p>
+<p><strong>Used by</strong>: All elements.</p>
 
 <p><strong>Description</strong>: (read-only, and mostly <strong>internal</strong>). The array of names of the element's parents (including itself) in the form. This will always match the structure of $form. It is different from <a href="#parents">#parents</a> in that #parents lists only the structure used in $form_state['values'], which is flat unless #tree is set to TRUE. Please see the <a href="http://drupal.org/node/279246#comment-2292322">complete comparison between #parents and #array_parents</a>.</p>
 
 <h3><a id="attached" name="attached">#attached</a></h3>
 
-<p><strong>Used by</strong>: All form elements</p>
+<p><strong>Used by</strong>: All elements.</p>
 
 <p><strong>Description</strong>: Allows loading of CSS, Javascript, libraries, or custom types when the form is built.</p>
 
@@ -4132,7 +4132,7 @@
 
 <h3><a id="attributes" name="attributes">#attributes</a></h3>
 
-<p><strong>Used by</strong>: <a href="#actions">actions</a>, <a href="#button">button</a>, <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#container">container</a>, <a href="#date">date</a>, <a href="#fieldset">fieldset</a>, <a href="#file">file</a>, <a href="#form">form</a>, <a href="#image_button">image_button</a>, <a href="#password">password</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#submit">submit</a>, <a href="#tableselect">tableselect</a>, <a href="#textarea">textarea</a>, <a href="#text_format">text_format</a>, <a href="#textfield">textfield</a>, <a href="#weight">weight</a></p>
+<p><strong>Used by</strong>: <a href="#actions">actions</a>, <a href="#button">button</a>, <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#container">container</a>, <a href="#date">date</a>, <a href="#fieldset">fieldset</a>, <a href="#file">file</a>, <a href="#form">form</a>, <a href="#image_button">image_button</a>, <a href="#password">password</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#submit">submit</a>, <a href="#tableselect">tableselect</a>, <a href="#textarea">textarea</a>, <a href="#text_format">text_format</a>, <a href="#textfield">textfield</a>, <a href="#url">url</a>, <a href="#weight">weight</a></p>
 
 <p><strong>Description</strong>: Additional HTML attributes, such as 'class' can be set using this mechanism.</p>
 
@@ -4289,7 +4289,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="default_value" name="default_value">#default_value</a></h3>
 
-<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#date">date</a>, <a href="#hidden">hidden</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#tableselect">tableselect</a>, <a href="#textarea">textarea</a>, <a href="#text_format">text_format</a>, <a href="#textfield">textfield</a>, <a href="#token">token</a>, <a href="#weight">weight</a></p>
+<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#date">date</a>, <a href="#hidden">hidden</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#tableselect">tableselect</a>, <a href="#textarea">textarea</a>, <a href="#text_format">text_format</a>, <a href="#textfield">textfield</a>, <a href="#token">token</a>, <a href="#url">url</a>, <a href="#weight">weight</a></p>
 
 <p><strong>Description</strong>: The value of the form element that will be displayed or selected initially if the form has not been submitted yet. <strong>Should NOT be confused with</strong> <strong><a href="#value">#value</a></strong>, which is a hard-coded value the user cannot change!</p>
 
@@ -4328,7 +4328,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="description" name="description">#description</a></h3>
 
-<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#date">date</a>, <a href="#fieldset">fieldset</a>, <a href="#file">file</a>, <a href="#item">item</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#text_format">text_format</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#weight">weight</a></p>
+<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#date">date</a>, <a href="#fieldset">fieldset</a>, <a href="#file">file</a>, <a href="#item">item</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#text_format">text_format</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#url">url</a>, <a href="#weight">weight</a></p>
 
 <p><strong>Description</strong>: The description of the form element. Make sure to enclose inside the t() function so this property can be translated.</p>
 
@@ -4348,7 +4348,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="disabled" name="disabled">#disabled</a></h3>
 
-<p><strong>Used by</strong>: <a href="#button">button</a>, <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#date">date</a>, <a href="#file">file</a>, <a href="#image_button">image_button</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#submit">submit</a>, <a href="#text_format">text_format</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#weight">weight</a></p>
+<p><strong>Used by</strong>: <a href="#button">button</a>, <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#date">date</a>, <a href="#file">file</a>, <a href="#image_button">image_button</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#submit">submit</a>, <a href="#text_format">text_format</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#url">url</a>, <a href="#weight">weight</a></p>
 
 <p><strong>Description</strong>: Disables (greys out) a form input element. Setting #disabled to TRUE results in user input being ignored, regardless of how the element is themed or whether JavaScript is used to change the control's attributes.</p>
 
@@ -4364,7 +4364,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="element_validate" name="element_validate">#element_validate</a></h3>
 
-<p><strong>Used by</strong>: Any element.</p>
+<p><strong>Used by</strong>: All elements.</p>
 
 <p><strong>Description</strong>: A list of custom validation functions. The validation functions must use form_error() or form_set_error() to flag the element as having an error if the validation fails.</p>
 
@@ -4462,7 +4462,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="field_prefix" name="field_prefix">#field_prefix</a></h3>
 
-<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#machine_name">machine_name</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#select">select</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a></p>
+<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#machine_name">machine_name</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#select">select</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#url">url</a></p>
 
 <p><strong>Description</strong>: Text or code that is placed directly in front of the textfield. This can be used to prefix a textfield with a constant string.</p>
 
@@ -4483,7 +4483,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="field_suffix" name="field_suffix">#field_suffix</a></h3>
 
-<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#machine_name">machine_name</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#select">select</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a></p>
+<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#machine_name">machine_name</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#select">select</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#url">url</a></p>
 
 <p><strong>Description</strong>: Text or code that is placed directly after a textfield. This can be used to add a unit to a textfield.</p>
 
@@ -4664,7 +4664,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="parents" name="parents">#parents</a></h3>
 
-<p><strong>Used by</strong>: All</p>
+<p><strong>Used by</strong>: All elements.</p>
 
 <p><strong>Description</strong>: Identifies parent form elements. See <a href="http://drupal.org/node/48643">#tree and #parents</a> in the handbook and the <a href="http://drupal.org/node/279246#comment-2292322">complete comparison between #parents and #array_parents</a>.</p>
 
@@ -4685,7 +4685,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="placeholder" name="placeholder">#placeholder</a></h3>
 
-<p><strong>Used by</strong>: <a href="#password">password</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a></p>
+<p><strong>Used by</strong>: <a href="#password">password</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#url">url</a></p>
 
 <p><strong>Description</strong>: Defines a short prompt or example text to be displayed in an input field using HTML5's placeholder attribute.</p>
 
@@ -4703,7 +4703,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="post_render" name="post_render">#post_render</a></h3>
 
-<p><strong>Used by</strong>: All elements and forms</p>
+<p><strong>Used by</strong>: All elements and forms.</p>
 
 <p><strong>Description</strong>: Function(s) to call <strong>after</strong> rendering in backdrop_render</a> has occured. The named function is called with two arguments, the rendered element and its children. It returns the (potentially) altered) element content.</p>
 
@@ -4773,7 +4773,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a name="process">#process</a></h3>
 
-<p><strong>Used by</strong>: All</p>
+<p><strong>Used by</strong>: All elements.</p>
 
 <p><strong>Description</strong>: An array of functions that are called when an element is processed. Using this callback, modules can "register" further actions. For example, the "radios" form type is expanded to multiple radio buttons using a processing function.</p>
 
@@ -4800,7 +4800,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="required" name="required">#required</a></h3>
 
-<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#date">date</a>, <a href="#file">file</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#text_format">text_format</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#weight">weight</a></p>
+<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#date">date</a>, <a href="#file">file</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#text_format">text_format</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#url">url</a>, <a href="#weight">weight</a></p>
 
 <p><strong>Description</strong>: Indicates whether or not the element is required. This automatically validates for empty fields, and flags inputs as required. File fields are <strong>NOT</strong> allowed to be required.</p>
 
@@ -4897,7 +4897,7 @@ Example in a #theme_wrappers callback.</p>
 
 <h3><a id="states" name="states">#states</a></h3>
 
-<p><strong>Used by</strong>: any element</p>
+<p><strong>Used by</strong>: All elements.</p>
 
 <p><strong>Description</strong>:  Adds JavaScript to the element to allow it to have different active states.</p>
 
@@ -4991,7 +4991,7 @@ if (!empty($node->nid) && node_access('delete', $node)) {
 
 <h3><a id="title" name="title">#title</a></h3>
 
-<p><strong>Used by</strong>: weight</p>
+<p><strong>Used by</strong>: All elements.</p>
 
 <p><strong>Description</strong>: The title of the form element. Make sure to enclose inside the t() function so this property can be translated.</p>
 
@@ -5011,7 +5011,7 @@ if (!empty($node->nid) && node_access('delete', $node)) {
 
 <h3><a id="title_display" name="title_display">#title_display</a></h3>
 
-<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#date">date</a>, <a href="#fieldset">fieldset</a>, <a href="#file">file</a>, <a href="#item">item</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#text_format">text_format</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#weight">weight</a></p>
+<p><strong>Used by</strong>: <a href="#checkbox">checkbox</a>, <a href="#checkboxes">checkboxes</a>, <a href="#date">date</a>, <a href="#fieldset">fieldset</a>, <a href="#file">file</a>, <a href="#item">item</a>, <a href="#password">password</a>, <a href="#password_confirm">password_confirm</a>, <a href="#radio">radio</a>, <a href="#radios">radios</a>, <a href="#select">select</a>, <a href="#text_format">text_format</a>, <a href="#textarea">textarea</a>, <a href="#textfield">textfield</a>, <a href="#url">url</a>, <a href="#weight">weight</a></p>
 
 <p><strong>Description</strong>: Indicates how the label should be rendered. The label includes the #title and the required marker, if #required. If the #title is empty but the field is #required, the label will contain only the required marker.</p>
 
@@ -5040,7 +5040,7 @@ if (!empty($node->nid) && node_access('delete', $node)) {
 
 <h3><a id="tree" name="tree">#tree</a></h3>
 
-<p><strong>Used by</strong>: All</p>
+<p><strong>Used by</strong>: All elements.</p>
 
 <p><strong>Description</strong>: Used to allow collections of form elements. Normally applied to the "parent" element, as the #tree property cascades to sub-elements. Use where you previously used ][ in form_ calls. For more information, see <a href="http://drupal.org/node/48643">#tree and #parents</a> in the handbook.</p>
 
@@ -5067,7 +5067,7 @@ if (!empty($node->nid) && node_access('delete', $node)) {
 
 <h3><a id="type" name="type">#type</a></h3>
 
-<p><strong>Used by</strong>: All</p>
+<p><strong>Used by</strong>: All elements.</p>
 
 <p><strong>Description</strong>: Used to determine the type of form element.</p>
 
