@@ -4,6 +4,7 @@
     "name": "default",
     "title": "Default Layout",
     "description": null,
+    "renderer_name": "standard",
     "module": "layout",
     "weight": 0,
     "storage": 2,
@@ -254,6 +255,7 @@
                     "title": "",
                     "style": "default",
                     "block_settings": {
+                        "description": "",
                         "delta": "newsletter",
                         "reusable": true
                     },
