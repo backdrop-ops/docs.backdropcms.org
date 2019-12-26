@@ -8,22 +8,37 @@ html,
 body {
   font-family: 'Source Sans Pro', "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
   font-size: 16px;
+  line-height: 1.25;
   margin: 0;
   padding: 0;
   min-width: 300px;
 }
+@media (max-width: 48em) {  /* 768px @ 16px font size  -- MD */
+  body {
+    font-size: 18px;
+  }
+}
 
 p {
-  font-size: 1.10em; /* relative size */
-  line-height: 1.45; /* 23.2px */
+  font-size: 1.125em; /* relative size */
+  line-height: 1.45; /* 26.1px @ 18px font size */
   margin: 1em 0;
+}
+@media (min-width: 34em) { /* 544px @ 16px font size -- SM */
+  p {
+    line-height: 1.25; /* 20.25px @ 18px font size */
+  }
+}
+@media (min-width: 48em) {  /* 768px @ 16px font size  -- MD */
+  p {
+    line-height: 1.45; /* 26.1px @ 18px font size */
+  }
 }
 
 a {
-  color: #007CBA;
+  color: #0078B5;
   text-decoration: none;
 }
-
 a:hover {
   color: #007CBA;
 }
@@ -98,10 +113,13 @@ table th {
   font-weight: 400; /* Normal */
   border-bottom: 2px solid #E8E6E5;
 }
-tr.even,
 tr.odd {
   background-color: #f7f7f7;
 }
+tr.even {
+  background-color: transparent;
+}
+
 table td {
   padding: 1em .5em;
 }
@@ -136,13 +154,20 @@ small {
 pre {
   overflow: hidden;
   overflow-x: scroll;
-  background-color: #F7F7F7;
+  background-color: #EEEEEE;
   padding: 15px;
   margin: 10px 0;
 }
 code {
   font-family: Menlo, Consolas, "Andale Mono", "Lucida Console", "Nimbus Mono L", "DejaVu Sans Mono", monospace, "Courier New";
   font-size: 0.857em;
+  background-color: #EEEEEE;
+  padding: 0.2em 0.5em;
+  border-radius: 3px;
+}
+pre code {
+  background-color: transparent;
+  padding: 0;
 }
 
 dt,
@@ -181,6 +206,13 @@ select {
   height: 40px;
   color: #444b53;
   padding: 4px 16px 4px 8px;
+}
+input[type="checkbox"] {
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  height: 22px;
+  line-height: 22px;
+  margin-right: .5em;
 }
 input[type="submit"] {
   border: 2px solid #007CBA;
