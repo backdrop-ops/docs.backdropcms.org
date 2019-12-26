@@ -124,7 +124,7 @@ description = Check that search works with numeric locale settings.
 group  = Search
 file = search.test
 
-; Added by Backdrop CMS packaging script on 2019-09-15
+; Added by Backdrop CMS packaging script on 2019-12-18
 project = backdrop
-version = 1.14.0
-timestamp = 1568603705
+version = 1.14.2
+timestamp = 1576703413
