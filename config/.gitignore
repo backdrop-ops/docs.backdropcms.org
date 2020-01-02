@@ -1,2 +1,3 @@
 # Ignore the dev-active directory
-dev-active
+dev-active/*.json
+
