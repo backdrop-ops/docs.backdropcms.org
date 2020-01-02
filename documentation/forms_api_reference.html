@@ -2293,7 +2293,7 @@
       <!-- image_button -->
       <td><strong>X</strong></td>
       <!-- item -->
-      <td><strong>X</strong></td>
+      <td>-</td>
       <!-- language_select -->
       <td><strong>X</strong></td>
       <!-- markup -->
@@ -3890,6 +3890,56 @@
 ?></code></p>
 
 <p>Note that if you plan to use JavaScript to change your <code>hidden</code> element's value, you will need to use the <code>#default_value</code> property rather than <code>#value</code>.</p>
+
+
+<h3><a id="html_date" name="html_date">html_date</a></h3>
+
+<p><strong>Description</strong>: Format a date element.</p>
+
+<p><strong>Properties</strong>: <a href="#access">#access</a>, <a href="#after_build">#after_build</a>, <a href="#ajax">#ajax</a>, <a href="#attached">#attached</a>, <a href="#attributes">#attributes</a>, <a href="#array_parents">array_parents</a>, <a href="#default_value">#default_value</a>, <a href="#disabled">#disabled</a>, <a href="#element_validate">#element_validate</a>, <a href="#parents">#parents</a>, <a href="#post_render">#post_render</a>, <a href="#prefix">#prefix</a>, <a href="#pre_render">#pre_render</a>, <a href="#process">#process</a>, <a href="#required">#required</a>, <a href="#states">#states</a>, <a href="#suffix">#suffix</a>, <a href="#theme">#theme</a>, <a href="#theme_wrappers">#theme_wrappers</a>, <a href="#title">#title</a>, <a href="#title_display">#title_display</a>, <a href="#tree">#tree</a>, <a href="#type"><strong>#type</strong></a>, <a href="#value_callback">#value_callback</a>, <a href="#weightval">#weight</a></p>
+
+
+<h3><a id="html_datetime" name="html_datetime">html_datetime</a></h3>
+
+<p><strong>Description</strong>: Format both a date element and a time element together.</p>
+
+<p><strong>Properties</strong>: <a href="#access">#access</a>, <a href="#after_build">#after_build</a>, <a href="#ajax">#ajax</a>, <a href="#attached">#attached</a>, <a href="#attributes">#attributes</a>, <a href="#array_parents">array_parents</a>, <a href="#default_value">#default_value</a>, <a href="#disabled">#disabled</a>, <a href="#element_validate">#element_validate</a>, <a href="#parents">#parents</a>, <a href="#post_render">#post_render</a>, <a href="#prefix">#prefix</a>, <a href="#pre_render">#pre_render</a>, <a href="#process">#process</a>, <a href="#required">#required</a>, <a href="#states">#states</a>, <a href="#suffix">#suffix</a>, <a href="#theme">#theme</a>, <a href="#theme_wrappers">#theme_wrappers</a>, <a href="#title">#title</a>, <a href="#title_display">#title_display</a>, <a href="#tree">#tree</a>, <a href="#type"><strong>#type</strong></a>, <a href="#value_callback">#value_callback</a>, <a href="#weightval">#weight</a></p>
+
+<p><strong>Usage example</strong> (node.module):</p>
+
+<p><code><?php
+  $form['author']['date'] = array(
+    '#type' => 'html_datetime',
+    '#title' => t('Authored on'),
+    '#default_value' => array(
+      'date' => format_date($node->created, 'custom', DATE_FORMAT_DATE),
+      'time' => format_date($node->created, 'custom', DATE_FORMAT_TIME),
+    ),
+    '#attributes' => array(
+      'date' => array(
+        'min' => '1970-01-01',
+        'max' => '2037-12-31',
+        'placeholder' => t('e.g. @date', array(
+          '@date' => format_date(REQUEST_TIME, 'custom', DATE_FORMAT_DATE)
+        )),
+      ),
+      'time' => array(
+        'placeholder' => t('e.g. @date', array(
+          '@date' => format_date(REQUEST_TIME, 'custom', DATE_FORMAT_TIME)
+        )),
+      ),
+    ),
+    '#description' => t('Leave blank to use the current time.'),
+  );
+?></code></p>
+
+
+<h3><a id="html_time" name="html_time">html_time</a></h3>
+
+<p><strong>Description</strong>: Format a time element.</p>
+
+<p><strong>Properties</strong>: <a href="#access">#access</a>, <a href="#after_build">#after_build</a>, <a href="#ajax">#ajax</a>, <a href="#attached">#attached</a>, <a href="#attributes">#attributes</a>, <a href="#array_parents">array_parents</a>, <a href="#default_value">#default_value</a>, <a href="#disabled">#disabled</a>, <a href="#element_validate">#element_validate</a>, <a href="#parents">#parents</a>, <a href="#post_render">#post_render</a>, <a href="#prefix">#prefix</a>, <a href="#pre_render">#pre_render</a>, <a href="#process">#process</a>, <a href="#required">#required</a>, <a href="#states">#states</a>, <a href="#suffix">#suffix</a>, <a href="#theme">#theme</a>, <a href="#theme_wrappers">#theme_wrappers</a>, <a href="#title">#title</a>, <a href="#title_display">#title_display</a>, <a href="#tree">#tree</a>, <a href="#type"><strong>#type</strong></a>, <a href="#value_callback">#value_callback</a>, <a href="#weightval">#weight</a></p>
+
 
 <h3><a id="image_button" name="image_button">image_button</a></h3>
 
