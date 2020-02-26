@@ -1,2 +1,2 @@
-# Ignore the dev-active directory
-dev-active
+# Ignore dev for local
+dev-active/*.json
