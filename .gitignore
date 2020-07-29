@@ -1,0 +1,9 @@
+# OS and IDE files.
+/.idea
+.DS_Store
+
+# Backups.
+/*.sql
+/*.sql.gz
+/*.tgz
+/*.tar.gz
