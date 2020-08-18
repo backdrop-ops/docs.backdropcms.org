@@ -24,6 +24,7 @@
             "09f11b4e-877e-45ab-9000-a4c6254faa04"
         ],
         "content": [
+            "2885b5da-3df1-49e9-a005-5dda5be7dfec",
             "default"
         ],
         "sidebar": [
@@ -119,6 +120,41 @@
                         }
                     }
                 }
+            }
+        },
+        "2885b5da-3df1-49e9-a005-5dda5be7dfec": {
+            "plugin": "backdropapi:form_api_table",
+            "data": {
+                "module": "backdropapi",
+                "delta": "form_api_table",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": []
+                },
+                "uuid": "2885b5da-3df1-49e9-a005-5dda5be7dfec",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                },
+                "conditions": [
+                    {
+                        "plugin": "path",
+                        "data": {
+                            "settings": {
+                                "visibility_setting": "1",
+                                "paths": "form-api",
+                                "load_condition_nojs": "Load condition"
+                            }
+                        }
+                    }
+                ]
             }
         },
         "default": {
