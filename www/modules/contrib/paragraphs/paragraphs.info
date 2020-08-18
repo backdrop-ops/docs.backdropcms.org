@@ -1,0 +1,12 @@
+name = Paragraphs
+description = Paragraphs module to control your content flow.
+backdrop = 1.x
+type = module
+package = Paragraphs
+
+dependencies[] = entity
+
+; Added by Backdrop CMS packaging script on 2018-10-04
+project = paragraphs
+version = 1.x-1.0.1
+timestamp = 1538678533

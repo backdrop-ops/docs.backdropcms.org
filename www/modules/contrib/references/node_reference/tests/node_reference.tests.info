@@ -1,0 +1,11 @@
+[NodeReferenceFormTest]
+name = Node reference 
+description = Make sure nodes are referenceable in entity forms. 
+group = References 
+file = node_reference.test
+
+
+; Added by Backdrop CMS packaging script on 2019-11-30
+project = references
+version = 1.x-1.0.2
+timestamp = 1575171954

@@ -1,0 +1,18 @@
+name = References
+description = Defines common base features for the various reference field types.
+package = Fields
+core = 7.x
+backdrop = 1.x
+type = module
+dependencies[] = field
+dependencies[] = options
+files[] = views/references_handler_relationship.inc
+files[] = views/references_handler_argument.inc
+files[] = views/references_plugin_display.inc
+files[] = views/references_plugin_style.inc
+files[] = views/references_plugin_row_fields.inc
+
+; Added by Backdrop CMS packaging script on 2019-11-30
+project = references
+version = 1.x-1.0.2
+timestamp = 1575171954
