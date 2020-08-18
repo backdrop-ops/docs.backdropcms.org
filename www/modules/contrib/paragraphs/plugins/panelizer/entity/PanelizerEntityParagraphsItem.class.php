@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Class for the Panelizer paragraphs item entity plugin.
- */
 
 /**
  * Panelizer Entity paragraphs item plugin class.
@@ -13,24 +9,44 @@ class PanelizerEntityParagraphsItem extends PanelizerEntityDefault {
 
   /**
    * True if the entity supports revisions.
+   *
+   * @var bool
    */
   public $supports_revisions = TRUE;
+
+  /**
+   * Path to the admin page for this entity.
+   *
+   * @var string
+   */
   public $entity_admin_root = 'admin/structure/paragraphs/%paragraphs_panelizer_bundle_name';
+
+  /**
+   * Menu depth to the admin page.
+   *
+   * @var int
+   */
   public $entity_admin_bundle = 3;
+
+  /**
+   * The name of the database table storing paragraphs items.
+   *
+   * @var string
+   */
   public $views_table = 'paragraphs_item';
 
   /**
    * {@inheritdoc}
    */
-  public function paragraphs_entity_access($op, $entity) {
-    return paragraphs_entity_access($op, $this->entity_type, $entity);
+  public function entity_access($op, $entity) {
+    return entity_access($op, $this->entity_type, $entity);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function entity_save($entity) {
-    entity_save($this->entity_type, $entity);
+  public function entity_plus_save($entity) {
+    entity_plus_save($this->entity_type, $entity);
   }
 
   /**
@@ -54,7 +70,7 @@ class PanelizerEntityParagraphsItem extends PanelizerEntityDefault {
     $retval = array();
 
     $retval[0] = TRUE;
-    $retval[1] = $this->paragraphs_entity_access(!empty($entity->is_new) ? 'create' : 'update', $entity);
+    $retval[1] = $this->entity_access(!empty($entity->is_new) ? 'create' : 'update', $entity);
 
     return $retval;
   }
@@ -62,7 +78,7 @@ class PanelizerEntityParagraphsItem extends PanelizerEntityDefault {
   /**
    * {@inheritdoc}
    */
-  function get_default_display($bundle, $view_mode) {
+  public function get_default_display($bundle, $view_mode) {
     // For now we just go with the empty display.
     // @todo come up with a better default display.
     return parent::get_default_display($bundle, $view_mode);

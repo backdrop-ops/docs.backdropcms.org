@@ -1,69 +1,56 @@
-Paragraphs
-==========
+# ![Paragraphs](https://github.com/backdrop-contrib/paragraphs/blob/1.x-1.x/images/paragraphs.png "Paragraphs for BackdropCMS")
 
-Paragraph is a module to create paragraphs in your content.
-You can create bundles(with own display and fields) as paragraph types.
+Paragraphs is the new way of content creation!
 
-When you add a paragraph field to your node/entity, you can select the allowed bundles, and when using the field, you can select a paragraph type from the allowed bundles to use different fields/display per paragraph.
+It allows you — Site Builders — to make things cleaner so that you can give more 
+editing power to your end users.
 
+Instead of putting all their content in one WYSIWYG body field including images 
+and videos, end-users can now choose on-the-fly between pre-defined Paragraph 
+Types independent from one another. Paragraph Types can be anything you want 
+from a simple text block or image to a complex and configurable slideshow.
 
-Installation and usage
-------------
+Paragraphs module comes with a new "paragraphs" field type that works like 
+Entity References. Simply add a new paragraphs field on any Content Type you 
+want and choose which Paragraph Types should be available to end-users. They 
+can then add as many Paragraph items as you allowed them to and reorder them 
+at will.
 
-1. Copy  to your modules directory
-2. Enable the module at the module administration page
-3. Create a Paragraph Bundle
-  - Go to Structure->Paragraph Bundles (admin/structure/paragraphs) and click 'Add Paragraph Bundle'. (Alternatively you can navigate directly to admin/structure/paragraphs/add)
-  - Enter 'Content text' as Name, and click 'Save Paragraph bundle'
-4. Add a field to a Paragraph Bundle
-  - Example for adding a text field which can be used for adding content:
-    - Click 'manage fields'
-    - At 'Add new field'-> enter:
-      - Label: 'Text'
-      - Field type: 'Long text' 
-    - and click the 'Save' button
-    - click 'Save field settings'
-    - at the bottom of that next page click 'Save settings'
-  - Hide field labels
-    - If you want to hide the label of the field you created from the page visitor:
-      - click on tab 'Manage display'
-      - Set the label of 'Paragraphs' to 'hidden' and click 'save'
-5. Set permissions for your Paragraph Bundle
-  - Go to /admin/people/permissions
-  - Under "Paragraphs Bundle Permissions" set appropriate permissions for user roles to view, create, edit or delete your Paragraph Bundle
-  - Note that if you don't set at least one user role to be able to view the Bundle, it will be invisible to everyone on the front end, including administrator role
-  - Click 'Save permissions'
-6. Add a Paragraphs field to your Content Type
-  Go to Structure->Content types (admin/structure/types)
-  - click 'manage fields' at the content type you want to add the Paragraph field to
-  - At 'Add new field' enter:
-    - Label: 'Paragraphs'
-    - Field type: 'Paragraphs'
-    - Leave widget on 'Embedded'
-  - and click the 'Save' button
-  - at 'Paragraphs field settings' set 'Number of values' to 'Unlimited'
-  - click 'Save settings'
-  - Hide field labels
-  - If you want to hide the label of the field you created from the front-end page visitor:
-    - click on tab 'Manage display'
-    - Set the label of 'Paragraphs' to 'hidden' and click 'save'
-7. Result
-  - The content editor of your Backdrop site will now be able to add Paragraphs to the content type you selected.
-  - The Paragraph content will display the same way as regular body content does after a default Backdrop installation.
+Paragraphs module does not come with any default Paragraph Types but you have 
+complete control over what fields they should be composed of and what they 
+should look like through the standard Backdrop **Manage Fields** and 
+**Manage Display** screens.
 
-License
--------
+You can also add custom option fields and do conditional coding in your CSS, 
+JS and preprocess functions so that end-users can have more control over the 
+look and feel of each item. This is way much cleaner and stable than adding 
+inline CSS or classes inside the body field's source.
 
-This project is GPL v2 software. See the LICENSE.txt file in this directory for
-complete text.
+So... what's it gonna be? Accordions, Tabs, Slideshows, Masonry galleries, 
+Parallax backgrounds...? Think big!
 
-Current Maintainers
--------------------
+Some more examples:
+
+ - Add a block of text with an image left to it
+ - Add a slideshow between blocks of text
+ - Add a youtube embed between your text
+ - Add quotes between your content blocks
+
+## Installation and Usage
+
+- Install this module using the [official Backdrop CMS instructions](https://backdropcms.org/guide/modules)
+
+- Usage instructions can be [viewed and edited in the Wiki](https://github.com/backdrop-contrib/paragraphs/wiki).
+
+## Issues
+
+ - Bugs and Feature requests should be reported in the [Issue Queue](https://github.com/backdrop-contrib/paragraphs/issues).
+
+## Current Maintainers
 
  - [Laryn Kragt Bakker](https://github.com/laryn) - [CEDC.org](https://cedc.org)
 
-Credits
--------
+## Credits
 
  - Ported to BackdropCMS by [@docwilmot](https://github.com/docwilmot)
 
@@ -72,3 +59,8 @@ Credits
     - [miro_dietiker](https://www.drupal.org/u/miro_dietiker)
     - [primsi](https://www.drupal.org/u/primsi)
     - [jeroenb](https://www.drupal.org/u/jeroenb)
+
+## License
+
+This project is GPL v2 software. See the LICENSE.txt file in this directory for
+complete text.

@@ -1,0 +1,10 @@
+name = Entity Plus
+description = Functions and wrappers to extend core Entity functionality.
+
+backdrop = 1.x
+type = module
+
+; Added by Backdrop CMS packaging script on 2020-07-21
+project = entity_plus
+version = 1.x-1.0.7
+timestamp = 1595363502

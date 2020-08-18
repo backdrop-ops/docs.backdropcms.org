@@ -11,24 +11,39 @@
 function paragraphs_schema() {
   $schema = array();
   $schema['paragraphs_bundle'] = array(
-    'description' => 'Stores information about paragraphs bundles.',
+    'description' => 'Stores information about Paragraph types.',
     'fields' => array(
       'bundle' => array(
-        'description' => 'The machine-readable name of this bundle.',
+        'description' => 'The machine-readable name of this Paragraph type.',
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
       ),
       'name' => array(
-        'description' => 'The human-readable name of this bundle.',
+        'description' => 'The human-readable label for this Paragraph type.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
         'translatable' => TRUE,
       ),
+      'label' => array(
+        'description' => 'A user-facing label for this bundle.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'translatable' => TRUE,
+      ),
+      'description' => array(
+        'description' => 'A brief description of this bundle.',
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'medium',
+        'translatable' => TRUE,
+      ),
       'locked' => array(
-        'description' => 'A boolean indicating whether the administrator can change the machine name of this bundle.',
+        'description' => 'A boolean indicating whether the administrator can change the machine name of this Paragraph type.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -52,7 +67,7 @@ function paragraphs_schema() {
         'description' => 'Default revision ID.',
       ),
       'bundle' => array(
-        'description' => 'The bundle of this paragraph item.',
+        'description' => 'The Paragraph type of this item.',
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
@@ -64,7 +79,7 @@ function paragraphs_schema() {
         'not null' => TRUE,
       ),
       'archived' => array(
-        'description' => 'Boolean indicating whether the paragraph item is archived.',
+        'description' => 'Boolean indicating whether the Paragraph item is archived.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -74,7 +89,7 @@ function paragraphs_schema() {
   );
 
   $schema['paragraphs_item_revision'] = array(
-    'description' => 'Stores revision information about paragraph items.',
+    'description' => 'Stores revision information about Paragraph items.',
     'fields' => array(
       'revision_id' => array(
         'type' => 'serial',
@@ -111,18 +126,43 @@ function paragraphs_field_schema($field) {
       'value' => array(
         'type' => 'int',
         'not null' => FALSE,
-        'description' => 'The paragraph item id.',
+        'description' => 'The Paragraph item id.',
       ),
       'revision_id' => array(
         'type' => 'int',
         'not null' => FALSE,
-        'description' => 'The paragraph item revision id.',
+        'description' => 'The Paragraph item revision id.',
       ),
     );
   }
   return array(
     'columns' => $columns,
   );
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function paragraphs_requirements($phase) {
+  $t = get_t();
+  $requirements = array();
+  
+  // Make sure schema version is appropriate.
+  if (backdrop_get_installed_schema_version('paragraphs') == 7102) {
+    backdrop_set_installed_schema_version('paragraphs', 999);
+  }
+
+  if ($phase == 'runtime') {
+    if (!module_exists('entity_plus')) {
+      $requirements['paragraphs'] = array(
+        'title' => $t('Paragraphs'),
+        'value' => $t('Required module is not installed'),
+        'description' => $t('Paragraphs requires the Entity Plus module to be installed.'),
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+  }
+  return $requirements;
 }
 
 /**
@@ -137,8 +177,41 @@ function paragraphs_uninstall() {
 }
 
 /**
+ * Update {paragraphs_bundle} schema to include label and description fields.
+ */
+function paragraphs_update_1000() {
+  $fields = array(
+    'label' => array(
+      'description' => 'A user-facing label for this bundle.',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    ),
+    'description' => array(
+      'description' => 'A brief description of this bundle.',
+      'type' => 'text',
+      'not null' => FALSE,
+      'size' => 'medium',
+      'default' => NULL,
+    ),
+  );
+
+  foreach ($fields as $key => $field) {
+    if (!db_field_exists('paragraphs_bundle', $key)) {
+      db_add_field('paragraphs_bundle', $key, $field);
+    }
+  }
+
+  // Set initial label value equal to name.
+  db_update('paragraphs_bundle')
+    ->expression('label', 'name')
+    ->execute();
+}
+
+/**
  * Implements hook_update_last_removed().
  */
 function paragraphs_update_last_removed() {
-  return 7102;
+  return 7103;
 }

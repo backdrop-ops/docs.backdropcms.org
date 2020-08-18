@@ -1,0 +1,74 @@
+<?php
+/**
+ * @file
+ * Custom module for the Backdrop API site.
+ */
+
+/**
+ * Implements hook_block_info().
+ */
+function backdropapi_block_info() {
+  $blocks['form_api_table'] = array(
+    'info' => t('Form API table'),
+    'description' => t('Displays all Form API elements and properties together in a table.'),
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function backdropapi_block_view($delta = '', $settings = array(), $contexts = array()) {
+  $block = array();
+
+  if ($delta == 'form_api_table') {
+    $block['subject'] = '';
+    $block['content'] = backdropapi_form_api_table();
+  }
+
+  return $block;
+}
+
+/**
+ * Returns a table of Form API elements and properties.
+ */
+function backdropapi_form_api_table() {
+  $variables = array();
+
+  // Get lists of Form API elements & properties.
+  $elements = views_get_view_result('form_api', 'attachment_1');
+  $properties = views_get_view_result('form_api', 'attachment_2');
+
+  // Setup the table header.
+  $variables['header'][] = '';
+  foreach ($elements as $element) {
+    $variables['header'][] = '<a href="#' . $element->node_title . '">' . $element->node_title . '</a>';
+  }
+
+  // Setup the table rows.
+  foreach ($properties as $property) {
+    $row = array('<a href="#' . $property->node_title . '">#' . $property->node_title . '</a>');
+
+    foreach ($elements as $element) {
+      // Get all properties for this element.
+      $element_properties = array();
+      foreach ($element->field_field_fapi_properties as $element_property) {
+        $element_properties[] = $element_property['rendered']['entity']['paragraphs_item'][$element_property['raw']['value']]['field_fapi_property'][0]['#title'];
+      }
+
+      // Set the value of the cell.
+      if (in_array($property->node_title, $element_properties)) {
+        $value = '&#10003;';
+      }
+      else {
+        $value = '&nbsp;';
+      }
+      $row[] = $value;
+    }
+
+    $variables['rows'][] = $row;
+  }
+
+  return theme('table', $variables);
+}

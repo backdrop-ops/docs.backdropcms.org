@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * paragraphs_test.panelizer.inc

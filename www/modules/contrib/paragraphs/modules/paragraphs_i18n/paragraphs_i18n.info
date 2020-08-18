@@ -8,7 +8,7 @@ dependencies[] = paragraphs
 dependencies[] = replicate
 dependencies[] = replicate_paragraphs
 
-; Added by Backdrop CMS packaging script on 2018-10-04
+; Added by Backdrop CMS packaging script on 2020-06-05
 project = paragraphs
-version = 1.x-1.0.1
-timestamp = 1538678533
+version = 1.x-1.1.0-beta
+timestamp = 1591372613
