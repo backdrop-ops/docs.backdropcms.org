@@ -110,6 +110,17 @@
         "delete own video files",
         "delete any video files",
         "download own video files",
-        "download any video files"
+        "download any video files",
+        "create fapi_element content",
+        "edit own fapi_element content",
+        "edit any fapi_element content",
+        "delete own fapi_element content",
+        "delete any fapi_element content",
+        "create fapi_property content",
+        "edit own fapi_property content",
+        "edit any fapi_property content",
+        "delete own fapi_property content",
+        "delete any fapi_property content",
+        "administer paragraphs bundles"
     ]
 }

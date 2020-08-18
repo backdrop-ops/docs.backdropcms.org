@@ -1,0 +1,10 @@
+{
+    "_config_name": "field.bundle.paragraphs_item.fapi_properties",
+    "bundle": "fapi_properties",
+    "entity_type": "paragraphs_item",
+    "view_modes": [],
+    "extra_fields": {
+        "form": [],
+        "display": []
+    }
+}

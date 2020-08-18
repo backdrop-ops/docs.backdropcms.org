@@ -1,0 +1,35 @@
+{
+    "_config_name": "field.instance.paragraphs_item.fapi_properties.field_fapi_property",
+    "field_name": "field_fapi_property",
+    "entity_type": "paragraphs_item",
+    "bundle": "fapi_properties",
+    "label": "FAPI Property",
+    "widget": {
+        "weight": "0",
+        "type": "node_reference_autocomplete",
+        "module": "node_reference",
+        "active": 1,
+        "settings": {
+            "autocomplete_match": "contains",
+            "size": "60",
+            "autocomplete_path": "node_reference/autocomplete"
+        }
+    },
+    "description": "",
+    "required": 1,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "node_reference_default",
+            "weight": "0",
+            "settings": [],
+            "module": "node_reference"
+        }
+    }
+}
