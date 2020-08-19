@@ -1,0 +1,36 @@
+{
+    "_config_name": "field.instance.node.fapi_element.field_special",
+    "field_name": "field_special",
+    "entity_type": "node",
+    "bundle": "fapi_element",
+    "label": "Special",
+    "widget": {
+        "weight": "1",
+        "type": "options_onoff",
+        "module": "options",
+        "active": 1,
+        "settings": {
+            "display_label": 1
+        }
+    },
+    "description": "'Special' elements are displayed in a seperate table to regular elements.",
+    "required": 0,
+    "deleted": 0,
+    "default_value": [
+        {
+            "value": 0
+        }
+    ],
+    "default_value_function": null,
+    "settings": {
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "hidden",
+            "weight": "3",
+            "settings": []
+        }
+    }
+}

@@ -5,7 +5,7 @@
     "bundle": "fapi_element",
     "label": "Properties",
     "widget": {
-        "weight": "2",
+        "weight": "3",
         "type": "paragraphs_embed",
         "module": "paragraphs",
         "active": 0,
