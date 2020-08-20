@@ -87,6 +87,57 @@
                         "link_to_node": 0,
                         "machine_name": 1
                     },
+                    "nid": {
+                        "id": "nid",
+                        "table": "node",
+                        "field": "nid",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "label": "",
+                        "exclude": 1,
+                        "alter": {
+                            "alter_text": 0,
+                            "text": "",
+                            "make_link": 0,
+                            "path": "",
+                            "absolute": 0,
+                            "external": 0,
+                            "replace_spaces": 0,
+                            "path_case": "none",
+                            "trim_whitespace": 0,
+                            "alt": "",
+                            "rel": "",
+                            "link_class": "",
+                            "prefix": "",
+                            "suffix": "",
+                            "target": "",
+                            "nl2br": 0,
+                            "max_length": "",
+                            "word_boundary": 1,
+                            "ellipsis": 1,
+                            "more_link": 0,
+                            "more_link_text": "",
+                            "more_link_path": "",
+                            "strip_tags": 0,
+                            "trim": 0,
+                            "preserve_tags": "",
+                            "html": 0
+                        },
+                        "element_type": "",
+                        "element_class": "",
+                        "element_label_type": "",
+                        "element_label_class": "",
+                        "element_label_colon": false,
+                        "element_wrapper_type": "",
+                        "element_wrapper_class": "",
+                        "element_default_classes": 1,
+                        "empty": "",
+                        "hide_empty": 0,
+                        "empty_zero": 0,
+                        "hide_alter_empty": 1,
+                        "link_to_node": 0
+                    },
                     "title": {
                         "id": "title",
                         "table": "node",
@@ -138,6 +189,60 @@
                         "hide_alter_empty": 1,
                         "link_to_node": 0
                     },
+                    "view": {
+                        "id": "view",
+                        "table": "views",
+                        "field": "view",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "label": "Used By",
+                        "exclude": 0,
+                        "alter": {
+                            "alter_text": false,
+                            "text": "",
+                            "make_link": false,
+                            "path": "",
+                            "absolute": false,
+                            "external": false,
+                            "replace_spaces": false,
+                            "path_case": "none",
+                            "trim_whitespace": false,
+                            "alt": "",
+                            "rel": "",
+                            "link_class": "",
+                            "prefix": "",
+                            "suffix": "",
+                            "target": "",
+                            "nl2br": false,
+                            "max_length": "",
+                            "word_boundary": true,
+                            "ellipsis": true,
+                            "more_link": false,
+                            "more_link_text": "",
+                            "more_link_path": "",
+                            "strip_tags": false,
+                            "trim": false,
+                            "preserve_tags": "",
+                            "html": false
+                        },
+                        "element_type": "",
+                        "element_class": "",
+                        "element_label_type": "",
+                        "element_label_class": "",
+                        "element_label_colon": 0,
+                        "element_wrapper_type": "",
+                        "element_wrapper_class": "",
+                        "element_default_classes": 1,
+                        "empty": "",
+                        "hide_empty": 0,
+                        "empty_zero": 0,
+                        "hide_alter_empty": 1,
+                        "view": "form_api",
+                        "display": "attachment_4",
+                        "arguments": "[!nid]",
+                        "query_aggregation": 0
+                    },
                     "body": {
                         "id": "body",
                         "table": "field_data_body",
@@ -177,9 +282,9 @@
                         },
                         "element_type": "",
                         "element_class": "",
-                        "element_label_type": "",
+                        "element_label_type": "div",
                         "element_label_class": "",
-                        "element_label_colon": 1,
+                        "element_label_colon": 0,
                         "element_wrapper_type": "",
                         "element_wrapper_class": "",
                         "element_default_classes": 1,
@@ -240,9 +345,9 @@
                         },
                         "element_type": "",
                         "element_class": "",
-                        "element_label_type": "",
+                        "element_label_type": "div",
                         "element_label_class": "",
-                        "element_label_colon": 1,
+                        "element_label_colon": 0,
                         "element_wrapper_type": "",
                         "element_wrapper_class": "",
                         "element_default_classes": 1,
@@ -305,9 +410,9 @@
                         },
                         "element_type": "",
                         "element_class": "",
-                        "element_label_type": "",
+                        "element_label_type": "div",
                         "element_label_class": "",
-                        "element_label_colon": 1,
+                        "element_label_colon": 0,
                         "element_wrapper_type": "",
                         "element_wrapper_class": "",
                         "element_default_classes": 1,
@@ -368,9 +473,9 @@
                         },
                         "element_type": "",
                         "element_class": "",
-                        "element_label_type": "",
+                        "element_label_type": "div",
                         "element_label_class": "",
-                        "element_label_colon": 1,
+                        "element_label_colon": 0,
                         "element_wrapper_type": "",
                         "element_wrapper_class": "",
                         "element_default_classes": 1,
@@ -989,7 +1094,7 @@
                     "grouping": [
                         {
                             "field": "title",
-                            "rendered": 1,
+                            "rendered": 0,
                             "rendered_strip": 0
                         }
                     ],
@@ -1119,8 +1224,8 @@
                         "alter": {
                             "alter_text": 0,
                             "text": "",
-                            "make_link": 0,
-                            "path": "",
+                            "make_link": 1,
+                            "path": "#[title]",
                             "absolute": 0,
                             "external": 0,
                             "replace_spaces": 0,
@@ -1232,7 +1337,7 @@
                         "exclude": 0,
                         "alter": {
                             "alter_text": 1,
-                            "text": "[field_fapi_property] = [field_default_value]",
+                            "text": "<a href=\"#[field_fapi_property]\">#[field_fapi_property]</a> = [field_default_value]",
                             "make_link": 0,
                             "path": "",
                             "absolute": 0,
@@ -1349,6 +1454,256 @@
                         "content": "<h2 id=\"default-values\">Default values</h2>",
                         "format": "fix_html",
                         "tokenize": 0
+                    }
+                }
+            }
+        },
+        "attachment_4": {
+            "display_title": "Used By",
+            "display_plugin": "attachment",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "display_description": "",
+                "title": "",
+                "defaults": {
+                    "title": false,
+                    "style_plugin": false,
+                    "style_options": false,
+                    "row_plugin": false,
+                    "row_options": false,
+                    "fields": false,
+                    "filters": false,
+                    "filter_groups": false,
+                    "sorts": false,
+                    "arguments": false,
+                    "relationships": false
+                },
+                "style_plugin": "default",
+                "style_options": {
+                    "grouping": [],
+                    "row_class": "",
+                    "default_row_class": 0,
+                    "row_class_special": 0
+                },
+                "row_plugin": "fields",
+                "row_options": {
+                    "default_field_elements": 0,
+                    "inline": {
+                        "title": "title"
+                    },
+                    "separator": "",
+                    "hide_empty": 1
+                },
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "node",
+                        "field": "title",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "label": "",
+                        "exclude": 0,
+                        "alter": {
+                            "alter_text": 0,
+                            "text": "",
+                            "make_link": 1,
+                            "path": "#[title]",
+                            "absolute": 0,
+                            "external": 0,
+                            "replace_spaces": 0,
+                            "path_case": "none",
+                            "trim_whitespace": 0,
+                            "alt": "",
+                            "rel": "",
+                            "link_class": "",
+                            "prefix": "",
+                            "suffix": "",
+                            "target": "",
+                            "nl2br": 0,
+                            "max_length": "",
+                            "word_boundary": 0,
+                            "ellipsis": 0,
+                            "more_link": 0,
+                            "more_link_text": "",
+                            "more_link_path": "",
+                            "strip_tags": 0,
+                            "trim": 0,
+                            "preserve_tags": "",
+                            "html": 0
+                        },
+                        "element_type": "",
+                        "element_class": "",
+                        "element_label_type": "",
+                        "element_label_class": "",
+                        "element_label_colon": false,
+                        "element_wrapper_type": "",
+                        "element_wrapper_class": "",
+                        "element_default_classes": 1,
+                        "empty": "",
+                        "hide_empty": 0,
+                        "empty_zero": 0,
+                        "hide_alter_empty": 1,
+                        "link_to_node": 0
+                    }
+                },
+                "filters": {
+                    "status": {
+                        "value": 1,
+                        "table": "node",
+                        "field": "status",
+                        "id": "status",
+                        "expose": {
+                            "operator": false
+                        },
+                        "group": 1
+                    },
+                    "type": {
+                        "id": "type",
+                        "table": "node",
+                        "field": "type",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "operator": "in",
+                        "value": {
+                            "fapi_element": "fapi_element"
+                        },
+                        "group": "1",
+                        "exposed": false,
+                        "expose": {
+                            "operator_id": false,
+                            "label": "",
+                            "description": "",
+                            "use_operator": false,
+                            "operator": "",
+                            "identifier": "",
+                            "required": false,
+                            "remember": false,
+                            "multiple": false,
+                            "remember_roles": {
+                                "authenticated": "authenticated"
+                            },
+                            "reduce": false
+                        },
+                        "is_grouped": false,
+                        "group_info": {
+                            "label": "",
+                            "description": "",
+                            "identifier": "",
+                            "optional": true,
+                            "widget": "select",
+                            "multiple": false,
+                            "remember": 0,
+                            "default_group": "All",
+                            "default_group_multiple": [],
+                            "group_items": []
+                        }
+                    }
+                },
+                "filter_groups": {
+                    "operator": "AND",
+                    "groups": {
+                        "1": "AND"
+                    }
+                },
+                "sorts": {
+                    "title": {
+                        "id": "title",
+                        "table": "node",
+                        "field": "title",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "order": "ASC",
+                        "exposed": false,
+                        "expose": {
+                            "label": ""
+                        }
+                    }
+                },
+                "pager": {
+                    "type": "none",
+                    "options": {
+                        "offset": "0"
+                    }
+                },
+                "arguments": {
+                    "nid": {
+                        "id": "nid",
+                        "table": "node",
+                        "field": "nid",
+                        "relationship": "field_fapi_property_nid",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "default_action": "not found",
+                        "exception": {
+                            "value": "all",
+                            "title_enable": 0,
+                            "title": "All"
+                        },
+                        "title_enable": 0,
+                        "title": "",
+                        "breadcrumb_enable": 0,
+                        "breadcrumb": "",
+                        "default_argument_type": "fixed",
+                        "default_argument_options": {
+                            "argument": ""
+                        },
+                        "default_argument_skip_url": 0,
+                        "summary_options": {
+                            "base_path": "",
+                            "count": "1",
+                            "items_per_page": "25",
+                            "override": 0
+                        },
+                        "summary": {
+                            "sort_order": "asc",
+                            "number_of_records": "0",
+                            "format": "default_summary"
+                        },
+                        "specify_validation": 1,
+                        "validate": {
+                            "type": "node",
+                            "fail": "not found"
+                        },
+                        "validate_options": {
+                            "types": {
+                                "fapi_property": "fapi_property"
+                            },
+                            "access_op": "view",
+                            "nid_type": "nid",
+                            "access": 0
+                        },
+                        "break_phrase": 0,
+                        "not": 0
+                    }
+                },
+                "relationships": {
+                    "field_fapi_properties_value": {
+                        "id": "field_fapi_properties_value",
+                        "table": "field_data_field_fapi_properties",
+                        "field": "field_fapi_properties_value",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "label": "Paragraph item from field_fapi_properties",
+                        "required": 0,
+                        "delta": "-1"
+                    },
+                    "field_fapi_property_nid": {
+                        "id": "field_fapi_property_nid",
+                        "table": "field_data_field_fapi_property",
+                        "field": "field_fapi_property_nid",
+                        "relationship": "field_fapi_properties_value",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "label": "field_fapi_property",
+                        "required": 0,
+                        "delta": "-1"
                     }
                 }
             }

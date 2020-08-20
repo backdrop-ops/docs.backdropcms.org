@@ -28,7 +28,7 @@
     "display": {
         "default": {
             "label": "hidden",
-            "type": "list_default",
+            "type": "list_key",
             "weight": "1",
             "settings": [],
             "module": "list"
