@@ -61,7 +61,7 @@ function backdropapi_form_api_table() {
       // Get all properties for this element.
       $element_properties = array();
       foreach ($element->field_field_fapi_properties as $element_property) {
-        $element_properties[] = $element_property['rendered']['entity']['paragraphs_item'][$element_property['raw']['value']]['field_fapi_property'][0]['#title'];
+        $element_properties[] = $element_property['rendered']['entity']['paragraphs_item'][$element_property['raw']['value']]['field_fapi_property'][0]['#markup'];
       }
 
       // Set the value of the cell.

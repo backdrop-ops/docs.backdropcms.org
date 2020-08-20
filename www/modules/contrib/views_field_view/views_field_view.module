@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * views_field_view.module
+ *
+ * @author
+ * Daniel Wehner <daniel.wehner@erdfisch.de>
+ */
+
+/**
+ * Implements hook_views_api().
+ */
+function views_field_view_views_api() {
+  return array(
+    'api' => '3.0',
+    'path' => backdrop_get_path('module', 'views_field_view') . '/views',
+  );
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function views_field_view_config_info() {
+  $prefixes['views_field_view.settings'] = array(
+    'label' => t('Views Field View Settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function views_field_view_autoload_info() {
+  return array(
+    'views_field_view_handler_field_view' => 'views/views_field_view_handler_field_view.inc',
+  );
+}
