@@ -939,11 +939,10 @@ function paragraphs_bundle_load($name = NULL, $rebuild = FALSE) {
       $bundles = $_bundles->data;
     }
     else {
-      $query = db_select('paragraphs_bundle', 'pb')
-        ->fields('pb')
-        ->orderBy('pb.bundle', 'ASC');
-      foreach ($query->execute() as $bundle_object) {
-        $bundles[$bundle_object->bundle] = $bundle_object;
+      $config_names = config_get_names_with_prefix('paragraphs.type.');
+      foreach ($config_names as $config_name) {
+        $type = str_replace('paragraphs.type.', '', $config_name);
+        $bundles[$type] = (object) config_get($config_name);
       }
       cache_set($cid, $bundles);
     }
@@ -983,31 +982,26 @@ function paragraphs_panelizer_bundle_name_load($name) {
  * @throws Exception
  */
 function paragraphs_bundle_save($bundle) {
-  $is_existing = (bool) db_query_range('SELECT 1 FROM {paragraphs_bundle} WHERE bundle = :bundle', 0, 1, array(':bundle' => $bundle->bundle))->fetchField();
+  $config = config('paragraphs.type.' . $bundle->bundle);
 
-  $fields = array(
+  if ($config->isNew()) {
+    $status = SAVED_NEW;
+  }
+  else {
+    $status = SAVED_UPDATED;
+  }
+
+  $bundle_data = array(
     'bundle' => (string) $bundle->bundle,
     'name' => (string) $bundle->name,
     'label' => (string) $bundle->label,
     'description' => (string) $bundle->description,
     'locked' => (int) $bundle->locked,
   );
-
-  if ($is_existing) {
-    db_update('paragraphs_bundle')
-      ->fields($fields)
-      ->condition('bundle', $bundle->bundle)
-      ->execute();
-    $status = SAVED_UPDATED;
+  foreach ($bundle_data as $key => $value) {
+    $config->set($key, $value);
   }
-  else {
-    db_insert('paragraphs_bundle')
-      ->fields($fields)
-      ->execute();
-
-    $status = SAVED_NEW;
-  }
-
+  $config->save();
   paragraphs_bundle_load(NULL, TRUE);
   entity_info_cache_clear();
   state_set('menu_rebuild_needed', TRUE);
@@ -1022,10 +1016,14 @@ function paragraphs_bundle_save($bundle) {
  */
 function paragraphs_bundle_delete($bundle_machine_name) {
   $bundle = paragraphs_bundle_load($bundle_machine_name);
-  if ($bundle) {
-    db_delete('paragraphs_bundle')
-      ->condition('bundle', $bundle->bundle)
-      ->execute();
+  if (is_object($bundle)) {
+    // delete config files
+    $config = config('paragraphs.type.' . $bundle->bundle);
+    $config->delete();
+    $sub_names = config_get_names_with_prefix('field.instance.paragraphs_item.' . $bundle->bundle . '.');
+    foreach ($sub_names as $sub_name) {
+      config($sub_name)->delete();
+    }
     field_attach_delete_bundle('paragraphs_item', $bundle->bundle);
     paragraphs_bundle_load(NULL, TRUE);
     entity_info_cache_clear();

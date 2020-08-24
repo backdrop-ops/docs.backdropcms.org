@@ -146,7 +146,7 @@ function paragraphs_field_schema($field) {
 function paragraphs_requirements($phase) {
   $t = get_t();
   $requirements = array();
-  
+
   // Make sure schema version is appropriate.
   if (backdrop_get_installed_schema_version('paragraphs') == 7102) {
     backdrop_set_installed_schema_version('paragraphs', 999);
@@ -214,4 +214,20 @@ function paragraphs_update_1000() {
  */
 function paragraphs_update_last_removed() {
   return 7103;
+}
+
+/**
+ * Updates paragraphs bundle to CMI.
+ */
+function paragraphs_update_1001() {
+  $query = db_select('paragraphs_bundle', 'pb')
+        ->fields('pb')
+        ->orderBy('pb.bundle', 'ASC');
+  foreach ($query->execute() as $bundle_object) {
+    $bundles[$bundle_object->bundle] = $bundle_object;
+  }
+  foreach ($bundles as $bundle) {
+    paragraphs_bundle_save($bundle);
+  }
+  db_drop_table('paragraphs_bundle');
 }
