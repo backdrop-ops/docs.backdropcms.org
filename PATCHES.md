@@ -14,3 +14,7 @@ api - Format @return tags nicely
 paragraphs - Convert Paragraphs to CMI
   https://github.com/backdrop-contrib/paragraphs/issues/46
   https://github.com/backdrop-contrib/paragraphs/pull/66.patch
+
+paragraphs - Bundle not exported/imported
+  https://github.com/backdrop-contrib/paragraphs/issues/28
+  https://github.com/backdrop-contrib/paragraphs/pull/68.patch
