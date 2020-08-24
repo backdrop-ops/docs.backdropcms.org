@@ -88,6 +88,19 @@ function paragraphs_ctools_plugin_directory($module, $plugin) {
 }
 
 /**
+ * Implements hook_config_info().
+ */
+function paragraphs_config_info() {
+  return array(
+    'paragraphs.type' => array(
+      'name_key' => 'bundle',
+      'label_key' => 'name',
+      'group' => t('Paragraphs types'),
+    ),
+  );
+}
+
+/**
  * Implements hook_entity_info().
  */
 function paragraphs_entity_info() {
