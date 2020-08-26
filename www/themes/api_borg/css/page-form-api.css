@@ -4,12 +4,12 @@
  * Contains styles relating to the form_api page.
  ******************************************************************************/
 
-article .field-name-body table.sticky-header a,
-article .field-name-body table.form-api a {
+table.sticky-header a,
+table.form-api a {
   text-decoration: none;
 }
-article .field-name-body table.sticky-header a:hover,
-article .field-name-body table.form-api a:hover {
+table.sticky-header a:hover,
+table.form-api a:hover {
   text-decoration: underline;
 }
 
@@ -21,10 +21,22 @@ table.sticky-header th,
 table.form-api th {
   border-bottom: 0;
 }
+table.sticky-header th a,
+table.form-api th a {
+  display: block;
+  height: 100px;
+  transform: translate(50px, 50px) rotate(-45deg);
+  width: 50px;
+}
 table.sticky-header td,
 table.form-api td {
   padding: .5em .75em;
   border: 1px solid #E8E6E5;
+}
+table.sticky-header td:not(:first-child),
+table.form-api td:not(:first-child) {
+  text-align: center;
+  width: 50px;
 }
 
 table.form-api tr.rotate-processed,
