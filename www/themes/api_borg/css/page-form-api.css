@@ -2,6 +2,9 @@
  * page-form-api.css
  *
  * Contains styles relating to the form_api page.
+ *
+ * Rotated table header styles are based loosely on:
+ * https://codepen.io/chriscoyier/pen/Fapif
  ******************************************************************************/
 
 table.sticky-header a,
