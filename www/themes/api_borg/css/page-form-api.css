@@ -24,8 +24,8 @@ table.sticky-header th,
 table.form-api th {
   border-bottom: 0;
 }
-table.sticky-header th a,
-table.form-api th a {
+.block-backdropapi-form-api-table table.sticky-header th a,
+.block-backdropapi-form-api-table table.form-api th a {
   display: block;
   height: 100px;
   transform: translate(50px, 50px) rotate(-45deg);
@@ -36,8 +36,8 @@ table.form-api td {
   padding: .5em .75em;
   border: 1px solid #E8E6E5;
 }
-table.sticky-header td:not(:first-child),
-table.form-api td:not(:first-child) {
+.block-backdropapi-form-api-table table.sticky-header td:not(:first-child),
+.block-backdropapi-form-api-table table.form-api td:not(:first-child) {
   text-align: center;
   width: 50px;
 }
