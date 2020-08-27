@@ -1,0 +1,14 @@
+name = User Reference
+description = Defines a field type for referencing a user from a node.
+package = Fields
+core = 7.x
+backdrop = 1.x
+type = module
+dependencies[] = field
+dependencies[] = references
+dependencies[] = options
+
+; Added by Backdrop CMS packaging script on 2019-11-30
+project = references
+version = 1.x-1.0.2
+timestamp = 1575171954

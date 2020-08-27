@@ -30,9 +30,9 @@ function api_borg_form_search_block_form_alter(&$form, $form_state) {
  */
 function api_borg_preprocess_page(&$variables) {
   backdrop_add_js('core/misc/tableheader.js');
-  if (arg(0) == 'node' && arg(1) == '41642' && !arg(2)) {
+  if (arg(0) == 'form-api' || (arg(0) == 'node' && arg(1) == '41642' && !arg(2))) {
     $path = backdrop_get_path('theme', 'api_borg');
-    backdrop_add_css($path . '/css/page-form-api.css');
+    backdrop_add_css($path . '/css/page-form-api.css', array('group' => CSS_THEME));
   }
 }
 
@@ -56,4 +56,73 @@ function api_borg_preprocess_search_results(&$variables) {
       $variables['search_results'][$key]['info'] = $result['result']['type'];
     }
   }
+}
+
+/**
+ * Prepares variables for unformatted views templates.
+ * @see views-view-unformatted.tpl.php
+ */
+function api_borg_preprocess_views_view_unformatted(&$variables) {
+  if ($variables['view']->name == 'form_api') {
+    // Re-word the title (content type).
+    if (!empty($variables['title'])) {
+      if ($variables['title'] == 'fapi_element') {
+        $variables['title'] = t('Elements');
+      }
+      elseif ($variables['title'] == 'fapi_property') {
+        $variables['title'] = t('Properties');
+      }
+    }
+  }
+}
+
+/**
+ * Prepares variables for paragraph items.
+ * @see paragraphs-item.tpl.php
+ */
+function api_borg_preprocess_paragraphs_item(&$variables, $hook) {
+  $content = $variables['content'];
+
+  if ($variables['bundle'] == 'fapi_properties') {
+    $property = $content['field_fapi_property'][0]['#markup'];
+    $recommended = !empty($content['field_recommended'][0]['#markup']);
+    $default = $content['field_default_value'][0]['#markup'];
+
+    $text = '#' . $property;
+    if ($recommended) {
+      $text = '<strong>' . $text . '</strong>';
+    }
+
+    $variables['fapi_property'] = l($text, '', array('fragment' => $property, 'external' => TRUE, 'html' => TRUE));
+    if (!empty($default)) {
+      $variables['fapi_property'] .= t(' (default: @value)', array('@value' => $default));
+    }
+  }
+}
+
+/*******************************************************************************
+ * Theme functions: override the output of theme functions.
+ ******************************************************************************/
+
+/**
+ * Overrides theme_views_view_field().
+ */
+function api_borg_views_view_field($variables) {
+  $view = $variables['view'];
+  $field = $variables['field'];
+  $row = $variables['row'];
+
+  if ($view->name == 'form_api' && $view->current_display == 'page') {
+    // Add a wrapper H3 tag with an ID, and add a '#' to property names.
+    if ($field->field == 'title') {
+      $text = $variables['output'];
+      if ($row->node_type == 'fapi_property') {
+        $text = '#' . $text;
+      }
+
+      $variables['output'] = '<h3 id="' . $variables['output'] . '">' . $text . '</h3>';
+    }
+  }
+
+  return $variables['output'];
 }

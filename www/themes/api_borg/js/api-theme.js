@@ -9,6 +9,7 @@ Backdrop.behaviors.apiTheme = {};
 Backdrop.behaviors.apiTheme.attach = function(context, settings) {
   Backdrop.apiTheme.rotateHeaders(context, settings);
   Backdrop.apiTheme.autocomplete(context, settings);
+  Backdrop.apiTheme.headingPermalinks(context, settings);
 };
 
 Backdrop.apiTheme = {};
@@ -145,6 +146,15 @@ Backdrop.apiTheme.autocomplete = function(context, settings) {
       // Stop the normal form submission.
       return e.preventDefault();
     });
+  });
+};
+
+/**
+ * Add a permalink to all headings with an ID attribute.
+ */
+Backdrop.apiTheme.headingPermalinks = function(context, settings) {
+  $(context).find('.block-backdropapi-form-api-table :header[id], .view-form-api.view-display-id-page :header[id]').once('permalink').each(function() {
+    $(this).append('&nbsp;<a href="#' + $(this).attr('id') + '" class="permalink">&para;</a>');
   });
 };
 

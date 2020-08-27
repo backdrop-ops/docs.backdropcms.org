@@ -1,0 +1,51 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the node_reference module.
+ */
+
+/**
+ * Implements hook_field_schema().
+ */
+function node_reference_field_schema($field) {
+  $columns = array(
+    'nid' => array(
+      'type'     => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+    ),
+  );
+  return array(
+    'columns' => $columns,
+    'indexes' => array('nid' => array('nid')),
+    'foreign keys' => array(
+      'nid' => array(
+        'table' => 'node',
+        'columns' => array('nid' => 'nid'),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function node_reference_update_last_removed() {
+  return 7000;
+}
+
+/**
+ * @defgroup updates-7.x-to-1.x Updates from 7.x to 1.x
+ * @{
+ * Update functions from Drupal 7.x to Backdrop CMS 1.x.
+ */
+
+/**
+ * Rebuild views data cache (a callback was renamed).
+ */
+function node_reference_update_1000() {
+  if (function_exists('views_invalidate_cache')) {
+    views_invalidate_cache();
+  }
+}

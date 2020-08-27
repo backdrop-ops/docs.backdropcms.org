@@ -2,14 +2,17 @@
  * page-form-api.css
  *
  * Contains styles relating to the form_api page.
+ *
+ * Rotated table header styles are based loosely on:
+ * https://codepen.io/chriscoyier/pen/Fapif
  ******************************************************************************/
 
-article .field-name-body table.sticky-header a,
-article .field-name-body table.form-api a {
+table.sticky-header a,
+table.form-api a {
   text-decoration: none;
 }
-article .field-name-body table.sticky-header a:hover,
-article .field-name-body table.form-api a:hover {
+table.sticky-header a:hover,
+table.form-api a:hover {
   text-decoration: underline;
 }
 
@@ -21,10 +24,22 @@ table.sticky-header th,
 table.form-api th {
   border-bottom: 0;
 }
+.block-backdropapi-form-api-table table.sticky-header th a,
+.block-backdropapi-form-api-table table.form-api th a {
+  display: block;
+  height: 100px;
+  transform: translate(50px, 50px) rotate(-45deg);
+  width: 50px;
+}
 table.sticky-header td,
 table.form-api td {
   padding: .5em .75em;
   border: 1px solid #E8E6E5;
+}
+.block-backdropapi-form-api-table table.sticky-header td:not(:first-child),
+.block-backdropapi-form-api-table table.form-api td:not(:first-child) {
+  text-align: center;
+  width: 50px;
 }
 
 table.form-api tr.rotate-processed,
@@ -41,4 +56,40 @@ span.rotate1 {
   position: relative;
   top: -5px;
   right: 5px;
+}
+
+a.permalink {
+  font-family: sans-serif;
+}
+h1 a.permalink,
+h2 a.permalink,
+h3 a.permalink,
+h4 a.permalink,
+h5 a.permalink,
+h6 a.permalink {
+  display: none;
+}
+h1:hover a.permalink,
+h2:hover a.permalink,
+h3:hover a.permalink,
+h4:hover a.permalink,
+h5:hover a.permalink,
+h6:hover a.permalink {
+  display: inline;
+}
+
+p {
+  font-size: 1em;
+}
+
+.views-field {
+  margin-bottom: 1em;
+}
+
+.views-label {
+  font-weight: bold;
+}
+
+.field-content p {
+  margin-top: 0;
 }

@@ -112,6 +112,17 @@
         "download own video files",
         "download any video files",
         "assign roles",
-        "administer flexible templates"
+        "administer flexible templates",
+        "create fapi_element content",
+        "edit own fapi_element content",
+        "edit any fapi_element content",
+        "delete own fapi_element content",
+        "delete any fapi_element content",
+        "create fapi_property content",
+        "edit own fapi_property content",
+        "edit any fapi_property content",
+        "delete own fapi_property content",
+        "delete any fapi_property content",
+        "administer paragraphs bundles"
     ]
 }
