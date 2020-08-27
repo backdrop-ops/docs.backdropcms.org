@@ -1,0 +1,21 @@
+# Backdrop recipe
+name: apiborg
+recipe: backdrop
+config:
+  php: '7.2'
+  webroot: www
+  backdrush: 1.x-1.x
+  xdebug: true
+services:
+  database:
+    type: mariadb:10.3
+    portforward: 3308
+  cache:
+    type: redis
+    persist: true
+tooling:
+  drush:
+    service: appserver
+    cmd: drush --root=/app/www --uri=https://apiborg.lndo.site
+  redis-cli:
+    service: cache
