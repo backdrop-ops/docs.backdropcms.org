@@ -1,0 +1,18 @@
+{
+    "_config_name": "field.bundle.node.fapi_property",
+    "bundle": "fapi_property",
+    "entity_type": "node",
+    "view_modes": {
+        "teaser": {
+            "custom_settings": false
+        }
+    },
+    "extra_fields": {
+        "form": {
+            "title": {
+                "weight": "-5"
+            }
+        },
+        "display": []
+    }
+}

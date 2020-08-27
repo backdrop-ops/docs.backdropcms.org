@@ -1,0 +1,8 @@
+{
+    "_config_name": "paragraphs.type.fapi_properties",
+    "bundle": "fapi_properties",
+    "name": "FAPI Properties",
+    "label": "FAPI Properties",
+    "description": "",
+    "locked": 1
+}
