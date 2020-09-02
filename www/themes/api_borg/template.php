@@ -122,6 +122,22 @@ function api_borg_views_view_field($variables) {
 
       $variables['output'] = '<h3 id="' . $variables['output'] . '">' . $text . '</h3>';
     }
+    // Display a list of all FAPI Elements for the 'type' property.
+    elseif (($row->node_type == 'fapi_property') && ($row->_field_data['nid']['entity']->title == 'type') && ($field->field == 'field_values')) {
+      $view = views_get_view('form_api');
+      $view->set_display('attachment_5');
+      $view->set_arguments(array());
+      $view->pre_execute();
+      $view->execute();
+      $results = $view->result;
+      $view->destroy();
+
+      $output = array();
+      foreach ($results as $result) {
+        $output[] = l($result->node_title, '', array('fragment' => $result->node_title, 'external' => TRUE));
+      }
+      $variables['output'] = implode(', ', $output);
+    }
   }
 
   return $variables['output'];
