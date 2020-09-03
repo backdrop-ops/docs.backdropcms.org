@@ -123,6 +123,7 @@
         "edit any fapi_property content",
         "delete own fapi_property content",
         "delete any fapi_property content",
-        "administer paragraphs bundles"
+        "administer paragraphs bundles",
+        "view hidden paths"
     ]
 }
