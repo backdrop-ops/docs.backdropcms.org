@@ -97,3 +97,21 @@ function backdropapi_form_api_table() {
 
   return $table_elements . $heading_special . $table_special;
 }
+
+function backdropapi_node_submit(Node $node, $form, &$form_state) {
+  $values = $form_state['values'];
+  $langcode = $values['langcode'];
+
+  if (!isset($values['field_fapi_properties'][$langcode][0])) {
+    foreach ($values['field_temp_properties'][$langcode] as $property) {
+      $paragraph = entity_create('paragraphs_item', array(
+        'bundle' => 'fapi_properties',
+        'field_name' => 'field_fapi_properties',
+      ));
+      $paragraph->is_new = TRUE;
+      $paragraph->setHostEntity('node', $node);
+      $paragraph->field_fapi_property[$langcode][0]['nid'] = $property['nid'];
+      $paragraph->save();
+    }
+  }
+}
