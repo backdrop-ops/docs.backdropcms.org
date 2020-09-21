@@ -103,5 +103,7 @@
     "site_favicon_upload": "",
     "x_frame_options": "SAMEORIGIN",
     "form_cache_expiration": 21600,
-    "log_date_format": "m/d/Y - H:i"
+    "log_date_format": "m/d/Y - H:i",
+    "user_password_reject_weak": false,
+    "user_password_strength_threshold": 50
 }
