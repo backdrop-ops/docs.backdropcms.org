@@ -1534,7 +1534,7 @@
                         "ui_name": "",
                         "label": "Heading",
                         "empty": 0,
-                        "content": "<h2 id=\"default-values\">Default values</h2>",
+                        "content": "<h2 id=\"default-values\">Default values</h2>\r\n<p>Every element automatically has these default values (see system_element_info()):</p>\r\n<ul>\r\n  <li><a href=\"#description\">#description</a> = NULL</li>\r\n  <li><a href=\"#attributes\">#attributes</a> = array()</li>\r\n  <li><a href=\"#required\">#required</a> = FALSE</li>\r\n  <li><a href=\"#tree\">#tree</a> = FALSE</li>\r\n  <li><a href=\"#parents\">#parents</a> = array()</li>\r\n</ul>\r\n<p>The following is a list of default values which do not need to be set (found in system_element_info):</p>",
                         "format": "fix_html",
                         "tokenize": 0
                     }
