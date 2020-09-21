@@ -87,13 +87,14 @@ function api_borg_preprocess_paragraphs_item(&$variables, $hook) {
     $property = $content['field_fapi_property'][0]['#markup'];
     $recommended = !empty($content['field_recommended'][0]['#markup']);
     $default = $content['field_default_value'][0]['#markup'];
+    $id_suffix = in_array($property, backdropapi_form_api_elements()) ? '_property' : '';
 
     $text = '#' . $property;
     if ($recommended) {
       $text = '<strong>' . $text . '</strong>';
     }
 
-    $variables['fapi_property'] = l($text, '', array('fragment' => $property, 'external' => TRUE, 'html' => TRUE));
+    $variables['fapi_property'] = l($text, '', array('fragment' => $property . $id_suffix, 'external' => TRUE, 'html' => TRUE));
     if (!empty($default)) {
       $variables['fapi_property'] .= t(' (default: @value)', array('@value' => $default));
     }
@@ -116,26 +117,25 @@ function api_borg_views_view_field($variables) {
     // Add a wrapper H3 tag with an ID, and add a '#' to property names.
     if ($field->field == 'title') {
       $text = $variables['output'];
+      $id_suffix = '';
       if ($row->node_type == 'fapi_property') {
+        if (in_array($text, backdropapi_form_api_elements())) {
+          $id_suffix = '_property';
+        }
         $text = '#' . $text;
       }
 
-      $variables['output'] = '<h3 id="' . $variables['output'] . '">' . $text . '</h3>';
+      $variables['output'] = '<h3 id="' . $variables['output'] . $id_suffix . '">' . $text . '</h3>';
     }
     // Display a list of all FAPI Elements for the 'type' property.
     elseif (($row->node_type == 'fapi_property') && ($row->_field_data['nid']['entity']->title == 'type') && ($field->field == 'field_values')) {
-      $view = views_get_view('form_api');
-      $view->set_display('attachment_5');
-      $view->set_arguments(array());
-      $view->pre_execute();
-      $view->execute();
-      $results = $view->result;
-      $view->destroy();
-
       $output = array();
+      $results = views_get_view_result('form_api', 'attachment_5');
+
       foreach ($results as $result) {
         $output[] = l($result->node_title, '', array('fragment' => $result->node_title, 'external' => TRUE));
       }
+
       $variables['output'] = implode(', ', $output);
     }
   }

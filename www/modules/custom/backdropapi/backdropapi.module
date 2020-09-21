@@ -54,7 +54,8 @@ function backdropapi_form_api_table() {
 
   // Setup the table rows.
   foreach ($properties as $property) {
-    $row_element = array('<a href="#' . $property->node_title . '">#' . $property->node_title . '</a>');
+    $id_suffix = in_array($property->node_title, backdropapi_form_api_elements()) ? '_property' : '';
+    $row_element = array('<a href="#' . $property->node_title . $id_suffix . '">#' . $property->node_title . '</a>');
     $row_special = $row_element;
 
     foreach ($elements as $element) {
@@ -96,4 +97,21 @@ function backdropapi_form_api_table() {
   ));
 
   return $table_elements . $heading_special . $table_special;
+}
+
+/**
+ * Get a list of all Form API elements.
+ */
+function backdropapi_form_api_elements() {
+  $elements = &backdrop_static(__FUNCTION__);
+
+  if (!isset($elements)) {
+    $results = views_get_view_result('form_api', 'attachment_5');
+
+    foreach ($results as $result) {
+      $elements[] = $result->node_title;
+    }
+  }
+
+  return $elements;
 }

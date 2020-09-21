@@ -1419,8 +1419,8 @@
                         "label": "",
                         "exclude": 0,
                         "alter": {
-                            "alter_text": 1,
-                            "text": "<a href=\"#[field_fapi_property]\">#[field_fapi_property]</a> = [field_default_value]",
+                            "alter_text": 0,
+                            "text": "",
                             "make_link": 0,
                             "path": "",
                             "absolute": 0,
