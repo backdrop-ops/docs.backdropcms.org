@@ -153,7 +153,7 @@ Backdrop.apiTheme.autocomplete = function(context, settings) {
  * Add a permalink to all headings with an ID attribute.
  */
 Backdrop.apiTheme.headingPermalinks = function(context, settings) {
-  $(context).find('.block-backdropapi-form-api-table :header[id], .view-form-api.view-display-id-page :header[id]').once('permalink').each(function() {
+  $(context).find('.block-backdropapi-form-api-table :header[id], .view-form-api.view-display-id-block_1 :header[id]').once('permalink').each(function() {
     $(this).append('&nbsp;<a href="#' + $(this).attr('id') + '" class="permalink">&para;</a>');
   });
 };

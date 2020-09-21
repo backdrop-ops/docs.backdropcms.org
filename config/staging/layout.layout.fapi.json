@@ -2,8 +2,9 @@
     "_config_name": "layout.layout.fapi",
     "path": "node/%",
     "name": "fapi",
-    "title": "FAPI",
+    "title": "Old FAPI",
     "description": null,
+    "renderer_name": "standard",
     "module": null,
     "weight": 0,
     "storage": 1,
@@ -32,6 +33,7 @@
             "451942c0-63ca-4311-b700-ec3ab83b1215"
         ]
     },
+    "contexts": [],
     "content": {
         "62f4fcd5-7e6f-4440-9500-e940d743ace2": {
             "plugin": "system:header",
