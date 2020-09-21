@@ -19,17 +19,19 @@ table.form-api a:hover {
 table.sticky-header,
 table.form-api {
   border-collapse: collapse;
+  width: auto;
 }
 table.sticky-header th,
 table.form-api th {
   border-bottom: 0;
+  padding-right: 0;
 }
 .block-backdropapi-form-api-table table.sticky-header th a,
 .block-backdropapi-form-api-table table.form-api th a {
   display: block;
-  height: 100px;
-  transform: translate(50px, 50px) rotate(-45deg);
-  width: 50px;
+  height: 140px;
+  transform: translate(50px, 90px) rotate(-45deg);
+  width: 20px;
 }
 table.sticky-header td,
 table.form-api td {
@@ -39,7 +41,7 @@ table.form-api td {
 .block-backdropapi-form-api-table table.sticky-header td:not(:first-child),
 .block-backdropapi-form-api-table table.form-api td:not(:first-child) {
   text-align: center;
-  width: 50px;
+  width: 20px;
 }
 
 table.form-api tr.rotate-processed,
@@ -92,4 +94,8 @@ p {
 
 .field-content p {
   margin-top: 0;
+}
+
+.form_api .l-bottom-inner > .row {
+  display: block;
 }

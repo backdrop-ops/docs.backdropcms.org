@@ -30,7 +30,7 @@ function api_borg_form_search_block_form_alter(&$form, $form_state) {
  */
 function api_borg_preprocess_page(&$variables) {
   backdrop_add_js('core/misc/tableheader.js');
-  if (arg(0) == 'form-api' || (arg(0) == 'node' && arg(1) == '41642' && !arg(2))) {
+  if (arg(0) == 'form_api' || (arg(0) == 'node' && arg(1) == '41642' && !arg(2))) {
     $path = backdrop_get_path('theme', 'api_borg');
     backdrop_add_css($path . '/css/page-form-api.css', array('group' => CSS_THEME));
   }
@@ -112,7 +112,7 @@ function api_borg_views_view_field($variables) {
   $field = $variables['field'];
   $row = $variables['row'];
 
-  if ($view->name == 'form_api' && $view->current_display == 'page') {
+  if ($view->name == 'form_api' && $view->current_display == 'block_1') {
     // Add a wrapper H3 tag with an ID, and add a '#' to property names.
     if ($field->field == 'title') {
       $text = $variables['output'];
