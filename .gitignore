@@ -3,7 +3,11 @@
 .DS_Store
 
 # Backups.
-/*.sql
-/*.sql.gz
-/*.tgz
-/*.tar.gz
+*.sql
+*.sql.gz
+*.tgz
+*.tar
+*.tar.gz
+
+# Ignore env vars.
+.env
