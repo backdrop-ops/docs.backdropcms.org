@@ -134,7 +134,7 @@
                     "style": "default",
                     "block_settings": [],
                     "contexts": [],
-                    "content": "This page provides a programmer's reference to the Backdrop CMS Form API. For a brief introduction on how to create forms, see the <a href=\"/api/backdrop/core!includes!form.inc/group/form_api\">Form generation guide</a>. For more extensive information about the Form API, see the <a href=\"https://www.drupal.org/node/2818753\">Form API handbook (Drupal 7 documentation)</a>.\r\n\r\nSkip to: <a href=\"#default-values\">Default Values</a> | <a href=\"#Elements\">Elements</a> | <a href=\"#Properties\">Properties</a>\r\n\r\nNote that internal properties are not included in the table below, but are included in the Properties list. These include: <a href=\"#built\">#built</a>, <a href=\"#children\">#children</a>, <a href=\"#error\">#error</a>, <a href=\"#id\">#id</a>, <a href=\"#input\">#input</a>, <a href=\"#printed\">#printed</a>, <a href=\"#validation_arguments\">#validation_arguments</a>.",
+                    "content": "This page provides a programmer's reference to the Backdrop CMS Form API. For a brief introduction on how to create forms, see the <a href=\"/api/backdrop/core!includes!form.inc/group/form_api\">Form generation guide</a>. For more extensive information about the Form API, see the <a href=\"https://www.drupal.org/node/2818753\">Form API handbook (Drupal 7 documentation)</a>.\r\n\r\nSkip to: <a href=\"#default-values\">Default Values</a> | <a href=\"#Elements\">Elements</a> | <a href=\"#Properties\">Properties</a>",
                     "format": "fix_html",
                     "admin_label": "Form API intro",
                     "admin_description": ""
