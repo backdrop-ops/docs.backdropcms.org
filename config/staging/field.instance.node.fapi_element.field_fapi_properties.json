@@ -12,7 +12,7 @@
         "settings": []
     },
     "description": "",
-    "required": 0,
+    "required": 1,
     "deleted": 0,
     "default_value": null,
     "default_value_function": null,

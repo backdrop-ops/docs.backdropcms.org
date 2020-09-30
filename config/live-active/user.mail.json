@@ -21,5 +21,11 @@
     "register_no_approval_body": "[user:name],\r\n\r\nThank you for registering at [site:name]. You may now log in by clicking this link or copying and pasting it to your browser:\r\n\r\n[user:one-time-login-url]\r\n\r\nThis link can only be used once to log in and will lead you to a page where you can set your password.\r\n\r\nAfter setting your password, you will be able to log in at [site:login-url] in the future using:\r\n\r\nusername: [user:name]\r\npassword: Your password\r\n\r\n--  [site:name] team",
     "register_no_approval_subject": "Account details for [user:name] at [site:name]",
     "register_pending_body": "[user:name],\r\n\r\nThank you for registering at [site:name]. Your application for an account is currently pending approval. Once it has been approved, you will receive another e-mail containing information about how to log in, set your password, and other details.\r\n\r\n\r\n--  [site:name] team",
-    "register_pending_subject": "Account details for [user:name] at [site:name] (pending admin approval)"
+    "register_pending_subject": "Account details for [user:name] at [site:name] (pending admin approval)",
+    "_config_translatables": [
+        "register_pending_approval_admin_body",
+        "register_pending_approval_admin_subject"
+    ],
+    "register_pending_approval_admin_body": "[user:name] has applied for an account.\n\n[user:edit-url]",
+    "register_pending_approval_admin_subject": "New account of [user:name] at [site:name] (pending approval)"
 }

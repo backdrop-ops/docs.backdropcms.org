@@ -17,10 +17,8 @@
                     "options": []
                 },
                 "access": {
-                    "type": "role",
-                    "role": {
-                        "3": "3"
-                    }
+                    "type": "perm",
+                    "perm": "access content"
                 },
                 "cache": {
                     "type": "none"
@@ -690,7 +688,7 @@
                         }
                     }
                 },
-                "title": "Form API Reference",
+                "title": "",
                 "style_options": {
                     "grouping": [
                         {
@@ -711,32 +709,8 @@
                 }
             }
         },
-        "page": {
-            "display_title": "Page",
-            "display_plugin": "page",
-            "display_options": {
-                "query": {
-                    "type": "views_query",
-                    "options": []
-                },
-                "path": "form-api",
-                "menu": {
-                    "type": "normal",
-                    "title": "Form API (new)",
-                    "description": "",
-                    "name": "main-menu",
-                    "weight": "0",
-                    "context": 0,
-                    "context_only_inline": 0
-                },
-                "defaults": {
-                    "access": true,
-                    "access_options": true
-                }
-            }
-        },
         "attachment_1": {
-            "display_title": "Elements",
+            "display_title": "Table elements",
             "display_plugin": "attachment",
             "display_options": {
                 "query": {
@@ -1020,7 +994,7 @@
             }
         },
         "attachment_2": {
-            "display_title": "Properties",
+            "display_title": "Table properties",
             "display_plugin": "attachment",
             "display_options": {
                 "query": {
@@ -1176,7 +1150,7 @@
             }
         },
         "attachment_3": {
-            "display_title": "Default Values",
+            "display_title": "Default values",
             "display_plugin": "attachment",
             "display_options": {
                 "query": {
@@ -1445,8 +1419,8 @@
                         "label": "",
                         "exclude": 0,
                         "alter": {
-                            "alter_text": 1,
-                            "text": "<a href=\"#[field_fapi_property]\">#[field_fapi_property]</a> = [field_default_value]",
+                            "alter_text": 0,
+                            "text": "",
                             "make_link": 0,
                             "path": "",
                             "absolute": 0,
@@ -1506,7 +1480,7 @@
                     }
                 },
                 "displays": {
-                    "page": "page",
+                    "block_1": "block_1",
                     "default": 0
                 },
                 "sorts": {
@@ -1560,15 +1534,27 @@
                         "ui_name": "",
                         "label": "Heading",
                         "empty": 0,
-                        "content": "<h2 id=\"default-values\">Default values</h2>",
+                        "content": "<h2 id=\"default-values\">Default values</h2>\r\n<p>Every element automatically has these default values (see system_element_info()):</p>\r\n<ul>\r\n  <li><a href=\"#description\">#description</a> = NULL</li>\r\n  <li><a href=\"#attributes\">#attributes</a> = array()</li>\r\n  <li><a href=\"#required\">#required</a> = FALSE</li>\r\n  <li><a href=\"#tree\">#tree</a> = FALSE</li>\r\n  <li><a href=\"#parents\">#parents</a> = array()</li>\r\n</ul>\r\n<p>The following is a list of default values which do not need to be set (found in system_element_info):</p>",
                         "format": "fix_html",
                         "tokenize": 0
                     }
                 }
             }
         },
+        "block_1": {
+            "display_title": "Main",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "block_description": "Form API main",
+                "display_description": ""
+            }
+        },
         "attachment_4": {
-            "display_title": "Used By",
+            "display_title": "Used by",
             "display_plugin": "attachment",
             "display_options": {
                 "query": {
@@ -1818,7 +1804,7 @@
             }
         },
         "attachment_5": {
-            "display_title": "Element Types",
+            "display_title": "#Type values",
             "display_plugin": "attachment",
             "display_options": {
                 "query": {
