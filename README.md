@@ -23,3 +23,15 @@ issue requesting editorial access to the site.
 ## Patches
 
 A list of currently applied patches are located in PATCHES.md
+
+## Contributing
+
+To contribute to the development of api.backdropcms.org, fork this repository
+into your own GitHub account, then clone it to your local environment. Use
+[Lando](https://lando.dev/) to build a local copy of the site, then run the
+following commands to get the latest sanitized database and files directory:
+* `lando pull-db`
+* `lando pull-files`
+
+See the `/config/README.md` file for instructions on setting up Backdrop's
+config workflow.
