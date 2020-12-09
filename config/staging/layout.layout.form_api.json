@@ -1,0 +1,396 @@
+{
+    "_config_name": "layout.layout.form_api",
+    "path": "form_api",
+    "name": "form_api",
+    "title": "Form API",
+    "description": null,
+    "renderer_name": "standard",
+    "module": null,
+    "weight": 0,
+    "storage": 1,
+    "layout_template": "boxton",
+    "disabled": false,
+    "settings": {
+        "title": "Form API Reference",
+        "title_display": "custom",
+        "title_block": "78e357c6-499c-4f0c-ba19-25c5af1415f5"
+    },
+    "positions": {
+        "header": [
+            "717983f2-7c92-45ae-a925-373196cbf386",
+            "80160dbe-05d0-4055-a900-f137aa06f2fa"
+        ],
+        "top": [
+            "78e357c6-499c-4f0c-ba19-25c5af1415f5"
+        ],
+        "content": [
+            "9101d358-f383-4465-a022-3456e8fac8a1",
+            "294e4c4e-c39a-4864-a809-9eddd56773e0",
+            "d92e9ea9-1200-4006-8c00-cad6da779d5b"
+        ],
+        "bottom": [
+            "dcb9a0b3-b42a-4a53-8c05-5d43c993afd9",
+            "1950f32f-60a5-4beb-8b00-e804fefce5c7"
+        ],
+        "footer": [
+            "ef43844c-660b-44a9-9609-9a6f59677b80",
+            "238f34b9-6b30-450a-8902-2c0cca565a4a",
+            "c6e5aee8-965a-4f1f-8c00-fe00a3718631",
+            "5fccdf2a-ecb0-4c7f-9409-9d7eceb583c0"
+        ],
+        "title": []
+    },
+    "contexts": [],
+    "content": {
+        "717983f2-7c92-45ae-a925-373196cbf386": {
+            "plugin": "system:header",
+            "data": {
+                "module": "system",
+                "delta": "header",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": {
+                        "menu": "",
+                        "logo": 1,
+                        "site_name": 1,
+                        "site_slogan": 1
+                    },
+                    "contexts": []
+                },
+                "uuid": "717983f2-7c92-45ae-a925-373196cbf386",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": "col-xs-12"
+                        }
+                    }
+                }
+            }
+        },
+        "80160dbe-05d0-4055-a900-f137aa06f2fa": {
+            "plugin": "system:user-menu",
+            "data": {
+                "module": "system",
+                "delta": "user-menu",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": {
+                        "menu_name": "user-menu",
+                        "style": "tree",
+                        "level": "1",
+                        "depth": "1",
+                        "expand_all": 0,
+                        "toggle": 0
+                    },
+                    "contexts": []
+                },
+                "uuid": "80160dbe-05d0-4055-a900-f137aa06f2fa",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "78e357c6-499c-4f0c-ba19-25c5af1415f5": {
+            "plugin": "system:breadcrumb",
+            "data": {
+                "module": "system",
+                "delta": "breadcrumb",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": []
+                },
+                "uuid": "78e357c6-499c-4f0c-ba19-25c5af1415f5",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "9101d358-f383-4465-a022-3456e8fac8a1": {
+            "plugin": "layout:custom_block",
+            "data": {
+                "module": "layout",
+                "delta": "custom_block",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": [],
+                    "content": "This page provides a programmer's reference to the Backdrop CMS Form API. For a brief introduction on how to create forms, see the <a href=\"/api/backdrop/core!includes!form.inc/group/form_api\">Form generation guide</a>. For more extensive information about the Form API, see the <a href=\"https://www.drupal.org/node/2818753\">Form API handbook (Drupal 7 documentation)</a>.\r\n\r\nSkip to: <a href=\"#default-values\">Default Values</a> | <a href=\"#Elements\">Elements</a> | <a href=\"#Properties\">Properties</a>\r\n\r\nNote that internal properties are not included in the table below, but are included in the Properties list. These include: <a href=\"#built\">#built</a>, <a href=\"#children\">#children</a>, <a href=\"#error\">#error</a>, <a href=\"#id\">#id</a>, <a href=\"#input\">#input</a>, <a href=\"#printed\">#printed</a>, <a href=\"#validation_arguments\">#validation_arguments</a>.",
+                    "format": "fix_html",
+                    "admin_label": "Form API intro",
+                    "admin_description": ""
+                },
+                "uuid": "9101d358-f383-4465-a022-3456e8fac8a1",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "294e4c4e-c39a-4864-a809-9eddd56773e0": {
+            "plugin": "backdropapi:form_api_table",
+            "data": {
+                "module": "backdropapi",
+                "delta": "form_api_table",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": [],
+                    "admin_label": "",
+                    "admin_description": ""
+                },
+                "uuid": "294e4c4e-c39a-4864-a809-9eddd56773e0",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "d92e9ea9-1200-4006-8c00-cad6da779d5b": {
+            "plugin": "views:form_api-block_1",
+            "data": {
+                "module": "views",
+                "delta": "form_api-block_1",
+                "settings": {
+                    "link_to_view": 0,
+                    "more_link": false,
+                    "use_pager": false,
+                    "pager_id": 0,
+                    "items_per_page": 10,
+                    "offset": 0,
+                    "path": null,
+                    "fields_override": null,
+                    "title_display": "none",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": [],
+                    "allowed": [],
+                    "path_override": false,
+                    "exposed": [],
+                    "admin_label": "",
+                    "admin_description": ""
+                },
+                "uuid": "d92e9ea9-1200-4006-8c00-cad6da779d5b",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "dcb9a0b3-b42a-4a53-8c05-5d43c993afd9": {
+            "plugin": "search:form",
+            "data": {
+                "module": "search",
+                "delta": "form",
+                "settings": {
+                    "title_display": "custom",
+                    "title": "Search Backdrop 1.x",
+                    "style": "default",
+                    "block_settings": {
+                        "search": {
+                            "label": "",
+                            "label_hide": 1,
+                            "placeholder": "",
+                            "button_text": "Search"
+                        }
+                    },
+                    "contexts": [],
+                    "admin_label": "",
+                    "admin_description": ""
+                },
+                "uuid": "dcb9a0b3-b42a-4a53-8c05-5d43c993afd9",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "1950f32f-60a5-4beb-8b00-e804fefce5c7": {
+            "plugin": "system:main-menu",
+            "data": {
+                "module": "system",
+                "delta": "main-menu",
+                "settings": {
+                    "title_display": "none",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": {
+                        "menu_name": "main-menu",
+                        "style": "tree",
+                        "level": "1",
+                        "depth": "0",
+                        "expand_all": 0,
+                        "clickdown": 0,
+                        "toggle": 1
+                    },
+                    "contexts": [],
+                    "admin_label": "",
+                    "admin_description": ""
+                },
+                "uuid": "1950f32f-60a5-4beb-8b00-e804fefce5c7",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "ef43844c-660b-44a9-9609-9a6f59677b80": {
+            "plugin": "on_the_web:social_links",
+            "data": {
+                "module": "on_the_web",
+                "delta": "social_links",
+                "settings": {
+                    "title_display": "custom",
+                    "title": "Stay connected",
+                    "style": "default",
+                    "block_settings": {
+                        "services": {
+                            "display": "auto",
+                            "enabled": {
+                                "linkedin": "linkedin",
+                                "rss": "rss",
+                                "youtube": "youtube",
+                                "google": "google",
+                                "facebook": "facebook",
+                                "github": "github",
+                                "twitter": "twitter"
+                            }
+                        }
+                    },
+                    "contexts": []
+                },
+                "uuid": "ef43844c-660b-44a9-9609-9a6f59677b80",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": "col-sm-6"
+                        }
+                    }
+                }
+            }
+        },
+        "238f34b9-6b30-450a-8902-2c0cca565a4a": {
+            "plugin": "block:newsletter",
+            "data": {
+                "module": "block",
+                "delta": "newsletter",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": {
+                        "delta": "newsletter",
+                        "description": "",
+                        "reusable": true
+                    },
+                    "contexts": []
+                },
+                "uuid": "238f34b9-6b30-450a-8902-2c0cca565a4a",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": "col-sm-6"
+                        }
+                    }
+                }
+            }
+        },
+        "c6e5aee8-965a-4f1f-8c00-fe00a3718631": {
+            "plugin": "system:powered-by",
+            "data": {
+                "module": "system",
+                "delta": "powered-by",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": []
+                },
+                "uuid": "c6e5aee8-965a-4f1f-8c00-fe00a3718631",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        },
+        "5fccdf2a-ecb0-4c7f-9409-9d7eceb583c0": {
+            "plugin": "menu:menu-footer-menu",
+            "data": {
+                "module": "menu",
+                "delta": "menu-footer-menu",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": {
+                        "menu_name": "menu-footer-menu",
+                        "style": "tree",
+                        "level": "1",
+                        "depth": "0",
+                        "expand_all": 0,
+                        "toggle": 0
+                    },
+                    "contexts": []
+                },
+                "uuid": "5fccdf2a-ecb0-4c7f-9409-9d7eceb583c0",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
