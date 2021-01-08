@@ -35,8 +35,8 @@ $database_prefix = '';
  * @endcode
  */
 
-$config_directories['active'] = '../config/live-active';
-$config_directories['staging'] = '../config/dev-active';
+$config_directories['active'] = '../config/dev-active';
+$config_directories['staging'] = '../config/staging';
 
 /**
  * Access control for update.php script.
