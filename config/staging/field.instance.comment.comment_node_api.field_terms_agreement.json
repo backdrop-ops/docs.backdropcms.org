@@ -1,0 +1,36 @@
+{
+    "_config_name": "field.instance.comment.comment_node_api.field_terms_agreement",
+    "field_name": "field_terms_agreement",
+    "entity_type": "comment",
+    "bundle": "comment_node_api",
+    "label": "Terms Agreement",
+    "widget": {
+        "weight": "1",
+        "type": "options_onoff",
+        "module": "options",
+        "active": 1,
+        "settings": {
+            "display_label": 0
+        }
+    },
+    "description": "<ul>\r\n  <li>Comments are heavily moderated. Only comments adhering to these terms will be approved.</li>\r\n  <li>This is not a discussion forum. Do not reference other comments or users.</li>\r\n  <li>Comments posted here should assist users reading the above documentation. Use them to give advice, examples, etc.</li>\r\n  <li>Do not report bugs or documentation issues here. File a <a href=\"https://github.com/backdrop-ops/api.backdropcms.org/issues\" target=\"_blank\">bug report</a> instead.</li>\r\n  <li>Do not ask for help or support here. Please use our <a href=\"https://forum.backdropcms.org/\" target=\"_blank\">forum</a> or other <a href=\"https://backdropcms.org/support/resources\" target=\"_blank\">support resources</a>.</li>\r\n</ul>",
+    "required": 1,
+    "deleted": 0,
+    "default_value": [
+        {
+            "value": 0
+        }
+    ],
+    "default_value_function": null,
+    "settings": {
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "hidden",
+            "weight": "1",
+            "settings": []
+        }
+    }
+}

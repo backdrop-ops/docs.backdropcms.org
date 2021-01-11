@@ -1,0 +1,17 @@
+{
+    "_config_name": "field.bundle.comment.comment_node_api",
+    "bundle": "comment_node_api",
+    "entity_type": "comment",
+    "view_modes": [],
+    "extra_fields": {
+        "form": {
+            "author": {
+                "weight": "-2"
+            },
+            "subject": {
+                "weight": "-1"
+            }
+        },
+        "display": []
+    }
+}

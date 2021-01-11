@@ -31,3 +31,42 @@ function backdropapi_install() {
     'api_search',
   ));
 }
+
+/**
+ * Enable comments on all existing API nodes.
+ */
+function backdropapi_update_1110(&$sandbox) {
+  // Setup the batch process.
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['max'] = db_query("SELECT COUNT(nid) FROM {node} WHERE type = 'api' AND comment != :status", array(
+      ':status' => COMMENT_NODE_OPEN,
+    ))->fetchField();
+    $sandbox['current_node'] = 0;
+  }
+
+  // Get 10 API nodes at a time.
+  $limit = 10;
+  $result = db_query_range("SELECT nid FROM {node} WHERE type = 'api' AND comment != :status AND nid > :current ORDER BY nid ASC", 0, $limit, array(
+    ':status' => COMMENT_NODE_OPEN,
+    ':current' => $sandbox['current_node'],
+  ));
+  while ($nid = $result->fetchField()) {
+    // Enable comments on the node.
+    $node = node_load($nid);
+    $node->comment = COMMENT_NODE_OPEN;
+    node_save($node);
+
+    // Update the batch process.
+    $sandbox['progress']++;
+    $sandbox['current_node'] = $nid;
+  }
+
+  // Update the batch progress bar.
+  $sandbox['#finished'] = ($sandbox['progress'] >= $sandbox['max']) ? TRUE : ($sandbox['progress'] / $sandbox['max']);
+
+  // Finish the batch process.
+  if ($sandbox['#finished']) {
+    return format_plural($sandbox['progress'], 'One API node updated.', '@count API nodes updated.');
+  }
+}
