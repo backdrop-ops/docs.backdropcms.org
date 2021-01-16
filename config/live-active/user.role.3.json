@@ -124,6 +124,7 @@
         "delete own fapi_property content",
         "delete any fapi_property content",
         "administer paragraphs bundles",
-        "view hidden paths"
+        "view hidden paths",
+        "administer smtp module"
     ]
 }
