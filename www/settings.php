@@ -125,7 +125,7 @@ $settings['hash_salt'] = 'ZBjJaY1BS0_iX0Q3VqGCCUAIA1AAF4TKiftCGHEGmgQ';
  * @see backdrop_check_trusted_hosts()
  * @see system_requirements()
  */
-$settings['trusted_host_patterns'] = array('^api\.backdropcms\.org$');
+$settings['trusted_host_patterns'] = array('^docs\.backdropcms\.org$');
 
 /**
  * Base URL (optional).
