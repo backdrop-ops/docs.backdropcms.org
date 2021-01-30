@@ -1,4 +1,4 @@
-name: apiborg
+name: docsborg
 recipe: backdrop
 env_file:
   - .env
@@ -17,21 +17,21 @@ services:
 tooling:
   drush:
     service: appserver
-    cmd: drush --root=/app/www --uri=https://apiborg.lndo.site
+    cmd: drush --root=/app/www --uri=https://docsborg.lndo.site
   redis-cli:
     service: cache
   pull-db:
     service: appserver
-    description: 'Get the latest DB from api.backdropcms.org'
+    description: 'Get the latest DB from docs.backdropcms.org'
     cmd:
       - appserver: php /app/scripts/pull-db-files.php --database
-      - database: /helpers/sql-import.sh api_backdrop-latest-sanitized.sql.gz
-      - appserver: rm -f api_backdrop-latest-sanitized.sql.gz
+      - database: /helpers/sql-import.sh docs-latest-sanitized.sql.gz
+      - appserver: rm -f docs-latest-sanitized.sql.gz
   pull-files:
     service: appserver
-    description: 'Get the latest files from api.backdropcms.org'
+    description: 'Get the latest files from docs.backdropcms.org'
     cmd:
       - php /app/scripts/pull-db-files.php --files
-      - tar -xzf api_backdrop-files-latest.tar.gz
+      - tar -xzf docs-files-latest.tar.gz
       - rm -r www/files/ && mv files/ www/
-      - rm -f api_backdrop-files-latest.tar.gz
+      - rm -f docs-files-latest.tar.gz
