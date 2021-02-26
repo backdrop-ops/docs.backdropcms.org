@@ -60,14 +60,12 @@
                     {
                         "source": "jsonpath_parser:0",
                         "target": "field_lecacy_nid",
-                        "unique": 1,
-                        "language": "und"
+                        "unique": 1
                     },
                     {
                         "source": "jsonpath_parser:1",
                         "target": "title",
-                        "unique": false,
-                        "language": "und"
+                        "unique": 1
                     },
                     {
                         "source": "jsonpath_parser:2",
@@ -108,13 +106,14 @@
                     {
                         "source": "jsonpath_parser:8",
                         "target": "user_name",
-                        "unique": false
+                        "unique": false,
+                        "language": "und"
                     }
                 ],
                 "insert_new": "1",
                 "update_existing": "2",
                 "update_non_existent": "skip",
-                "input_format": "fix_html",
+                "input_format": "documentation",
                 "skip_hash_check": 0,
                 "bundle": "docs",
                 "language": "und"
