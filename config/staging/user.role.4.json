@@ -33,6 +33,10 @@
         "view files",
         "create docs content",
         "edit own docs content",
-        "edit any docs content"
+        "edit any docs content",
+        "import documentation feeds",
+        "clear documentation feeds",
+        "unlock documentation feeds",
+        "use text format documentation"
     ]
 }

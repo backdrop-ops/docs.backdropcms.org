@@ -130,6 +130,17 @@
         "edit own docs content",
         "edit any docs content",
         "delete own docs content",
-        "delete any docs content"
+        "delete any docs content",
+        "administer feeds",
+        "import documentation feeds",
+        "clear documentation feeds",
+        "unlock documentation feeds",
+        "administer view modes",
+        "access file overview",
+        "manage files",
+        "delete files",
+        "upload editor files",
+        "use text format documentation",
+        "view any unpublished content"
     ]
 }
