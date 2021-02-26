@@ -2,15 +2,15 @@
     "_config_name": "filter.format.plain_text",
     "format": "plain_text",
     "name": "Plain text",
-    "cache": "1",
+    "cache": true,
     "status": "1",
-    "weight": "10",
+    "weight": "-7",
     "roles": [],
     "filters": {
         "filter_html": {
             "module": "filter",
-            "status": "0",
-            "weight": "-10",
+            "status": 0,
+            "weight": -10,
             "settings": {
                 "allowed_html": "<a> <em> <strong> <cite> <blockquote> <code> <ul> <ol> <li> <dl> <dt> <dd>",
                 "filter_html_help": 1,
@@ -19,29 +19,31 @@
         },
         "filter_html_escape": {
             "module": "filter",
-            "status": "1",
-            "weight": "0",
+            "status": 1,
+            "weight": 0,
             "settings": []
         },
         "filter_url": {
             "module": "filter",
-            "status": "1",
-            "weight": "1",
+            "status": 1,
+            "weight": 1,
             "settings": {
                 "filter_url_length": 72
             }
         },
         "filter_autop": {
             "module": "filter",
-            "status": "1",
-            "weight": "2",
+            "status": 1,
+            "weight": 2,
             "settings": []
         },
         "filter_htmlcorrector": {
             "module": "filter",
-            "status": "0",
-            "weight": "10",
+            "status": 0,
+            "weight": 10,
             "settings": []
         }
-    }
+    },
+    "editor": null,
+    "editor_settings": []
 }
