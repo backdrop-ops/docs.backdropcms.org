@@ -14,10 +14,6 @@
         "formblock_expose": 0,
         "formblock_show_help": 0,
         "menu_options": {
-            "menu-more-developer-resources": "menu-more-developer-resources",
-            "menu-handbook": "menu-handbook",
-            "menu-user-guide": "menu-user-guide",
-            "devel": 0,
             "menu-footer-menu": 0,
             "main-menu": 0,
             "management": 0,
@@ -43,7 +39,7 @@
         "project_release_type": "",
         "hidden_path": 0,
         "node_preview": "1",
-        "scheduling_enabled": 1,
+        "scheduling_enabled": 0,
         "menu_default": 0,
         "node_submitted_format": "[node:created:medium] by [node:author]"
     },
