@@ -126,6 +126,7 @@
         "administer paragraphs bundles",
         "view hidden paths",
         "administer smtp module",
-        "use text format documentation"
+        "use text format documentation",
+        "administer feeds"
     ]
 }
