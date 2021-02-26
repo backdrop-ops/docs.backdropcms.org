@@ -29,6 +29,7 @@
 function hook_feeds_plugins() {
   $info = array();
   $info['MyFetcher'] = array(
+    'module' => 'mymodule',
     'name' => 'My Fetcher',
     'description' => 'Fetches my stuff.',
     'help' => 'More verbose description here. Will be displayed on fetcher selection menu.',
