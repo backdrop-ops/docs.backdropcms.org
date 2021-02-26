@@ -30,6 +30,7 @@
         "use text format code",
         "view any unpublished content",
         "use text format fix_html",
-        "view files"
+        "view files",
+        "use text format documentation"
     ]
 }

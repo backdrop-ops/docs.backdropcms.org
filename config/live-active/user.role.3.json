@@ -125,6 +125,7 @@
         "delete any fapi_property content",
         "administer paragraphs bundles",
         "view hidden paths",
-        "administer smtp module"
+        "administer smtp module",
+        "use text format documentation"
     ]
 }
