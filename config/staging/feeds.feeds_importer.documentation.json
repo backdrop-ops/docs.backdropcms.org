@@ -114,7 +114,7 @@
                 "insert_new": "1",
                 "update_existing": "2",
                 "update_non_existent": "skip",
-                "input_format": "fix_html",
+                "input_format": "documentation",
                 "skip_hash_check": 0,
                 "bundle": "docs",
                 "language": "und"
