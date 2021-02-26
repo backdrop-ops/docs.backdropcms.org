@@ -20,9 +20,32 @@
         "parser": {
             "plugin_key": "FeedsJSONPathParser",
             "config": {
-                "context": "",
-                "sources": [],
-                "debug": [],
+                "context": "$.nodes.*.node",
+                "sources": {
+                    "jsonpath_parser:0": "Nid",
+                    "jsonpath_parser:1": "title",
+                    "jsonpath_parser:2": "Callout",
+                    "jsonpath_parser:3": "'Documentation Level'",
+                    "jsonpath_parser:4": "'Documentation Status'",
+                    "jsonpath_parser:5": "Body",
+                    "jsonpath_parser:6": "'Original source title'",
+                    "jsonpath_parser:7": "'Original source url'",
+                    "jsonpath_parser:8": "Username"
+                },
+                "debug": {
+                    "options": {
+                        "context": 0,
+                        "jsonpath_parser:0": 0,
+                        "jsonpath_parser:1": 0,
+                        "jsonpath_parser:2": 0,
+                        "jsonpath_parser:3": 0,
+                        "jsonpath_parser:4": 0,
+                        "jsonpath_parser:5": 0,
+                        "jsonpath_parser:6": 0,
+                        "jsonpath_parser:7": 0,
+                        "jsonpath_parser:8": 0
+                    }
+                },
                 "allow_override": 0,
                 "convert_four_byte": 0
             }
@@ -30,16 +53,70 @@
         "processor": {
             "plugin_key": "FeedsNodeProcessor",
             "config": {
-                "expire": -1,
-                "author": 0,
-                "authorize": true,
-                "mappings": [],
-                "insert_new": 1,
-                "update_existing": 0,
+                "expire": "-1",
+                "author": "38",
+                "authorize": 0,
+                "mappings": [
+                    {
+                        "source": "jsonpath_parser:0",
+                        "target": "field_lecacy_nid",
+                        "unique": 1,
+                        "language": "und"
+                    },
+                    {
+                        "source": "jsonpath_parser:1",
+                        "target": "title",
+                        "unique": false,
+                        "language": "und"
+                    },
+                    {
+                        "source": "jsonpath_parser:2",
+                        "target": "field_callout",
+                        "unique": false,
+                        "language": "und"
+                    },
+                    {
+                        "source": "jsonpath_parser:3",
+                        "target": "field_docs_level",
+                        "unique": false,
+                        "language": "und"
+                    },
+                    {
+                        "source": "jsonpath_parser:4",
+                        "target": "field_docs_status",
+                        "unique": false,
+                        "language": "und"
+                    },
+                    {
+                        "source": "jsonpath_parser:5",
+                        "target": "body",
+                        "unique": false,
+                        "language": "und"
+                    },
+                    {
+                        "source": "jsonpath_parser:6",
+                        "target": "field_docs_source:title",
+                        "unique": false,
+                        "language": "und"
+                    },
+                    {
+                        "source": "jsonpath_parser:7",
+                        "target": "field_docs_source:url",
+                        "unique": false,
+                        "language": "und"
+                    },
+                    {
+                        "source": "jsonpath_parser:8",
+                        "target": "user_name",
+                        "unique": false
+                    }
+                ],
+                "insert_new": "1",
+                "update_existing": "2",
                 "update_non_existent": "skip",
-                "input_format": null,
-                "skip_hash_check": false,
-                "bundle": null,
+                "input_format": "fix_html",
+                "skip_hash_check": 0,
+                "bundle": "docs",
                 "language": "und"
             }
         },
