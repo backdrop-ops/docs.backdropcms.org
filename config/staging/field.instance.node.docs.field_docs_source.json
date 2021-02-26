@@ -5,7 +5,11 @@
     "bundle": "docs",
     "label": "Original source",
     "widget": {
+<<<<<<< HEAD
         "weight": "5",
+=======
+        "weight": "4",
+>>>>>>> 2ec61111d7c6bdd75443fbb403f841236c5693b6
         "type": "link_field",
         "module": "link",
         "active": 0,

@@ -1,0 +1,53 @@
+{
+    "_config_name": "feeds.feeds_importer.documentation",
+    "id": "documentation",
+    "disabled": false,
+    "config": {
+        "name": "Documentation",
+        "description": "Pulls docs files from b.org to docs.b.org",
+        "fetcher": {
+            "plugin_key": "FeedsHTTPFetcher",
+            "config": {
+                "auto_detect_feeds": false,
+                "use_pubsubhubbub": false,
+                "designated_hub": "",
+                "request_timeout": null,
+                "auto_scheme": "http",
+                "accept_invalid_cert": false,
+                "cache_http_result": true
+            }
+        },
+        "parser": {
+            "plugin_key": "FeedsJSONPathParser",
+            "config": {
+                "context": "",
+                "sources": [],
+                "debug": [],
+                "allow_override": 0,
+                "convert_four_byte": 0
+            }
+        },
+        "processor": {
+            "plugin_key": "FeedsNodeProcessor",
+            "config": {
+                "expire": -1,
+                "author": 0,
+                "authorize": true,
+                "mappings": [],
+                "insert_new": 1,
+                "update_existing": 0,
+                "update_non_existent": "skip",
+                "input_format": null,
+                "skip_hash_check": false,
+                "bundle": null,
+                "language": "und"
+            }
+        },
+        "content_type": "",
+        "update": 0,
+        "import_period": "43200",
+        "expire_period": 3600,
+        "import_on_create": 1,
+        "process_in_background": 0
+    }
+}
