@@ -1,0 +1,14 @@
+{
+    "_config_name": "field.bundle.node.docs",
+    "bundle": "docs",
+    "entity_type": "node",
+    "view_modes": [],
+    "extra_fields": {
+        "form": {
+            "title": {
+                "weight": "0"
+            }
+        },
+        "display": []
+    }
+}

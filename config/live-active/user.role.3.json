@@ -126,7 +126,14 @@
         "administer paragraphs bundles",
         "view hidden paths",
         "administer smtp module",
-        "use text format documentation",
-        "administer feeds"
+        "create docs content",
+        "edit own docs content",
+        "edit any docs content",
+        "delete own docs content",
+        "delete any docs content",
+        "administer feeds",
+        "import documentation feeds",
+        "clear documentation feeds",
+        "unlock documentation feeds"
     ]
 }
