@@ -1,0 +1,9 @@
+type = module
+name = Property Validation
+description = "Add validation rules to properties."
+package = Fields
+backdrop = 1.x
+dependencies[] = field
+dependencies[] = ctools
+dependencies[] = entity
+files[] = property_validation_validator.inc
