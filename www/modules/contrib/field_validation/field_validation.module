@@ -43,15 +43,9 @@ function field_validation_config_info() {
   // string, provide a "name_key" that will be read from the configuration file
   // and used when listing the configuration file.
   $prefixes['field_validation.rule'] = array(
-    'name_key' => 'name',
-    'label_key' => 'name',
+    'name_key' => 'machine',
+    'label_key' => 'rulename',
     'group' => t('Field Validation Rules'),
-  );
-  // If this configuration file points to one particular file, a "name" key
-  // will display that exact string for that file.
-  $prefixes['field_validation.settings'] = array(
-    'label' => t('Field Validation ??'),
-    'group' => t('Configuration'),
   );
   return $prefixes;
 }
