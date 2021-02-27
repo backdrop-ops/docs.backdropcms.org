@@ -60,12 +60,13 @@
                     {
                         "source": "jsonpath_parser:0",
                         "target": "field_lecacy_nid",
-                        "unique": 1
+                        "unique": 1,
+                        "language": "und"
                     },
                     {
                         "source": "jsonpath_parser:1",
                         "target": "title",
-                        "unique": 1
+                        "unique": 0
                     },
                     {
                         "source": "jsonpath_parser:2",

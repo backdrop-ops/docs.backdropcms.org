@@ -1,7 +1,7 @@
 {
     "_config_name": "views.settings",
     "exposed_filter_any_label": "new_any",
-    "show_additional_queries": false,
+    "show_additional_queries": 0,
     "sql_signature": false,
     "devel_output": false,
     "devel_region": "footer",

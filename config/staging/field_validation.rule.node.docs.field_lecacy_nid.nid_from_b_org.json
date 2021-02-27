@@ -1,0 +1,30 @@
+{
+    "_config_name": "field_validation.rule.node.docs.field_lecacy_nid.nid_from_b_org",
+    "_module": "field_validation",
+    "entity_type": "node",
+    "bundle": "docs",
+    "field_name": "field_lecacy_nid",
+    "rulename": "nid from b.org",
+    "machine": "nid_from_b_org",
+    "validator": "field_validation_unique_validator",
+    "col": "value",
+    "error_message": "nid must be unique",
+    "settings": {
+        "data": "global",
+        "per_user": 0,
+        "bypass": 0,
+        "roles": {
+            "anonymous": 0,
+            "authenticated": 0,
+            "4": 0,
+            "3": 0
+        },
+        "errors": 0,
+        "condition": 0,
+        "condition_wrapper": {
+            "condition_field": "",
+            "condition_operator": "equals",
+            "condition_value": ""
+        }
+    }
+}
