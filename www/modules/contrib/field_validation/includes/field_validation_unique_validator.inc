@@ -10,11 +10,11 @@ class field_validation_unique_validator extends field_validation_validator {
    */
   public function validate() {
     $flag = TRUE;
-    $scope = $this->rule->settings['data'];
+    $scope = $this->rule['settings']['data'];
     $count = 0;
     foreach ($this->items as $delta1 => $item1) {
       if ($this->delta != $delta1) {
-        if ($this->value == $item1[$this->rule->col]) {
+        if ($this->value == $item1[$this->rule['col']]) {
           $flag = FALSE;
           break;
         }
@@ -25,21 +25,21 @@ class field_validation_unique_validator extends field_validation_validator {
       if ($scope == 'global') {
       }
       elseif ($scope == 'entity') {
-        $query->entityCondition('entity_type', $this->rule->entity_type);
+        $query->entityCondition('entity_type', $this->rule['entity_type']);
       }
       elseif ($scope == 'bundle') {
-        $query->entityCondition('entity_type', $this->rule->entity_type);
-        $query->entityCondition('bundle', $this->rule->bundle);
+        $query->entityCondition('entity_type', $this->rule['entity_type']);
+        $query->entityCondition('bundle', $this->rule['bundle']);
       }
 
-      list($id, $vid, $bundle) = entity_extract_ids($this->rule->entity_type, $this->entity);
-      if ($this->rule->entity_type == 'user' && arg(0) == 'user' && arg(2) == 'edit' && empty($id)) {
+      list($id, $vid, $bundle) = entity_extract_ids($this->rule['entity_type'], $this->entity);
+      if ($this->rule['entity_type'] == 'user' && arg(0) == 'user' && arg(2) == 'edit' && empty($id)) {
         $id = arg(1);
       }
-      if ($this->rule->entity_type == 'field_collection_item' && arg(0) == 'field-collection' && arg(3) == 'edit' && empty($id)) {
+      if ($this->rule['entity_type'] == 'field_collection_item' && arg(0) == 'field-collection' && arg(3) == 'edit' && empty($id)) {
         $id = arg(2);
       }
-      if ($this->rule->entity_type == 'profile2' && empty($id)) {
+      if ($this->rule['entity_type'] == 'profile2' && empty($id)) {
         $arg_index = 1;
         if (module_exists('profile2_page')) {
           $profile_type = profile2_type_load($this->entity->type);
@@ -58,10 +58,10 @@ class field_validation_unique_validator extends field_validation_validator {
       }
       // Always bypass all access checkings.
       $query->addMetaData('account', user_load(1));
-      $query->fieldCondition($this->rule->field_name, $this->rule->col, $this->value);
+      $query->fieldCondition($this->rule['field_name'], $this->rule['col'], $this->value);
 
       // Do the check per user.
-      if (isset($this->rule->settings['per_user']) && $this->rule->settings['per_user'] && $scope != 'global') {
+      if (isset($this->rule['settings']['per_user']) && $this->rule['settings']['per_user'] && $scope != 'global') {
         global $user;
         $query->propertyCondition('uid', $user->uid);
       }
