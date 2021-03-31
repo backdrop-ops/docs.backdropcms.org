@@ -141,6 +141,8 @@
         "delete files",
         "upload editor files",
         "use text format documentation",
-        "view any unpublished content"
+        "view any unpublished content",
+        "administer feeds_tamper",
+        "tamper documentation"
     ]
 }

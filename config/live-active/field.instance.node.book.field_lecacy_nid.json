@@ -1,11 +1,11 @@
 {
-    "_config_name": "field.instance.node.docs.field_lecacy_nid",
+    "_config_name": "field.instance.node.book.field_lecacy_nid",
     "field_name": "field_lecacy_nid",
     "entity_type": "node",
-    "bundle": "docs",
-    "label": "Lecacy NID",
+    "bundle": "book",
+    "label": "Legacy NID",
     "widget": {
-        "weight": "6",
+        "weight": "7",
         "type": "text_textfield",
         "module": "text",
         "active": 1,
@@ -25,10 +25,9 @@
     "display": {
         "default": {
             "label": "hidden",
-            "type": "text_default",
-            "settings": [],
-            "module": "text",
-            "weight": 5
+            "type": "hidden",
+            "weight": "5",
+            "settings": []
         }
     }
 }

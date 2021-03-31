@@ -174,65 +174,71 @@
         "api_filter": {
             "status": 0,
             "weight": -48,
-            "module": "api",
-            "settings": []
+            "settings": [],
+            "module": "api"
         },
         "codefilter": {
             "status": 1,
             "weight": -47,
-            "module": "codefilter",
-            "settings": []
+            "settings": {
+                "nowrap_expand": false
+            },
+            "module": "codefilter"
         },
         "filter_image_caption": {
             "status": 1,
             "weight": -45,
-            "module": "filter",
-            "settings": []
+            "settings": [],
+            "module": "filter"
         },
         "filter_autop": {
             "status": 1,
             "weight": -43,
-            "module": "filter",
-            "settings": []
+            "settings": [],
+            "module": "filter"
         },
         "filter_url": {
             "status": 1,
             "weight": -46,
-            "module": "filter",
-            "settings": []
+            "settings": {
+                "filter_url_length": 72
+            },
+            "module": "filter"
         },
         "filter_htmlcorrector": {
             "status": 1,
             "weight": -42,
-            "module": "filter",
-            "settings": []
+            "settings": [],
+            "module": "filter"
         },
         "filter_html_escape": {
             "status": 0,
             "weight": -50,
-            "module": "filter",
-            "settings": []
+            "settings": [],
+            "module": "filter"
         },
         "filter_image_align": {
             "status": 1,
             "weight": -44,
-            "module": "filter",
-            "settings": []
+            "settings": [],
+            "module": "filter"
         },
         "filter_html": {
             "status": 1,
             "weight": -49,
             "settings": {
-                "allowed_html": "<a> <em> <strong> <cite> <blockquote> <code> <ul> <ol> <li> <dl> <dt> <dd> <h3> <h4> <h5> <p> <img> <figure> <figcaption>"
+                "allowed_html": "<a> <em> <strong> <cite> <blockquote> <code> <pre> <ul> <ol> <li> <h1> <h2> <h3> <h4> <i> <p> <small> <blockquote> <div> <img> <figcaption> <figure> <table> <thead> <tbody> <td> <tr> <th><span>",
+                "filter_html_help": 1,
+                "filter_html_nofollow": 0
             },
             "module": "filter"
         }
     },
     "roles": {
-        "authenticated": "authenticated",
         "4": "4",
         "3": "3",
-        "anonymous": 0
+        "anonymous": 0,
+        "authenticated": 0
     },
     "weight": "-10"
 }

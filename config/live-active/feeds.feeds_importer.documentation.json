@@ -8,13 +8,13 @@
         "fetcher": {
             "plugin_key": "FeedsHTTPFetcher",
             "config": {
-                "auto_detect_feeds": false,
-                "use_pubsubhubbub": false,
+                "auto_detect_feeds": 0,
+                "use_pubsubhubbub": 0,
                 "designated_hub": "",
-                "request_timeout": null,
+                "request_timeout": "",
                 "auto_scheme": "http",
-                "accept_invalid_cert": false,
-                "cache_http_result": true
+                "accept_invalid_cert": 0,
+                "cache_http_result": 0
             }
         },
         "parser": {
@@ -22,15 +22,16 @@
             "config": {
                 "context": "$.nodes.*.node",
                 "sources": {
-                    "jsonpath_parser:0": "Nid",
-                    "jsonpath_parser:1": "title",
-                    "jsonpath_parser:2": "Callout",
-                    "jsonpath_parser:3": "'Documentation Level'",
-                    "jsonpath_parser:4": "'Documentation Status'",
-                    "jsonpath_parser:5": "Body",
-                    "jsonpath_parser:6": "'Original source title'",
-                    "jsonpath_parser:7": "'Original source url'",
-                    "jsonpath_parser:8": "Username"
+                    "jsonpath_parser:0": "Body",
+                    "jsonpath_parser:1": "Callout",
+                    "jsonpath_parser:2": "'Documentation Level'",
+                    "jsonpath_parser:3": "'Documentation Status'",
+                    "jsonpath_parser:4": "Nid",
+                    "jsonpath_parser:5": "'Original source title'",
+                    "jsonpath_parser:6": "'Original source url'",
+                    "jsonpath_parser:7": "title",
+                    "jsonpath_parser:8": "Username",
+                    "jsonpath_parser:9": "Nid"
                 },
                 "debug": {
                     "options": {
@@ -43,7 +44,8 @@
                         "jsonpath_parser:5": 0,
                         "jsonpath_parser:6": 0,
                         "jsonpath_parser:7": 0,
-                        "jsonpath_parser:8": 0
+                        "jsonpath_parser:8": 0,
+                        "jsonpath_parser:9": 0
                     }
                 },
                 "allow_override": 0,
@@ -59,56 +61,89 @@
                 "mappings": [
                     {
                         "source": "jsonpath_parser:0",
-                        "target": "field_lecacy_nid",
-                        "unique": 1,
-                        "language": "und"
+                        "target": "body",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": {
+                            "find_replace_inline_images": {
+                                "plugin_id": "find_replace",
+                                "settings": {
+                                    "find": "https://backdropcms.org/files/inline-images/",
+                                    "replace": "https://docs.backdropcms.org/files/inline-images/",
+                                    "case_sensitive": 0,
+                                    "word_boundaries": 0,
+                                    "whole": 0,
+                                    "regex": false,
+                                    "func": "str_ireplace"
+                                },
+                                "description": "Find/replace inline images",
+                                "id": "find_replace_inline_images",
+                                "weight": 0,
+                                "disabled": false
+                            }
+                        }
                     },
                     {
                         "source": "jsonpath_parser:1",
-                        "target": "title",
-                        "unique": 0
+                        "target": "field_callout",
+                        "unique": false,
+                        "language": "und",
+                        "tampers": []
                     },
                     {
                         "source": "jsonpath_parser:2",
-                        "target": "field_callout",
+                        "target": "field_docs_level",
                         "unique": false,
-                        "language": "und"
+                        "language": "und",
+                        "tampers": []
                     },
                     {
                         "source": "jsonpath_parser:3",
-                        "target": "field_docs_level",
+                        "target": "field_docs_status",
                         "unique": false,
-                        "language": "und"
+                        "language": "und",
+                        "tampers": []
                     },
                     {
                         "source": "jsonpath_parser:4",
-                        "target": "field_docs_status",
+                        "target": "field_lecacy_nid",
                         "unique": false,
-                        "language": "und"
+                        "language": "und",
+                        "tampers": []
                     },
                     {
                         "source": "jsonpath_parser:5",
-                        "target": "body",
+                        "target": "field_docs_source:title",
                         "unique": false,
-                        "language": "und"
+                        "language": "und",
+                        "tampers": []
                     },
                     {
                         "source": "jsonpath_parser:6",
-                        "target": "field_docs_source:title",
+                        "target": "field_docs_source:url",
                         "unique": false,
-                        "language": "und"
+                        "language": "und",
+                        "tampers": []
                     },
                     {
                         "source": "jsonpath_parser:7",
-                        "target": "field_docs_source:url",
+                        "target": "title",
                         "unique": false,
-                        "language": "und"
+                        "language": "und",
+                        "tampers": []
                     },
                     {
                         "source": "jsonpath_parser:8",
                         "target": "user_name",
                         "unique": false,
-                        "language": "und"
+                        "language": "und",
+                        "tampers": []
+                    },
+                    {
+                        "source": "jsonpath_parser:9",
+                        "target": "guid",
+                        "unique": 1,
+                        "tampers": []
                     }
                 ],
                 "insert_new": "1",
@@ -116,7 +151,7 @@
                 "update_non_existent": "skip",
                 "input_format": "documentation",
                 "skip_hash_check": 0,
-                "bundle": "docs",
+                "bundle": "book",
                 "language": "und"
             }
         },

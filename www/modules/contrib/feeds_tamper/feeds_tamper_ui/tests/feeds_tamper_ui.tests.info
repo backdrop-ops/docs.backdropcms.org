@@ -1,0 +1,10 @@
+[FeedsTamperUIWebTestCase]
+name = Feeds Tamper UI
+description = Regression tests for Feeds Tamper UI.
+group = Feeds Tamper
+file = tests/feeds_tamper_ui.test
+
+; Added by Backdrop CMS packaging script on 2020-09-18
+project = feeds_tamper
+version = 1.x-1.2.2
+timestamp = 1600458292

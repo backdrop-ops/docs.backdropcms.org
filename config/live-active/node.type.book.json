@@ -25,12 +25,17 @@
         "node_type_language": null,
         "menu_options": {
             "main-menu": "main-menu",
+            "menu-footer-menu": 0,
             "management": 0,
-            "navigation": 0,
             "user-menu": 0
         },
         "menu_parent": "main-menu:0",
         "node_permissions": true,
-        "hidden_path": "0"
-    }
+        "hidden_path": 0,
+        "menu_default": 0,
+        "scheduling_enabled": 1,
+        "node_submitted_format": "[node:created:medium] by [node:author]",
+        "language": 0
+    },
+    "node_preview": "1"
 }
