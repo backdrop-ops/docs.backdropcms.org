@@ -1,0 +1,18 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the Menu Pager module.
+ */
+
+/**
+ * Convert Menu Pager variables to config.
+ */
+function menu_pager_update_1000() {
+  // TODO: We want to save existing variables to block settings, not config...
+  $config = config('menu_pager.settings');
+  foreach (menu_get_menus() as $name => $title) {
+    $config->set('restrict_to_parent_' . $name, update_variable_get('menu_pager_restrict_to_parent_' . $name, FALSE));
+    update_variable_del('menu_pager_restrict_to_parent_' . $name);
+  }
+  $config->save();
+}
