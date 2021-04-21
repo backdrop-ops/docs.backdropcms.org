@@ -1,7 +1,7 @@
 {
     "_config_name": "feeds.feeds_importer.documentation",
     "id": "documentation",
-    "disabled": false,
+    "disabled": true,
     "config": {
         "name": "Documentation",
         "description": "Pulls docs files from b.org to docs.b.org",
