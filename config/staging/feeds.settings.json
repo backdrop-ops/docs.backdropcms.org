@@ -5,7 +5,9 @@
     "feeds_source_class": "FeedsSource",
     "feeds_sync_cache_feeds_http_interval": 21600,
     "feeds_http_file_cache_dir": null,
-    "default_feeds_importer": [],
+    "default_feeds_importer": {
+        "documentation": true
+    },
     "http_request_timeout": 30,
     "proxy_auth_method": 1,
     "proxy_server": "",

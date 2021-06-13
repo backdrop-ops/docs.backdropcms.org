@@ -1,7 +1,7 @@
 {
     "_config_name": "node.type.book",
     "type": "book",
-    "name": "Handbook Page",
+    "name": "Documentation Page",
     "base": "node_content",
     "module": "node",
     "description": "<em>Books</em> have a built-in hierarchical navigation. Use for handbooks or tutorials.",
@@ -35,7 +35,10 @@
         "menu_default": 0,
         "scheduling_enabled": 1,
         "node_submitted_format": "[node:created:medium] by [node:author]",
-        "language": 0
+        "language": 0,
+        "diff_show_preview_changes_node": 0,
+        "diff_enable_revisions_page_node": 0,
+        "diff_view_mode_preview_node": ""
     },
     "node_preview": "1"
 }

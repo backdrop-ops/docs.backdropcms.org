@@ -37,6 +37,19 @@
         "import documentation feeds",
         "clear documentation feeds",
         "unlock documentation feeds",
-        "use text format documentation"
+        "use text format documentation",
+        "access dashboard",
+        "view hidden paths",
+        "create fapi_element content",
+        "edit own fapi_element content",
+        "edit any fapi_element content",
+        "delete own fapi_element content",
+        "delete any fapi_element content",
+        "create fapi_property content",
+        "edit own fapi_property content",
+        "edit any fapi_property content",
+        "delete own fapi_property content",
+        "delete any fapi_property content",
+        "view the administration theme"
     ]
 }
