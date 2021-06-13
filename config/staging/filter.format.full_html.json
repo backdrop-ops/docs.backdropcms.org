@@ -4,7 +4,7 @@
     "name": "HTML code",
     "cache": true,
     "status": "1",
-    "weight": "-8",
+    "weight": "-7",
     "roles": {
         "3": "3",
         "anonymous": 0,
@@ -34,14 +34,6 @@
             "module": "api",
             "settings": []
         },
-        "filter_url": {
-            "status": 1,
-            "weight": 0,
-            "settings": {
-                "filter_url_length": "72"
-            },
-            "module": "filter"
-        },
         "codefilter": {
             "status": 1,
             "weight": 0,
@@ -49,6 +41,14 @@
                 "nowrap_expand": 0
             },
             "module": "codefilter"
+        },
+        "filter_url": {
+            "status": 1,
+            "weight": 0,
+            "settings": {
+                "filter_url_length": "72"
+            },
+            "module": "filter"
         },
         "filter_autop": {
             "status": 0,
