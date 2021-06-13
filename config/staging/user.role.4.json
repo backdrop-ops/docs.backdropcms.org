@@ -51,6 +51,7 @@
         "delete own fapi_property content",
         "delete any fapi_property content",
         "view the administration theme",
-        "use text format full_html"
+        "use text format full_html",
+        "use text format markdown"
     ]
 }

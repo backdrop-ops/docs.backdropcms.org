@@ -4,7 +4,7 @@
     "name": "Plain text",
     "cache": true,
     "status": "1",
-    "weight": "-7",
+    "weight": "-6",
     "roles": [],
     "filters": {
         "filter_html": {
