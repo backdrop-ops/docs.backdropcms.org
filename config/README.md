@@ -1,10 +1,10 @@
 # Config Workflow Instructions
 
-These instructions explain api.BackdropCMS.org's Configuration Management
-workflow. For an overview of config management, see the
-[API docs](https://api.backdropcms.org/documentation/working-configuration).
-api.BackdropCMS.org uses the
-'[Versioned staging directory](https://api.backdropcms.org/documentation/versioned-staging-directory)'
+These instructions explain docs.backdropcms.org's Configuration Management
+workflow. For an overview of config management, see
+[Working with configuration](https://docs.backdropcms.org/documentation/working-with-configuration).
+docs.backdropcms.org uses the
+'[Versioned staging directory](https://docs.backdropcms.org/documentation/versioned-staging-directory)'
 approach with a few changes (namely the inclusion of the `live-active` directory
 in version control).
 
@@ -28,8 +28,8 @@ environment.
    $config_directories['staging'] = '../config/staging';
    ```
 
-2. Check that `live-active` is an exact match to what's on api.BackdropCMS.org
-   (ask someone in a GitHub ticket or in Gitter to confirm this for you). See
+2. Check that `live-active` is an exact match to what's on docs.backdropcms.org
+   (ask someone in a GitHub ticket or in Zulip to confirm this for you). See
    note below.
 
 3. Copy the contents of the `live-active` directory into the `staging`
