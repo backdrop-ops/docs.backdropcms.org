@@ -84,19 +84,20 @@ function backdropapi_form_api_table() {
   }
 
   // Theme the tables.
+  $heading_elements = '<h3 id="input-elements">' . t('Input elements') . '</h3>';
   $table_elements = theme('table', array(
     'header' => $header_elements,
     'rows' => $rows_elements,
     'attributes' => array('class' => array('form-api')),
   ));
-  $heading_special = '<h3 id="special-elements">' . t('Special elements') . '</h3>';
+  $heading_special = '<h3 id="special-elements">' . t('Structure elements') . '</h3>';
   $table_special = theme('table', array(
     'header' => $header_special,
     'rows' => $rows_special,
     'attributes' => array('class' => array('form-api')),
   ));
 
-  return $table_elements . $heading_special . $table_special;
+  return $heading_elements . $table_elements . $heading_special . $table_special;
 }
 
 /**
