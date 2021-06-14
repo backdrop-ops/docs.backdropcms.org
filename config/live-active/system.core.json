@@ -51,11 +51,11 @@
     "site_favicon_path": "",
     "site_favicon_mimetype": "",
     "site_frontpage": "node/28585",
-    "site_name": "Backdrop CMS API",
+    "site_name": "Backdrop CMS Documentation",
     "site_logo_theme": 1,
     "site_logo_path": "",
     "site_mail": "no-reply@backdropcms.org",
-    "site_slogan": "Documentation for Backdrop CMS developers.",
+    "site_slogan": "Documentation and API source code for Backdrop CMS.",
     "theme_default": "api_borg",
     "theme_debug": false,
     "user_admin_role": "3",
@@ -106,5 +106,11 @@
     "log_date_format": "m/d/Y - H:i",
     "user_password_reject_weak": false,
     "user_password_strength_threshold": 50,
-    "config_sync_clear_staging": 1
+    "config_sync_clear_staging": 1,
+    "_config_translatables": [
+        "anonymous",
+        "site_name",
+        "site_slogan",
+        "maintenance_mode_message"
+    ]
 }

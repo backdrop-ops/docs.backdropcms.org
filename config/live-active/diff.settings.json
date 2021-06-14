@@ -1,0 +1,25 @@
+{
+    "_config_name": "diff.settings",
+    "diff_theme": "default",
+    "diff_radio_behavior": "simple",
+    "diff_context_lines_leading": "2",
+    "diff_context_lines_trailing": "2",
+    "diff_admin_path": {
+        "node": 1,
+        "user": 1
+    },
+    "diff_default_state": {
+        "node": "raw",
+        "user": "raw"
+    },
+    "diff_show_header": {
+        "node": 1,
+        "user": 1
+    },
+    "diff_additional_options": {
+        "node": [],
+        "user": []
+    },
+    "diff_show_diff_inline_node_bundles": [],
+    "diff_field_default_options": []
+}

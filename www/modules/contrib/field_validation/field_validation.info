@@ -1,0 +1,6 @@
+type = module
+name = Field Validation
+description = Add validation rules to fields.
+package = Fields
+backdrop = 1.x
+dependencies[] = field

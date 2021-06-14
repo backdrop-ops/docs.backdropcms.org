@@ -1,0 +1,243 @@
+<?php
+/**
+ * @file
+ * Add validation rules to field instance.
+ */
+
+/**
+ * Implements hook_autoload_info().
+ */
+function field_validation_autoload_info() {
+  return array(
+    // Add the main validator class.
+    'field_validation_validator' => 'field_validation_validator.inc',
+    // Add all the old ctools plugins.
+    'field_validation_blacklist_validator' => 'includes/field_validation_blacklist_validator.inc',
+    'field_validation_date_range2_validator' => 'includes/field_validation_date_range2_validator.inc',
+    'field_validation_email_validator' => 'includes/field_validation_email_validator.inc',
+    'field_validation_equal_values_validator' => 'includes/field_validation_equal_values_validator.inc',
+    'field_validation_length_validator' => 'includes/field_validation_length_validator.inc',
+    'field_validation_match_field_validator' => 'includes/field_validation_match_field_validator.inc',
+    'field_validation_match_property_validator' => 'includes/field_validation_match_property_validator.inc',
+    'field_validation_must_be_empty_validator' => 'includes/field_validation_must_be_empty_validator.inc',
+    'field_validation_number_of_selections_validator' => 'includes/field_validation_number_of_selections_validator.inc',
+    'field_validation_numeric2_validator' => 'includes/field_validation_numeric2_validator.inc',
+    'field_validation_oneofseveral_validator' => 'includes/field_validation_oneofseveral_validator.inc',
+    'field_validation_pattern_validator' => 'includes/field_validation_pattern_validator.inc',
+    'field_validation_php_validator' => 'includes/field_validation_php_validator.inc',
+    'field_validation_plain_text_validator' => 'includes/field_validation_plain_text_validator.inc',
+    'field_validation_regex_validator' => 'includes/field_validation_regex_validator.inc',
+    'field_validation_specific_value_validator' => 'includes/field_validation_specific_value_validator.inc',
+    'field_validation_unique_validator' => 'includes/field_validation_unique_validator.inc',
+    'field_validation_unique_values_validator' => 'includes/field_validation_unique_values_validator.inc',
+    'field_validation_url_validator' => 'includes/field_validation_url_validator.inc',
+    'field_validation_words_validator' => 'includes/field_validation_words_validator.inc',
+  );
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function field_validation_config_info() {
+  // If there are a large number of configuration files prefixed with this
+  // string, provide a "name_key" that will be read from the configuration file
+  // and used when listing the configuration file.
+  $prefixes['field_validation.rule'] = array(
+    'name_key' => 'machine',
+    'label_key' => 'rulename',
+    'group' => t('Field Validation Rules'),
+  );
+  return $prefixes;
+}
+
+/**
+ * Implements hook_field_attach_validate().
+ */
+function field_validation_field_attach_validate($entity_type, $entity, &$errors) {
+  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+
+  // @todo switch from using ctools exports to config.
+  //ctools_include('export');
+  //$rules = ctools_export_load_object('field_validation_rule', 'conditions', array('entity_type' => $entity_type, 'bundle' => $bundle));
+
+  $prefix = 'field_validation.rule.' . $entity_type . '.' . $bundle;
+  $names = config_get_names_with_prefix($prefix);
+  $rules = config_load_multiple($names);
+
+  if ($rules) {
+    foreach ($rules as $rule) {
+      // Disabled by Ctools.
+      if (!empty($rule['disabled'])) {
+        continue;
+      }
+      // @todo switch from using ctools plugins to normal classes.
+      //ctools_include('plugins');
+      //$plugin = ctools_get_plugins('field_validation', 'validator', $rule->validator);
+      //$class = ctools_plugin_get_class($plugin, 'handler');
+
+      $info = field_validation_get_validator_info($rule['validator']);
+      $class = $info['class'];
+
+      if (empty($class)) {
+        continue;
+      }
+      if (!is_subclass_of($rule['validator'], 'field_validation_validator')) {
+        drupal_set_message(t("Plugin '@validator' should extend 'field_validation_validator'.", array('@validator' => $rule['validator'])));
+        continue;
+      }
+
+      $field_name = $rule['field_name'];
+      $field = field_info_field($field_name);
+      $instance = field_info_instance($entity_type, $field_name, $bundle);
+      $languages = field_available_languages($entity_type, $field);
+      foreach ($languages as $langcode) {
+        $items = isset($entity->{$field_name}[$langcode]) ? $entity->{$field_name}[$langcode] : array();
+        foreach ($items as $delta => $item) {
+          $value = isset($item[$rule['col']]) ? $item[$rule['col']] : '';
+
+          $validator = new $class($entity_type, $entity, $field, $instance, $langcode, $items, $delta, $item, $value, $rule, $errors);
+          if ($validator->bypass_validation()) {
+            break;
+          }
+          if ($validator->pass_condition() == FALSE) {
+            break;
+          }
+          $break = $validator->validate();
+          if (!empty($break)) {
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Wrapper function. @todo, remove.
+ *
+ * @return array
+ */
+function field_validation_get_validators() {
+  $info = field_validation_get_validator_info();
+  return $info;
+}
+
+/**
+ * Gets all validator info from /plugins/validators.
+ *
+ * @return array
+ */
+function field_validation_get_validator_info($validator = FALSE) {
+  // Call all hook_field_validation_validator_info().
+  $info = module_invoke_all('field_validation_validator_info');
+
+  // Let other modules alter the info using
+  // hook_field_validation_validator_info_alter().
+  backdrop_alter('field_validation_validator_info', $info);
+
+  if ($validator) {
+    return $info[$validator];
+  }
+
+  return $info;
+}
+
+/**
+ * Implements hook_field_validation_validator_info().
+ */
+function field_validation_field_validation_validator_info() {
+  $info = array(
+    'field_validation_blacklist_validator' => array(
+      'label' => t('Words blacklist'),
+      'description' => t("Validates that user-entered data doesn't contain any of the specified illegal words."),
+      'class' => 'field_validation_blacklist_validator',
+    ),
+    'field_validation_date_range2_validator' => array(
+      'label' => t('Date range2'),
+      'description' => t("Validates user-entered text against a specified date range."),
+      'class' => 'field_validation_date_range2_validator',
+    ),
+    'field_validation_email_validator' => array(
+      'label' => t('Email'),
+      'description' => t("Verifies that user-entered data is a valid email address."),
+      'class' => 'field_validation_email_validator',
+    ),
+    'field_validation_length_validator' => array(
+      'label' => t('Length'),
+      'description' => t('Verifies the length of user-entered values, with the option to specify minimum and maximum length.'),
+      'class' => 'field_validation_length_validator',
+    ),
+    'field_validation_match_field_validator' => array(
+      'label' => t('Match against a field'),
+      'description' => t("Validate that user-entered data matches against a field, for example must match user's realname."),
+      'class' => 'field_validation_match_field_validator',
+    ),
+    'field_validation_match_property_validator' => array(
+      'label' => t('Match against a property'),
+      'description' => t("Validate that user-entered data matches against a property, for example must match user's name."),
+      'class' => 'field_validation_match_property_validator',
+    ),
+    'field_validation_must_be_empty_validator' => array(
+      'label' => t('Must be empty'),
+      'description' => t("Verifies that a specified textfield remains empty - Recommended use case: used as an anti-spam measure by hiding the element with CSS."),
+      'class' => 'field_validation_must_be_empty_validator',
+    ),
+    'field_validation_number_of_selections_validator' => array(
+      'label' => t('Number of selections'),
+      'description' => t('Verifies the number of options a user could select, with the option to specify minimum and maximum number of selections.'),
+      'class' => 'field_validation_number_of_selections_validator',
+    ),
+    'field_validation_numeric2_validator' => array(
+      'label' => t('Numeric values'),
+      'description' => t('Verifies that user-entered values are numeric, with the option to specify min and / or max values.'),
+      'class' => 'field_validation_numeric2_validator',
+    ),
+    'field_validation_oneofseveral_validator' => array(
+      'label' => t('Require at least one of several fields'),
+      'description' => t('Forces the user to specify / select at least one of several fields.'),
+      'class' => 'field_validation_oneofseveral_validator',
+    ),
+    'field_validation_pattern_validator' => array(
+      'label' => t('Pattern(regex lite)'),
+      'description' => t('Verifies that a user-entered value conforms to a specified pattern.'),
+      'class' => 'field_validation_pattern_validator',
+    ),
+    'field_validation_php_validator' => array(
+      'label' => t('PHP code'),
+      'description' => t("Be careful, it is powerful and also dangerous."),
+      'class' => 'field_validation_php_validator',
+    ),
+    'field_validation_plain_text_validator' => array(
+      'label' => t('Plain text (disallow tags)'),
+      'description' => t("Verifies that user-entered data doesn't contain HTML tags."),
+      'class' => 'field_validation_plain_text_validator',
+    ),
+    'field_validation_regex_validator' => array(
+      'label' => t('Regular expression (POSIX multibyte)'),
+      'description' => t('Validates user-entered text against a specified regular expression using <a href="http://php.net/manual/en/function.mb-ereg.php">mb_ereg*</a> function\'s family.'),
+      'class' => 'field_validation_regex_validator',
+    ),
+    'field_validation_specific_value_validator' => array(
+      'label' => t('Specific value(s)'),
+      'description' => t("Verifies that the specified field contains a defined value."),
+      'class' => 'field_validation_specific_value_validator',
+    ),
+    'field_validation_unique_validator' => array(
+      'label' => t('Unique values'),
+      'description' => t('Verifies that all values are unique in current entity or bundle.'),
+      'class' => 'field_validation_unique_validator',
+    ),
+    'field_validation_url_validator' => array(
+      'label' => t('URL'),
+      'description' => t("Verifies that user-entered data is a valid url."),
+      'class' => 'field_validation_url_validator',
+    ),
+    'field_validation_words_validator' => array(
+      'label' => t('Number of words'),
+      'description' => t('Verifies the number of words of user-entered values, with the option to specify minimum and maximum number of words.'),
+      'class' => 'field_validation_words_validator',
+    ),
+  );
+
+  return $info;
+}

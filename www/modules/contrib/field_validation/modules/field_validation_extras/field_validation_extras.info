@@ -1,0 +1,6 @@
+type = module
+name = Field validation extras
+description = Extra validators for Field validation 7.x-2.x.
+package = Fields
+backdrop = 1.x
+dependencies[] = field_validation

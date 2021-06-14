@@ -125,6 +125,24 @@
         "delete any fapi_property content",
         "administer paragraphs bundles",
         "view hidden paths",
-        "administer smtp module"
+        "administer smtp module",
+        "create docs content",
+        "edit own docs content",
+        "edit any docs content",
+        "delete own docs content",
+        "delete any docs content",
+        "administer feeds",
+        "import documentation feeds",
+        "clear documentation feeds",
+        "unlock documentation feeds",
+        "administer view modes",
+        "access file overview",
+        "manage files",
+        "delete files",
+        "upload editor files",
+        "use text format documentation",
+        "view any unpublished content",
+        "administer feeds_tamper",
+        "tamper documentation"
     ]
 }

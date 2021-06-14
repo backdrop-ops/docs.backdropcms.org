@@ -1,0 +1,14 @@
+name = Diff
+description = Show differences between content revisions.
+backdrop = 1.x
+type = module
+tags[] = Revisions
+tags[] = Differences
+tags[] = Utility
+tags[] = Content
+configure = admin/config/content/diff/settings
+
+; Added by Backdrop CMS packaging script on 2020-02-23
+project = diff
+version = 1.x-3.4.0
+timestamp = 1582471538

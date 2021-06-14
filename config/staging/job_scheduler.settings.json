@@ -1,0 +1,5 @@
+{
+    "_config_name": "job_scheduler.settings",
+    "job_scheduler_class_feeds_source_import": "JobScheduler",
+    "job_scheduler_class_feeds_source_expire": "JobScheduler"
+}

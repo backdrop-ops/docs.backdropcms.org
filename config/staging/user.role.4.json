@@ -30,6 +30,26 @@
         "use text format code",
         "view any unpublished content",
         "use text format fix_html",
-        "view files"
+        "view files",
+        "create docs content",
+        "edit own docs content",
+        "edit any docs content",
+        "import documentation feeds",
+        "clear documentation feeds",
+        "unlock documentation feeds",
+        "use text format documentation",
+        "access dashboard",
+        "view hidden paths",
+        "create fapi_element content",
+        "edit own fapi_element content",
+        "edit any fapi_element content",
+        "delete own fapi_element content",
+        "delete any fapi_element content",
+        "create fapi_property content",
+        "edit own fapi_property content",
+        "edit any fapi_property content",
+        "delete own fapi_property content",
+        "delete any fapi_property content",
+        "view the administration theme"
     ]
 }

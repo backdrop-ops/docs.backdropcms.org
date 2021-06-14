@@ -1,0 +1,226 @@
+[FeedsTamperWebTestHelper]
+name = FeedsTamperWebTestHelper
+description = FeedsTamperWebTestHelper
+group = Feeds Tamper
+file = feeds_tamper.test
+
+[FeedsTamperWebTestCase]
+name = Feeds Tamper
+description = Regression tests for Feeds Tamper.
+group = Feeds Tamper
+file = feeds_tamper.test
+
+[FeedsTamperCSVTestCase]
+name = Special case: CSV parser
+description = Tests the special case that is FeedsCSVParser. See <a href="http://drupal.org/node/1133724" target="_blank">#1133724</a>.
+group = Feeds Tamper
+file = feeds_tamper.test
+
+[FeedsTamperEfqFinderTestCase]
+name = Plugins: EFQ finder
+description = Regression tests for the EFQ finder plugin.
+group = Feeds Tamper
+file = feeds_tamper_efq_finder.test
+
+[FeedsTamperUnitTestCase]
+name = FeedsTamperUnitTestCase
+description = FeedsTamperUnitTestCase
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperAbsoluteURLTestCase]
+name = Plugins: Make URLs absolute
+description = Unit tests for "Make URLs absolute" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperArrayFilterTestCase]
+name = Plugins: Filter empty items
+description = Unit tests for "Filter empty items".
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperCastToIntTestCase]
+name = Plugins: Cast to int
+description = Unit tests for "Cast to integer" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperCovertBooleanTestCase]
+name = Plugins: Convert to boolean
+description = Unit tests for "Convert to boolean" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperConvertCaseTestCase]
+name = Plugins: Convert Case
+description = Unit tests for "Convert Case" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperCopyTestCase]
+name = Plugins: Copy
+description = Unit tests for "Copy" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperCountryToCodeTestCase]
+name = Plugins: Country to Code
+description = Unit tests for "Country to Code" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperDefaultValueTestCase]
+name = Plugins: Set default value
+description = Unit tests for "Set default value" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperExplodeTestCase]
+name = Plugins: Explode
+description = Unit tests for "Explode" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperFindReplaceTestCase]
+name = Plugins: Find Replace
+description = Unit tests for "Find Replace" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperFindReplaceREGEXTestCase]
+name = Plugins: Find Replace Regex
+description = Unit tests for "Find Replace Regex" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperHashTestCase]
+name = Plugins: Hash
+description = Unit tests for "Calculate hash" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperHTMLEntityEncodeTestCase]
+name = Plugins: HTML Entity Encode
+description = Unit tests for "HTML Entity Encode" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperHTMLEntityDecodeTestCase]
+name = Plugins: HTML Entity Decode
+description = Unit tests for "HTML Entity Decode" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperImplodeTestCase]
+name = Plugins: Implode
+description = Unit tests for "Implode" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperKeyWordFilterTestCase]
+name = Plugins: Keyword Filter
+description = Unit tests for "Keyword Filter" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperMathTestCase]
+name = Plugins: Math
+description = Unit tests for "Math" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperNumberFormatTestCase]
+name = Plugins: Format a number
+description = Unit tests for "Format a number" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperRequiredTestCase]
+name = Plugins: Required
+description = Unit tests for "Required" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperRewriteTestCase]
+name = Plugins: Rewrite
+description = Unit tests for "Rewrite" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperSprintfTestCase]
+name = Plugins: Format string
+description = Unit tests for the "sprintf" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperStripTagsTestCase]
+name = Plugins: Strip Tags
+description = Unit tests for the "Strip Tags" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperStrPadTestCase]
+name = Plugins: Pad a string
+description = Unit tests for "Pad a string" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperStrToTimeTestCase]
+name = Plugins: String to Unix Timestamp
+description = Unit tests for the "String to Unix Timestamp" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperTimeToDateTestCase]
+name = Plugins: Unix timestamp to Date
+description = Unit tests for the "Unix timestamp to Date" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperTrimTestCase]
+name = Plugins: Trim
+description = Unit tests for "Trim" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperTruncateTextTestCase]
+name = Plugins: Truncate Text
+description = Unit tests for "Truncate Text" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperUniqueTestCase]
+name = Plugins: Unique
+description = Unit tests for "Unique" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperURLencodeTestCase]
+name = Plugins: URLencode text
+description = Unit tests for "URL Encode" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperURLdecodeTestCase]
+name = Plugins: URLdecode text
+description = Unit tests for "URL Decode" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperEncodeDecodeTestCase]
+name = Plugins: Encode
+description = Unit tests for "Encode/Decode" plugin.
+group = Feeds Tamper
+file = feeds_tamper_plugins.test
+
+[FeedsTamperTemporaryTargetTestCase]
+name = Temporary targets and blank sources
+description = Tests for adding temporary targets and blank sources.
+group = Feeds Tamper
+file = temporary_target.test
+
+; Added by Backdrop CMS packaging script on 2020-09-18
+project = feeds_tamper
+version = 1.x-1.2.2
+timestamp = 1600458292
