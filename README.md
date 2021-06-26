@@ -1,4 +1,4 @@
-# BackdropCMS Documentation
+# Backdropcms Documentation
 
 This repository holds the codebase for
 [docs.backdropcms.org](https://docs.backdropcms.org).
