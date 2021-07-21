@@ -52,7 +52,7 @@ function entity_plus_get_property_info($entity_plus_type = NULL) {
  *
  * @see hook_entity_property_info()
  */
-function entity_property_info_defaults() {
+function entity_plus_property_info_defaults() {
   return array(
     'type' => 'text',
     'getter callback' => 'entity_plus_property_verbatim_get',
