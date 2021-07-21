@@ -27,7 +27,6 @@
       </div>
       <div class="<?php print implode(' ', $classes_col2); ?>">
         <?php print render($content); ?>
-        <?php print $more; ?>
       </div>
     </div><!-- /.row -->
   </div><!-- /.project-main -->
