@@ -20,11 +20,3 @@ feeds_jsonpath_parser - Prevent PHP notice by adding missing module key
   https://github.com/backdrop-contrib/feeds_jsonpath_parser/pull/4.patch
 
 field validation -- running latest -dev (no releases yet)
-
-paragraphs - Convert Paragraphs to CMI
-  https://github.com/backdrop-contrib/paragraphs/issues/46
-  https://github.com/backdrop-contrib/paragraphs/pull/66.patch
-
-paragraphs - Bundle not exported/imported
-  https://github.com/backdrop-contrib/paragraphs/issues/28
-  https://github.com/backdrop-contrib/paragraphs/pull/68.patch
