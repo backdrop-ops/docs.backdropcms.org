@@ -50,6 +50,7 @@
         "edit any fapi_property content",
         "delete own fapi_property content",
         "delete any fapi_property content",
-        "view the administration theme"
+        "view the administration theme",
+        "use text format full_html"
     ]
 }
