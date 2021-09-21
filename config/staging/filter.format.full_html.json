@@ -14,55 +14,55 @@
     "filters": {
         "api_filter": {
             "status": 1,
-            "weight": 0,
+            "weight": -47,
             "module": "api",
             "settings": []
         },
         "codefilter": {
             "status": 1,
-            "weight": 0,
+            "weight": -48,
             "module": "codefilter",
             "settings": []
         },
         "filter_image_caption": {
             "status": 1,
-            "weight": 4,
+            "weight": -44,
             "module": "filter",
             "settings": []
         },
         "filter_autop": {
             "status": 0,
-            "weight": 1,
+            "weight": -45,
             "module": "filter",
             "settings": []
         },
         "filter_url": {
-            "status": 1,
-            "weight": 0,
+            "status": 0,
+            "weight": -46,
             "module": "filter",
             "settings": []
         },
         "filter_htmlcorrector": {
             "status": 1,
-            "weight": 10,
+            "weight": -42,
             "module": "filter",
             "settings": []
         },
         "filter_html_escape": {
             "status": 0,
-            "weight": -10,
+            "weight": -50,
             "module": "filter",
             "settings": []
         },
         "filter_image_align": {
             "status": 0,
-            "weight": 5,
+            "weight": -43,
             "module": "filter",
             "settings": []
         },
         "filter_html": {
             "status": 0,
-            "weight": -10,
+            "weight": -49,
             "settings": {
                 "allowed_html": "<a> <em> <strong> <cite> <blockquote> <code> <ul> <ol> <li> <dl> <dt> <dd>"
             },
