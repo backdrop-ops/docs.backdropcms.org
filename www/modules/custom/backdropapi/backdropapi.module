@@ -12,7 +12,7 @@ function backdropapi_menu() {
     'title' => 'FAPI check',
     'description' => 'Report on what elements, properties, and/or default properties are missing from the Form API Reference.',
     'page callback' => 'backdropapi_fapi_check_view',
-    'access arguments' => array('administer API reference'),
+    'access arguments' => array('access API reference'),
   );
   return $items;
 }
