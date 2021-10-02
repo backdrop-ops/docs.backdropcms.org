@@ -100,3 +100,11 @@ p {
 .form_api .l-bottom-inner > .row {
   display: block;
 }
+
+/* Tightening up the lists in Default values */
+.view-display-id-attachment_3 .view-header li {
+  margin: 0 0 0.25em 0;
+}
+.view-display-id-attachment_3 .views-field-field-fapi-property {
+  margin-bottom: 0;
+}
