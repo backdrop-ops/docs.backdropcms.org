@@ -53,6 +53,7 @@ function backdropapi_form_api_table() {
   }
 
   // Setup the table rows.
+  $mark = '&#10003;'; // checkmark
   foreach ($properties as $property) {
     $id_suffix = in_array($property->node_title, backdropapi_form_api_elements()) ? '_property' : '';
     $row_element = array('<a href="#' . $property->node_title . $id_suffix . '">#' . $property->node_title . '</a>');
@@ -68,7 +69,7 @@ function backdropapi_form_api_table() {
       // Set the value of the cell.
       $value = '';
       if (in_array($property->node_title, $element_properties)) {
-        $value = '&#10003;';
+        $value = $mark;
       }
 
       if (!empty($element->field_field_special) && $element->field_field_special[0]['raw']['value']) {
@@ -79,8 +80,13 @@ function backdropapi_form_api_table() {
       }
     }
 
-    $rows_elements[] = $row_element;
-    $rows_special[] = $row_special;
+    // Only display non-empty rows in each table.
+    if (in_array($mark, $row_element)) {
+      $rows_elements[] = $row_element;
+    }
+    if (in_array($mark, $row_special)) {
+      $rows_special[] = $row_special;
+    }
   }
 
   // Theme the tables.
