@@ -4,3 +4,19 @@
 .form-textarea {
   font-family: Monaco, "Lucida Console", monospace;
 }
+
+/**
+ * FAPI element edit page
+ */
+.node-fapi-element-form .paragraphs-item-type-fapi-properties .field-name-field-fapi-property {
+  float: left;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties .field-name-field-recommended {
+  float: right;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties .field-name-field-default-value {
+  float: right;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties .form-actions {
+  clear: both;
+}
