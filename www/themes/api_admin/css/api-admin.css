@@ -6,8 +6,15 @@
 }
 
 /**
- * FAPI element edit page
+ * FAPI element edit page. Fine-tune CSS to ease editing of longs lists of
+ * properties.
  */
+.node-fapi-element-form .paragraphs-item-type-fapi-properties td {
+  padding: 5px 20px 10px;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties td > .form-wrapper {
+  display: none;
+}
 .node-fapi-element-form .paragraphs-item-type-fapi-properties .field-name-field-fapi-property {
   float: left;
 }
@@ -18,5 +25,9 @@
   float: right;
 }
 .node-fapi-element-form .paragraphs-item-type-fapi-properties .form-actions {
-  clear: both;
+  float: left;
+  margin: 0;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties .form-actions input {
+  margin: 5px 0 0 0;
 }
