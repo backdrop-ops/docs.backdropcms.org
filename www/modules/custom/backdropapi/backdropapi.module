@@ -103,13 +103,13 @@ function backdropapi_form_api_table() {
   }
 
   // Theme the tables.
-  $heading_elements = '<h3 id="input-elements">' . t('Input elements') . '</h3>';
+  $heading_elements = '<h2 id="input-elements">' . t('Input elements') . '</h2>';
   $table_elements = theme('table', array(
     'header' => $header_elements,
     'rows' => $rows_elements,
     'attributes' => array('class' => array('form-api')),
   ));
-  $heading_special = '<h3 id="special-elements">' . t('Structure elements') . '</h3>';
+  $heading_special = '<h2 id="special-elements">' . t('Structure elements') . '</h2>';
   $table_special = theme('table', array(
     'header' => $header_special,
     'rows' => $rows_special,
@@ -142,7 +142,7 @@ function backdropapi_form_api_elements() {
 function backdropapi_fapi_check_view() {
 
   $build[] = array(
-    '#markup' => t('This page lists missing FAPI elements, properties, and default property values.'),
+    '#markup' => t('This page lists missing FAPI elements, properties, and default property values by comparing what is declared by the various <code>*_element_info()</code> hooks and the stored values in the <a href="/form_api">Form API Reference</a>.'),
     '#prefix' => '<p>',
     '#suffix' => '</p>',
   );
@@ -207,17 +207,30 @@ function backdropapi_fapi_check_view() {
       $element_node_properties[$property_name] = $item;
     }
 
-    // Go through the element_info defaults and check whether the node has the property and its default value.
+    // Go through the element_info defaults and check whether the node has the
+    // property and its default value.
     foreach ($element_info as $raw_property_name => $raw_property_value) {
       $property_name = substr($raw_property_name, 1);
       $property_value = _backdropapi_format_default_property_value($raw_property_value);
-      $has_property = !isset($element_node_properties[$property_name]);
+      // If the property value is a string, strip the quotes from it for
+      // comparison.
+      $len = strlen($property_value);
+      if($len > 2 && $property_value[0] == "'" && $property_value[$len - 1] == "'") {
+        $property_value = substr($property_value, 1, $len - 2);
+      }
+      $has_property = isset($element_node_properties[$property_name]);
       $has_default = $has_property && !empty($element_node_properties[$property_name]->field_default_value);
+      if ($has_default) {
+        $element_node_default_value = $element_node_properties[$property_name]->field_default_value['und'][0]['value'];
+      }
       if (!$has_property) {
-        $build_items[] = t('FAPI Element %element is missing default property %property with value %value.', array('%element' => $element_type, '%property' => $property_name, '%value' => $property_value));
+        $build_items[] = t('FAPI Element %element is missing default property %property with default value %value', array('%element' => $element_type, '%property' => $property_name, '%value' => $property_value));
       }
       elseif (!$has_default) {
-        $build_items[] = t('FAPI Element %element has property %property but is missing default value %value.', array('%element' => $element_type, '%property' => $property_name, '%value' => $property_value));
+        $build_items[] = t('FAPI Element %element has property %property but is missing default value %value', array('%element' => $element_type, '%property' => $property_name, '%value' => $property_value));
+      }
+      elseif ($property_value != $element_node_default_value) {
+        $build_items[] = t('FAPI Element %element has property %property with default value %element_node_default_value but should have default value %value', array('%element' => $element_type, '%property' => $property_name, '%element_node_default_value' => $element_node_default_value, '%value' => $property_value));
       }
     }
 
