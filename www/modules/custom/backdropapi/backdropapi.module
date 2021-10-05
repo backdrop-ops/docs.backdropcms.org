@@ -212,6 +212,7 @@ function backdropapi_fapi_check_view() {
     foreach ($element_info as $raw_property_name => $raw_property_value) {
       $property_name = substr($raw_property_name, 1);
       $property_value = _backdropapi_format_default_property_value($raw_property_value);
+      $property_modifier = isset($property_nodes_by_property[$property_name]) ? '' : t('[CREATE]');
       // If the property value is a string, strip the quotes from it for
       // comparison.
       $len = strlen($property_value);
@@ -224,7 +225,7 @@ function backdropapi_fapi_check_view() {
         $element_node_default_value = $element_node_properties[$property_name]->field_default_value['und'][0]['value'];
       }
       if (!$has_property) {
-        $build_items[] = t('FAPI Element %element is missing default property %property with default value %value', array('%element' => $element_type, '%property' => $property_name, '%value' => $property_value));
+        $build_items[] = t('FAPI Element %element is missing default property %property @property_modifier with default value %value', array('%element' => $element_type, '%property' => $property_name, '@property_modifier' => $property_modifier, '%value' => $property_value));
       }
       elseif (!$has_default) {
         $build_items[] = t('FAPI Element %element has property %property but is missing default value %value', array('%element' => $element_type, '%property' => $property_name, '%value' => $property_value));
