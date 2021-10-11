@@ -211,27 +211,31 @@ function backdropapi_fapi_check_view() {
     // property and its default value.
     foreach ($element_info as $raw_property_name => $raw_property_value) {
       $property_name = substr($raw_property_name, 1);
-      $property_value = _backdropapi_format_default_property_value($raw_property_value);
+      $property_default_value = _backdropapi_format_default_property_value($raw_property_value);
       $property_modifier = isset($property_nodes_by_property[$property_name]) ? '' : t('[CREATE]');
       // If the property value is a string, strip the quotes from it for
       // comparison.
-      $len = strlen($property_value);
-      if($len > 2 && $property_value[0] == "'" && $property_value[$len - 1] == "'") {
-        $property_value = substr($property_value, 1, $len - 2);
+      $len = strlen($property_default_value);
+      if($len > 2 && $property_default_value[0] == "'" && $property_default_value[$len - 1] == "'") {
+        $property_default_value = substr($property_default_value, 1, $len - 2);
       }
-      $has_property = isset($element_node_properties[$property_name]);
-      $has_default = $has_property && !empty($element_node_properties[$property_name]->field_default_value);
-      if ($has_default) {
+      $element_node_has_property = isset($element_node_properties[$property_name]);
+      $element_node_has_default = $element_node_has_property && !empty($element_node_properties[$property_name]->field_default_value);
+      if ($element_node_has_default) {
         $element_node_default_value = $element_node_properties[$property_name]->field_default_value['und'][0]['value'];
       }
-      if (!$has_property) {
-        $build_items[] = t('FAPI Element %element is missing default property %property @property_modifier with default value %value', array('%element' => $element_type, '%property' => $property_name, '@property_modifier' => $property_modifier, '%value' => $property_value));
+
+      if (!$element_node_has_property) {
+        $build_items[] = t('FAPI Element %element is missing default property %property @property_modifier with default value %value', array('%element' => $element_type, '%property' => $property_name, '@property_modifier' => $property_modifier, '%value' => $property_default_value));
       }
-      elseif (!$has_default) {
-        $build_items[] = t('FAPI Element %element has property %property but is missing default value %value', array('%element' => $element_type, '%property' => $property_name, '%value' => $property_value));
+      elseif (!$element_node_has_default) {
+        $build_items[] = t('FAPI Element %element has property %property but is missing default value %value', array('%element' => $element_type, '%property' => $property_name, '%value' => $property_default_value));
       }
-      elseif ($property_value != $element_node_default_value) {
-        $build_items[] = t('FAPI Element %element has property %property with default value %element_node_default_value but should have default value %value', array('%element' => $element_type, '%property' => $property_name, '%element_node_default_value' => $element_node_default_value, '%value' => $property_value));
+      elseif ($property_default_value != $element_node_default_value) {
+        // Don't list an error if the default value was given by request_uri().
+        if ($element_node_default_value != 'request_uri()') {
+          $build_items[] = t('FAPI Element %element has property %property with default value %element_node_default_value but should have default value %value', array('%element' => $element_type, '%property' => $property_name, '%element_node_default_value' => $element_node_default_value, '%value' => $property_default_value));
+        }
       }
     }
 
@@ -255,5 +259,7 @@ function _backdropapi_format_default_property_value($raw_property_value) {
   $property_value = str_replace(array("\n", 'true', 'false', '  '), array('', 'TRUE', 'FALSE', ' '), $property_value);
   $property_value = str_replace(array('array (', ',)', '( '), array('array(', ')', '('), $property_value);
   $property_value = str_replace(array('0 => ', '1 => '), array('', ''), $property_value);
+  // Replace runs of spaces with single space.
+  $property_value = preg_replace('!\s+!', ' ', $property_value);
 return $property_value;
 }
