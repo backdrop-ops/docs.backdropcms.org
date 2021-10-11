@@ -182,6 +182,21 @@ function backdropapi_fapi_check_view() {
     $property_nodes_by_property[$node->title] = $node;
   }
 
+  // These properties should be part of any element that has a theme wrapper of
+  // 'form_element'.
+  // @see theme_form_element()
+  $form_element_properties = array(
+    'title',
+    'title_display',
+    'description',
+    'required',
+    'children',
+    'name',
+    'wrapper_attributes',
+    'field_prefix',
+    'field_suffix',
+  );
+
   // Go through all form elements and compare their stored default properties
   // with the values that are defined in code, which will be in $element_info.
   foreach ($elements_info as $element_type => $element_info) {
@@ -235,6 +250,16 @@ function backdropapi_fapi_check_view() {
         // Don't list an error if the default value was given by request_uri().
         if ($element_node_default_value != 'request_uri()') {
           $build_items[] = t('FAPI Element %element has property %property with default value %element_node_default_value but should have default value %value', array('%element' => $element_type, '%property' => $property_name, '%element_node_default_value' => $element_node_default_value, '%value' => $property_default_value));
+        }
+      }
+    }
+
+    // If the element is processed by theme_form_element(), check whether the
+    // element node has all the properties that theme_form_element() handles.
+    if (isset($element_info['#theme_wrappers']) && $element_info['#theme_wrappers'][0] == 'form_element') {
+      foreach ($form_element_properties as $property) {
+        if (!isset($element_node_properties[$property])) {
+          $build_items[] = t('FAPI Element %element has theme wrapper %wrapper but is missing property %property.', array('%element' => $element_type, '%wrapper' => 'form_element', '%property' => $property));
         }
       }
     }
