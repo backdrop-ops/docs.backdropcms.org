@@ -3,7 +3,7 @@
     "name": "api_references",
     "description": "Blocks for listing references in the API module. Used directly by the API module. Do not delete or disable.",
     "module": "api",
-    "storage": 4,
+    "storage": 2,
     "tag": "api",
     "disabled": false,
     "base_table": "api_reference_storage",
@@ -187,8 +187,10 @@
                 },
                 "display_description": "All items in a particular group/topic",
                 "defaults": {
-                    "hide_admin_links": false
-                }
+                    "hide_admin_links": false,
+                    "group_by": false
+                },
+                "group_by": 1
             }
         },
         "block_related_topics": {
