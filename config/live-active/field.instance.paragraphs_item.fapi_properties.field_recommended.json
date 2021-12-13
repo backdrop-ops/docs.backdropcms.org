@@ -5,7 +5,7 @@
     "bundle": "fapi_properties",
     "label": "Recommended",
     "widget": {
-        "weight": "1",
+        "weight": "2",
         "type": "options_onoff",
         "module": "options",
         "active": 1,

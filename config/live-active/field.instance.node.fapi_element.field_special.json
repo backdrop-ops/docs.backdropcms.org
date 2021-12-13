@@ -3,7 +3,7 @@
     "field_name": "field_special",
     "entity_type": "node",
     "bundle": "fapi_element",
-    "label": "Special",
+    "label": "Structure",
     "widget": {
         "weight": "1",
         "type": "options_onoff",
@@ -13,7 +13,7 @@
             "display_label": 1
         }
     },
-    "description": "'Special' elements are displayed in a seperate table to regular elements.",
+    "description": "'Structure' elements give structure to a form but don't collect input; 'Input' elements collect input.",
     "required": 0,
     "deleted": 0,
     "default_value": [

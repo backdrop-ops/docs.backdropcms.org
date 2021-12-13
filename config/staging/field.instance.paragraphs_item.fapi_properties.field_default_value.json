@@ -5,7 +5,7 @@
     "bundle": "fapi_properties",
     "label": "Default Value",
     "widget": {
-        "weight": "2",
+        "weight": "1",
         "type": "text_textfield",
         "module": "text",
         "active": 1,
@@ -25,7 +25,7 @@
     "display": {
         "default": {
             "label": "hidden",
-            "type": "text_default",
+            "type": "text_plain",
             "weight": "2",
             "settings": [],
             "module": "text"
