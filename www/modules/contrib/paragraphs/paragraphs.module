@@ -95,7 +95,7 @@ function paragraphs_config_info() {
     'paragraphs.type' => array(
       'name_key' => 'bundle',
       'label_key' => 'name',
-      'group' => t('Paragraphs types'),
+      'group' => t('Paragraph types'),
     ),
   );
 }
@@ -433,6 +433,7 @@ function paragraphs_form_field_ui_field_edit_form_alter(&$form, $form_state) {
  */
 function paragraphs_field_edit_form_submit($form, &$form_state) {
   $instance = $form['#instance'];
+  $destination = backdrop_get_destination();
   $form_state['redirect'] = array('admin/structure/paragraphs/' . $instance['bundle'] . '/fields/' . $instance['field_name'] . '/delete', array('query' => $destination));
 }
 

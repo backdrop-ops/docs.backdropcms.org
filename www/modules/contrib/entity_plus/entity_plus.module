@@ -4,8 +4,47 @@
  * Returns a property wrapper for given data.
  */
 
+ /**
+  * Define status codes used for exportable entities.
+  *
+  * Temporarily (?) wrapped in a check to see if they are already defined
+  * since Entity UI declares the same.
+  * See: https://github.com/backdrop-contrib/entity_plus/issues/20
+  */
+
+if (!defined('ENTITY_CUSTOM') && !module_exists('entity_ui')) {
+  /**
+  * A bit flag used to let us know if an entity is in the database.
+  */
+  define('ENTITY_CUSTOM', 0x01);
+
+  /**
+  * Deprecated, but still here for backward compatibility.
+  */
+  define('ENTITY_IN_DB', 0x01);
+
+  /**
+  * A bit flag used to let us know if an entity is a 'default' in code.
+  */
+  define('ENTITY_IN_CODE', 0x02);
+
+  /**
+  * A bit flag used to mark entities as overridden, e.g. they were originally
+  * definded in code and are saved now in the database. Same as
+  * (ENTITY_CUSTOM | ENTITY_IN_CODE).
+  */
+  define('ENTITY_OVERRIDDEN', 0x03);
+
+  /**
+  * A bit flag used to mark entities as fixed, thus not changeable for any
+  * user.
+  */
+  define('ENTITY_FIXED', 0x04 | 0x02);
+}
+
 module_load_include('inc', 'entity_plus', 'modules/callbacks');
 module_load_include('inc', 'entity_plus', 'includes/entity_plus.property');
+module_load_include('inc', 'entity_plus', 'views/entity_plus.views');
 
 function entity_metadata_wrapper($type, $data = NULL, array $info = array()) {
   if ($type == 'entity' || (($entity_plus_info = entity_get_info()) && isset($entity_plus_info[$type]))) {
@@ -60,6 +99,20 @@ function entity_plus_autoload_info() {
     'EntityPlusControllerExportable' => 'includes/entity_plus.controller.inc',
     'EntityPlusControllerInterface' => 'includes/entity_plus.controller.inc',
     'EntityPlusControllerInterface' => 'includes/entity_plus.controller.inc',
+    'EntityPlusFieldHandlerHelper' => 'views/handlers/entity_plus_views_field_handler_helper.inc',
+    'entity_plus_views_handler_area_entity' => 'views/handlers/entity_plus_views_handler_area_entity.inc',
+    'entity_plus_views_handler_field_boolean' => 'views/handlers/entity_plus_views_handler_field_boolian.inc',
+    'entity_plus_views_handler_field_date' => 'views/handlers/entity_plus_views_handler_field_date.inc',
+    'entity_plus_views_handler_field_duration' => 'views/handlers/entity_plus_views_handler_field_duration.inc',
+    'entity_plus_views_handler_field_entity' => 'views/handlers/entity_plus_views_handler_field_entity.inc',
+    'entity_plus_views_handler_field_field' => 'views/handlers/entity_plus_views_handler_field_field.inc',
+    'entity_plus_views_handler_field_numeric' => 'views/handlers/entity_plus_views_handler_field_numeric.inc',
+    'entity_plus_views_handler_field_options' => 'views/handlers/entity_plus_views_handler_field_options.inc',
+    'entity_plus_views_handler_field_text' => 'views/handlers/entity_plus_views_handler_field_text.inc',
+    'entity_plus_views_handler_field_uri' => 'views/handlers/entity_plus_views_handler_field_uri.inc',
+    'entity_plus_views_handler_relationship_by_bundle' => 'views/handlers/entity_plus_views_handler_relationship_by_bundle.inc',
+    'entity_plus_views_handler_relationship' => 'views/handlers/entity_plus_views_handler_relationship.inc',
+    'entity_plus_views_plugin_row_entity_view' => 'views/plugins/entity_plus_views_plugin_row_entity_view.inc',
   );
 }
 
@@ -618,7 +671,6 @@ function entity_plus_revision_set_default($entity_plus_type, $entity) {
   }
 }
 
-
 /**
  * Checks if a given entity has a certain exportable status.
  *
@@ -912,6 +964,10 @@ function entity_plus_theme() {
   $pattern = '(' . implode('|', $types) . ')(\.|__)';
 
   return array(
+    'entity_plus_status' => array(
+      'variables' => array('status' => NULL, 'html' => TRUE),
+      'file' => 'theme/entity_plus.theme.inc',
+    ),
     'entity_plus' => array(
       'render element' => 'elements',
       'template' => 'entity_plus',

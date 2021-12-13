@@ -79,3 +79,31 @@ function template_preprocess_entity_plus(&$variables) {
     $variables['theme_hook_suggestions'][] = $entity_type . '__' . $id;
   }
 }
+
+/**
+ * Themes the exportable status of an entity.
+ */
+function theme_entity_plus_status($variables) {
+  $status = $variables['status'];
+  $html = $variables['html'];
+  if (($status & ENTITY_FIXED) == ENTITY_FIXED) {
+    $label = t('Fixed');
+    $help = t('The configuration is fixed and cannot be changed.');
+    return $html ? "<span class='entity-status-fixed' title='$help'>" . $label . "</span>" : $label;
+  }
+  elseif (($status & ENTITY_OVERRIDDEN) == ENTITY_OVERRIDDEN) {
+    $label = t('Overridden');
+    $help = t('This configuration is provided by a module, but has been changed.');
+    return $html ? "<span class='entity-status-overridden' title='$help'>" . $label . "</span>" : $label;
+  }
+  elseif ($status & ENTITY_IN_CODE) {
+    $label = t('Default');
+    $help = t('A module provides this configuration.');
+    return $html ? "<span class='entity-status-default' title='$help'>" . $label . "</span>" : $label;
+  }
+  elseif ($status & ENTITY_CUSTOM) {
+    $label = t('Custom');
+    $help = t('A custom configuration by a user.');
+    return $html ? "<span class='entity-status-custom' title='$help'>" . $label . "</span>" : $label;
+  }
+}
