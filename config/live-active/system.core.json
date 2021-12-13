@@ -64,7 +64,7 @@
     "user_mail_status_activated_notify": 1,
     "user_mail_status_blocked_notify": 0,
     "user_mail_status_canceled_notify": 0,
-    "user_register": "admin_only",
+    "user_register": "visitors_admin_approval",
     "user_signatures": 0,
     "user_password_reset_timeout": 86400,
     "user_pictures": 0,
@@ -104,7 +104,7 @@
     "x_frame_options": "SAMEORIGIN",
     "form_cache_expiration": 21600,
     "log_date_format": "m/d/Y - H:i",
-    "user_password_reject_weak": false,
+    "user_password_reject_weak": 1,
     "user_password_strength_threshold": 50,
     "config_sync_clear_staging": 1,
     "_config_translatables": [
@@ -113,5 +113,6 @@
         "site_slogan",
         "maintenance_mode_message"
     ],
-    "block_interest_cohort": 1
+    "block_interest_cohort": 1,
+    "messages_dismissible": 1
 }
