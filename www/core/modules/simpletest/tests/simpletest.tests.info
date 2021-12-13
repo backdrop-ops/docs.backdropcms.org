@@ -904,6 +904,12 @@ description  = Tests a form using form storage and makes sure validation and cac
 group = Form API
 file = form.test
 
+[FormsFormCacheTestCase]
+name = Form caching
+description = Tests storage and retrieval of forms from cache.
+group = Form API
+file = form.test
+
 [FormsFormWrapperTestCase]
 name = Form wrapper callback
 description = Tests form wrapper callbacks to pass a prebuilt form to form builder functions.
@@ -1372,7 +1378,7 @@ description = Test the file tokens.
 group = Token
 file = token.test
 
-; Added by Backdrop CMS packaging script on 2021-09-15
+; Added by Backdrop CMS packaging script on 2021-12-03
 project = backdrop
-version = 1.20.0
-timestamp = 1631745433
+version = 1.20.3
+timestamp = 1638576231
