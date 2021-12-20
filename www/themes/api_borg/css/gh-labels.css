@@ -1,12 +1,12 @@
 /*******************************************************************************
- * github-tags.css
+ * gh-labels.css
  *
  * Contains styles for Github tags.
  *
- * Example usage: <span class="github-tag github-tag-pr-needs-code-review"></span>
+ * Example usage: <span class="gh-label gh-label-pr-needs-code-review"></span>
  ******************************************************************************/
 
-.github-tag {
+.gh-label {
   background-color: #DDD;
   padding: 4px 10px;
   border-radius: 14px;
@@ -14,237 +14,247 @@
   font-weight: 600;
 }
 
+/* Special formatting for hyperlinked labels. Add class gh-label-wrapper to
+the surrounding <a> tag. */
+
+article .field-name-body a.gh-label-wrapper {
+  text-decoration: none;
+}
+a.gh-label-wrapper {
+  color: black;
+}
+
 /* Specific tags used in the Backdrop issue queue */
 
-.github-tag-blocked {
+.gh-label-blocked {
   color: white;
   background-color: rgb(255, 0, 0);
 }
-.github-tag-blocked::after {
+.gh-label-blocked::after {
   content: "blocked";
 }
 
-.github-tag-contrib-candidate {
+.gh-label-contrib-candidate {
   background-color: white;
   border: 1px solid rgb(191, 191, 191);
 }
-.github-tag-contrib-candidate::after {
+.gh-label-contrib-candidate::after {
   content: "contrib candidate";
 }
 
-.github-tag-design {
+.gh-label-design {
   background-color: white;
   border: 1px solid rgb(191, 191, 191);
 }
-.github-tag-design::after {
+.gh-label-design::after {
   content: "design";
 }
 
-.github-tag-good-first-issue {
+.gh-label-good-first-issue {
   background-color: rgb(170, 252, 169);
 }
-.github-tag-good-first-issue::after {
+.gh-label-good-first-issue::after {
   content: "good first issue";
 }
 
-.github-tag-help-wanted {
+.gh-label-help-wanted {
   color: white;
   background-color: rgb(0, 134, 114);
 }
-.github-tag-help-wanted::after {
+.gh-label-help-wanted::after {
   content: "help wanted";
 }
 
 
 
-.github-tag-milestone-candidate-bug {
+.gh-label-milestone-candidate-bug {
   background-color: rgb(254, 242, 192);
 }
-.github-tag-milestone-candidate-bug::after {
+.gh-label-milestone-candidate-bug::after {
   content: "milestone candidate - bug";
 }
 
-.github-tag-milestone-candidate-minor {
+.gh-label-milestone-candidate-minor {
   background-color: rgb(254, 242, 192);
 }
-.github-tag-milestone-candidate-minor::after {
+.gh-label-milestone-candidate-minor::after {
   content: "milestone candidate - minor";
 }
 
-.github-tag-needs-automated-tests {
+.gh-label-needs-automated-tests {
   background-color: rgb(250, 216, 199);
 }
-.github-tag-needs-automated-tests::after {
+.gh-label-needs-automated-tests::after {
   content: "needs automated tests";
 }
 
-.github-tag-needs-benchmarks {
+.gh-label-needs-benchmarks {
   background-color: rgb(250, 216, 199);
 }
-.github-tag-needs-benchmarks::after {
+.gh-label-needs-benchmarks::after {
   content: "needs benchmarks";
 }
 
-.github-tag-needs-change-record {
+.gh-label-needs-change-record {
   background-color: rgb(250, 216, 199);
 }
-.github-tag-needs-change-record::after {
+.gh-label-needs-change-record::after {
   content: "needs change record";
 }
 
 
 
-.github-tag-needs-documentation {
+.gh-label-needs-documentation {
   background-color: rgb(250, 216, 199);
 }
-.github-tag-needs-documentation::after {
+.gh-label-needs-documentation::after {
   content: "needs documentation";
 }
 
-.github-tag-needs-more-feedback {
+.gh-label-needs-more-feedback {
   background-color: rgb(250, 216, 199);
 }
-.github-tag-needs-more-feedback::after {
+.gh-label-needs-more-feedback::after {
   content: "needs more feedbback";
 }
 
-.github-tag-needs-translation-update {
+.gh-label-needs-translation-update {
   background-color: rgb(250, 216, 199);
 }
-.github-tag-needs-translation-update::after {
+.gh-label-needs-translation-update::after {
   content: "needs translation update";
 }
 
-.github-tag-needs-usage-metrics {
+.gh-label-needs-usage-metrics {
   background-color: rgb(250, 216, 199);
 }
-.github-tag-needs-usage-metrics::after {
+.gh-label-needs-usage-metrics::after {
   content: "needs usage metrics";
 }
 
-.github-tag-pr-needs-code-review {
+.gh-label-pr-needs-code-review {
   background-color: rgb(255, 255, 221);
 }
-.github-tag-pr-needs-code-review::after {
+.gh-label-pr-needs-code-review::after {
   content: "pr - needs code review";
 }
 
 
 
-.github-tag-pr-needs-testing {
+.gh-label-pr-needs-testing {
   background-color: rgb(255, 255, 221);
 }
-.github-tag-pr-needs-testing::after {
+.gh-label-pr-needs-testing::after {
   content: "pr - needs testing";
 }
 
-.github-tag-pr-needs-work {
+.gh-label-pr-needs-work {
   background-color: rgb(255, 236, 232);
 }
-.github-tag-pr-needs-work::after {
+.gh-label-pr-needs-work::after {
   content: "pr - needs work";
 }
 
-.github-tag-pr-ready-to-be-committed {
+.gh-label-pr-ready-to-be-committed {
   background-color: rgb(241, 255, 232);
   border: 1px solid rgb(163, 255, 102);
 }
-.github-tag-pr-ready-to-be-committed::after {
+.gh-label-pr-ready-to-be-committed::after {
   content: "pr - ready to be committed";
 }
 
-.github-tag-pr-works-for-me {
+.gh-label-pr-works-for-me {
   background-color: rgb(241, 255, 232);
   border: 1px solid rgb(163, 255, 102);
 }
-.github-tag-pr-works-for-me::after {
+.gh-label-pr-works-for-me::after {
   content: "pr - works for me";
 }
 
-.github-tag-status-cannot-reproduce {
+.gh-label-status-cannot-reproduce {
   background-color: white;
   border: 1px solid rgb(191, 191, 191);
 }
-.github-tag-status-cannot-reproduce::after {
+.gh-label-status-cannot-reproduce::after {
   content: "status - cannot reproduce";
 }
 
 
 
-.github-tag-status-duplicate {
+.gh-label-status-duplicate {
   background-color: rgb(207, 211, 205);
 }
-.github-tag-status-duplicate::after {
+.gh-label-status-duplicate::after {
   content: "status - duplicate";
 }
 
-.github-tag-status-fixed {
+.gh-label-status-fixed {
   background-color: rgb(194, 224, 198);
 }
-.github-tag-status-fixed::after {
+.gh-label-status-fixed::after {
   content: "status - fixed";
 }
 
-.github-tag-status-has-pull-request {
+.gh-label-status-has-pull-request {
   background-color: rgb(212, 197, 249);
 }
-.github-tag-status-has-pull-request::after {
+.gh-label-status-has-pull-request::after {
   content: "status - has pull request";
 }
 
-.github-tag-status-postponed {
+.gh-label-status-postponed {
   background-color: rgb(207, 211, 215);
 }
-.github-tag-status-postponed:after {
+.gh-label-status-postponed:after {
   content: "status - postponed";
 }
 
-.github-tag-status-works-as-designed {
+.gh-label-status-works-as-designed {
   background-color: white;
   border: 1px solid rgb(191, 191, 191);
 }
-.github-tag-status-works-as-designed::after {
+.gh-label-status-works-as-designed::after {
   content: "status - works as designed";
 }
 
 
 
-.github-tag-type-bug-report {
+.gh-label-type-bug-report {
   color: white;
   background-color: rgb(255, 0, 0);
 }
-.github-tag-type-bug-report::after {
+.gh-label-type-bug-report::after {
   content: "type - bug report";
 }
 
-.github-tag-type-documentation {
+.gh-label-type-documentation {
   color: white;
   background-color: rgb(0, 82, 204);
 }
-.github-tag-type-documentation::after {
+.gh-label-type-documentation::after {
   content: "type - documentation";
 }
 
-.github-tag-type-feature-request {
+.gh-label-type-feature-request {
   background-color: rgb(162, 238, 239);
 }
-.github-tag-type-feature-request::after {
+.gh-label-type-feature-request::after {
   content: "type - feature request";
 }
 
-.github-tag-type-question {
+.gh-label-type-question {
   color: white;
   background-color: rgb(204, 49, 124);
 }
-.github-tag-type-question::after {
+.gh-label-type-question::after {
   content: "type - question";
 }
 
-.github-tag-type-task {
+.gh-label-type-task {
   color: white;
   background-color: rgb(0, 107, 117);
 }
-.github-tag-type-task::after {
+.gh-label-type-task::after {
   content: "type - task";
 }
 
