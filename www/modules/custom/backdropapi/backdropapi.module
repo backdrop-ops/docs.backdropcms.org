@@ -182,15 +182,49 @@ function backdropapi_fapi_check_view() {
     $property_nodes_by_property[$node->title] = $node;
   }
 
-  // These properties should be part of any element that has a theme wrapper of
+  // These properties are supported in all form elements. Note, though, that
+  // some of them are only used internally.
+  // @see form_builder()
+  $all_element_properties = array(
+    'process',
+    'after_build',
+    'pre_render',
+    'theme',
+    'theme_wrappers',
+    'post_render',
+    'required',
+    'attributes',
+    'title_display',
+    'weight',
+
+    // Currently commenting out properties that are only used internally.
+
+//    'processed',
+//    'defaults_loaded',
+//    'sorted',
+//    'tree',
+//    'access',
+//    'parents',
+//    'array_parents',
+//    'children',
+//    'after_build_done',
+  );
+
+  // These properties are supported only in input elements.
+  $input_element_properties = array(
+   'value_callback',
+   'disabled',
+   'allow_focus',
+   'value',
+  );
+
+  // These properties are supported in any element that has a theme wrapper of
   // 'form_element'.
   // @see theme_form_element()
   $form_element_properties = array(
     'title',
-    'title_display',
     'description',
-    'required',
-    'children',
+    'id',
     'name',
     'wrapper_attributes',
     'field_prefix',
@@ -251,6 +285,13 @@ function backdropapi_fapi_check_view() {
         if ($element_node_default_value != 'request_uri()') {
           $build_items[] = t('FAPI Element %element has property %property with default value %element_node_default_value but should have default value %value', array('%element' => $element_type, '%property' => $property_name, '%element_node_default_value' => $element_node_default_value, '%value' => $property_default_value));
         }
+      }
+    }
+
+    // These are properties that are supported in all elements that are processed by function form_building().
+    foreach ($all_element_properties as $property) {
+      if (!isset($all_element_properties[$property])) {
+        $build_items[] = t('FAPI Element %element is missing property %property.', array('%element' => $element_type, '%property' => $property));
       }
     }
 
