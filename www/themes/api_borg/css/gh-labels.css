@@ -1,7 +1,7 @@
 /*******************************************************************************
  * gh-labels.css
  *
- * Contains styles for Github tags.
+ * Contains styles for Github labels.
  *
  * Example usage: <span class="gh-label gh-label-pr-needs-code-review"></span>
  ******************************************************************************/
@@ -15,7 +15,7 @@
 }
 
 /* Special formatting for hyperlinked labels. Add class gh-label-wrapper to
-the surrounding <a> tag. */
+the surrounding <a> tag to prevent default link styling. */
 
 article .field-name-body a.gh-label-wrapper {
   text-decoration: none;
@@ -24,7 +24,7 @@ a.gh-label-wrapper {
   color: black;
 }
 
-/* Specific tags used in the Backdrop issue queue */
+/* Specific tags used in the Backdrop Github issue queue */
 
 .gh-label-blocked {
   color: white;
