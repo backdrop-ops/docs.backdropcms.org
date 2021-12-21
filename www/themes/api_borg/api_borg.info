@@ -13,6 +13,7 @@ stylesheets[screen][] = css/components-views.css
 ; These really exist
 stylesheets[screen][] = css/api-layout.css
 stylesheets[screen][] = css/api-blocks.css
+stylesheets[screen][] = css/gh-labels.css
 
 ; Leave this one, we need this for all Borg sites.
 ;stylesheets[screen][] = css/components-menus.css

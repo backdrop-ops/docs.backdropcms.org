@@ -1,0 +1,261 @@
+/*******************************************************************************
+ * gh-labels.css
+ *
+ * Contains styles for Github labels.
+ *
+ * Example usage: <span class="gh-label gh-label-pr-needs-code-review"></span>
+ ******************************************************************************/
+
+.gh-label {
+  background-color: #DDD;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Special formatting for hyperlinked labels. Add class gh-label-wrapper to
+the surrounding <a> tag to prevent default link styling. */
+
+article .field-name-body a.gh-label-wrapper {
+  text-decoration: none;
+}
+a.gh-label-wrapper {
+  color: black;
+}
+
+/* Specific tags used in the Backdrop Github issue queue */
+
+.gh-label-blocked {
+  color: white;
+  background-color: rgb(255, 0, 0);
+}
+.gh-label-blocked::after {
+  content: "blocked";
+}
+
+.gh-label-contrib-candidate {
+  background-color: white;
+  border: 1px solid rgb(191, 191, 191);
+}
+.gh-label-contrib-candidate::after {
+  content: "contrib candidate";
+}
+
+.gh-label-design {
+  background-color: white;
+  border: 1px solid rgb(191, 191, 191);
+}
+.gh-label-design::after {
+  content: "design";
+}
+
+.gh-label-good-first-issue {
+  background-color: rgb(170, 252, 169);
+}
+.gh-label-good-first-issue::after {
+  content: "good first issue";
+}
+
+.gh-label-help-wanted {
+  color: white;
+  background-color: rgb(0, 134, 114);
+}
+.gh-label-help-wanted::after {
+  content: "help wanted";
+}
+
+
+
+.gh-label-milestone-candidate-bug {
+  background-color: rgb(254, 242, 192);
+}
+.gh-label-milestone-candidate-bug::after {
+  content: "milestone candidate - bug";
+}
+
+.gh-label-milestone-candidate-minor {
+  background-color: rgb(254, 242, 192);
+}
+.gh-label-milestone-candidate-minor::after {
+  content: "milestone candidate - minor";
+}
+
+.gh-label-needs-automated-tests {
+  background-color: rgb(250, 216, 199);
+}
+.gh-label-needs-automated-tests::after {
+  content: "needs automated tests";
+}
+
+.gh-label-needs-benchmarks {
+  background-color: rgb(250, 216, 199);
+}
+.gh-label-needs-benchmarks::after {
+  content: "needs benchmarks";
+}
+
+.gh-label-needs-change-record {
+  background-color: rgb(250, 216, 199);
+}
+.gh-label-needs-change-record::after {
+  content: "needs change record";
+}
+
+
+
+.gh-label-needs-documentation {
+  background-color: rgb(250, 216, 199);
+}
+.gh-label-needs-documentation::after {
+  content: "needs documentation";
+}
+
+.gh-label-needs-more-feedback {
+  background-color: rgb(250, 216, 199);
+}
+.gh-label-needs-more-feedback::after {
+  content: "needs more feedbback";
+}
+
+.gh-label-needs-translation-update {
+  background-color: rgb(250, 216, 199);
+}
+.gh-label-needs-translation-update::after {
+  content: "needs translation update";
+}
+
+.gh-label-needs-usage-metrics {
+  background-color: rgb(250, 216, 199);
+}
+.gh-label-needs-usage-metrics::after {
+  content: "needs usage metrics";
+}
+
+.gh-label-pr-needs-code-review {
+  background-color: rgb(255, 255, 221);
+}
+.gh-label-pr-needs-code-review::after {
+  content: "pr - needs code review";
+}
+
+
+
+.gh-label-pr-needs-testing {
+  background-color: rgb(255, 255, 221);
+}
+.gh-label-pr-needs-testing::after {
+  content: "pr - needs testing";
+}
+
+.gh-label-pr-needs-work {
+  background-color: rgb(255, 236, 232);
+}
+.gh-label-pr-needs-work::after {
+  content: "pr - needs work";
+}
+
+.gh-label-pr-ready-to-be-committed {
+  background-color: rgb(241, 255, 232);
+  border: 1px solid rgb(163, 255, 102);
+}
+.gh-label-pr-ready-to-be-committed::after {
+  content: "pr - ready to be committed";
+}
+
+.gh-label-pr-works-for-me {
+  background-color: rgb(241, 255, 232);
+  border: 1px solid rgb(163, 255, 102);
+}
+.gh-label-pr-works-for-me::after {
+  content: "pr - works for me";
+}
+
+.gh-label-status-cannot-reproduce {
+  background-color: white;
+  border: 1px solid rgb(191, 191, 191);
+}
+.gh-label-status-cannot-reproduce::after {
+  content: "status - cannot reproduce";
+}
+
+
+
+.gh-label-status-duplicate {
+  background-color: rgb(207, 211, 205);
+}
+.gh-label-status-duplicate::after {
+  content: "status - duplicate";
+}
+
+.gh-label-status-fixed {
+  background-color: rgb(194, 224, 198);
+}
+.gh-label-status-fixed::after {
+  content: "status - fixed";
+}
+
+.gh-label-status-has-pull-request {
+  background-color: rgb(212, 197, 249);
+}
+.gh-label-status-has-pull-request::after {
+  content: "status - has pull request";
+}
+
+.gh-label-status-postponed {
+  background-color: rgb(207, 211, 215);
+}
+.gh-label-status-postponed:after {
+  content: "status - postponed";
+}
+
+.gh-label-status-works-as-designed {
+  background-color: white;
+  border: 1px solid rgb(191, 191, 191);
+}
+.gh-label-status-works-as-designed::after {
+  content: "status - works as designed";
+}
+
+
+
+.gh-label-type-bug-report {
+  color: white;
+  background-color: rgb(255, 0, 0);
+}
+.gh-label-type-bug-report::after {
+  content: "type - bug report";
+}
+
+.gh-label-type-documentation {
+  color: white;
+  background-color: rgb(0, 82, 204);
+}
+.gh-label-type-documentation::after {
+  content: "type - documentation";
+}
+
+.gh-label-type-feature-request {
+  background-color: rgb(162, 238, 239);
+}
+.gh-label-type-feature-request::after {
+  content: "type - feature request";
+}
+
+.gh-label-type-question {
+  color: white;
+  background-color: rgb(204, 49, 124);
+}
+.gh-label-type-question::after {
+  content: "type - question";
+}
+
+.gh-label-type-task {
+  color: white;
+  background-color: rgb(0, 107, 117);
+}
+.gh-label-type-task::after {
+  content: "type - task";
+}
+
+
