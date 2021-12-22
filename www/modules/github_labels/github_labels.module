@@ -1,0 +1,235 @@
+<?php
+/**
+ * @file
+ *
+ * Main file implementing hooks and callbacks.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function github_labels_menu() {
+  $items['admin/config/content/github_labels'] = array(
+    'title' => 'GitHub labels',
+    'description' => 'Configure settings for GitHub labels',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('github_labels_settings_form'),
+    'file' => 'github_labels.admin.inc',
+    'access arguments' => array('administer filters'),
+  );
+
+  $items['admin/reports/github_labels'] = array(
+    'title' => 'GitHub labels',
+    'description' => 'Show all GitHub labels and their corresponding HTML',
+    'page callback' => 'github_labels_report_page',
+    'file' => 'github_labels.admin.inc',
+    'access arguments' => array('administer filters'),
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_init().
+ * Load CSS for GitHub labels.
+ */
+function github_labels_init() {
+  backdrop_add_css(github_labels_css(), 'inline');
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function github_labels_config_info() {
+  $prefixes['github_labels.settings'] = array(
+    'label' => t('GitHub Labels settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
+ * Implements hook_token_info().
+ */
+function github_labels_token_info() {
+  $info['types']['gh-label'] = array(
+    'name' => t('GitHub labels'),
+    'description' => t('Tokens for GitHub labels'),
+  );
+  $info['types']['gh-label-link'] = array(
+    'name' => t('GitHub label links'),
+    'description' => t('Tokens for GitHub label hyperlinks'),
+  );
+
+  $info['tokens']['gh-label'] = array();
+  $info['tokens']['gh-label-link'] = array();
+  $labels_info = github_labels_info();
+  foreach ($labels_info['all'] as $clean_name => $data) {
+    $info['tokens']['gh-label'][$clean_name] = array(
+      'name' => $data['name'],
+      'description' => t('GitHub label for %name', array('%name' => $data['name'])),
+    );
+    $info['tokens']['gh-label-link'][$clean_name] = array(
+      'name' => $data['name'],
+      'description' => t('GitHub label hyperlink for %name', array('%name' => $data['name'])),
+    );
+  }
+  return $info;
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function github_labels_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  $replacements = array();
+  if ($type == 'gh-label' || $type == 'gh-label-link') {
+    $labels_info = github_labels_info();
+    if ($type == 'gh-label') {
+      foreach ($tokens as $key => $token) {
+        if (isset($labels_info['all'][$key])) {
+          $replacements[$token] = $labels_info['all'][$key]['html'];
+        }
+      }
+    }
+    else {
+      // $type == 'gh-label-link'
+      foreach ($tokens as $key => $token) {
+        if (isset($labels_info['all'][$key])) {
+          $replacements[$token] = $labels_info['all'][$key]['link_html'];
+        }
+      }
+    }
+  }
+  return $replacements;
+}
+
+/**
+ * Returns a structured list of GitHub label information from the configured
+ * repositories. Sanitization happens here.
+ *
+ * @returns - an array with two keys:
+ *  - repositories - a sub-array keyed on the individual repositories, each
+ *    repository keyed on the clean name of the label. This is used to create
+ *    repository-specific tables on the reports page.
+ *  - all - an array of all labels keyed on the clean name of label. This is
+ *    used to create the CSS and tokens.
+ */
+function github_labels_info() {
+  require_once backdrop_get_path('module', 'path') . '/path.inc';
+  $cached_info = cache_get('github_labels_info');
+  if (!empty($cached_info)) {
+    return $cached_info->data;
+  }
+  $repositories = trim(config_get('github_labels.settings', 'repositories'));
+  if (empty($repositories)) {
+    return array();
+  }
+  $labels_info = array(
+    'all' => array(),
+    'repositories' => array(),
+  );
+  $repositories = explode("\n", $repositories);
+  foreach ($repositories as $repository) {
+    $repository = trim(check_plain($repository));
+    if (!empty($repository)) {
+      $url = 'https://api.github.com/repos/' . $repository . '/labels';
+      $result = backdrop_http_request($url);
+      if (!empty($result->code) && $result->code == 200 && !empty($result->data)) {
+        $repository_data = backdrop_json_decode($result->data);
+        if (!empty($repository_data)) {
+          $info_data = array();
+          foreach ($repository_data as &$row) {
+            $data = array();
+            $name = check_plain($row['name']);
+            $clean_name = path_clean_string($name);
+            $html = '<span class="gh-label gh-label-' . $clean_name . '"></span>';
+            $link_html = '<a class="gh-label-wrapper" href="https://github.com/backdrop/backdrop-issues/labels/' . $clean_name . '">' . $html . '</a>';
+            $label_data = array(
+              'name' => $name,
+              'clean_name' => $clean_name,
+              'html' => $html,
+              'link_html' => $link_html,
+              'color' => $row['color'],
+            );
+            $info_data[$clean_name] = $label_data;
+            if (!isset($labels_info['all'][$clean_name])) {
+              $labels_info['all'][$clean_name] = $label_data;
+            }
+          }
+          $labels_info['repositories'][$repository] = $info_data;
+        }
+        else {
+          watchdog('github_labels', 'Unable to parse JSON from %url', array('%url' => $url));
+        }
+      }
+      else {
+        watchdog('github_labels', 'Unable to get GitHub label information from %url', array('%url' => $url));
+      }
+    }
+  }
+  // If we were unable to build the table of information, don't cache the empty
+  // array. We can try again later.
+  if (!empty($labels_info['all'])) {
+    cache_set('github_labels_info', $labels_info);
+  }
+  return $labels_info;
+}
+
+/**
+ * Returns the CSS for all GitHub labels.
+ */
+function github_labels_css() {
+  $cached_css = cache_get('github_labels_css');
+  if (!empty($cached_css)) {
+    return $cached_css->data;
+  }
+  $labels_info = github_labels_info();
+  if (empty($labels_info)) {
+    return '';
+  }
+  $css = '
+.gh-label {
+  background-color: #DDD;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: sans-serif;
+}
+a.gh-label-wrapper span {
+  text-decoration: none;
+}
+a.gh-label-wrapper {
+  color: transparent;
+}
+  ';
+  foreach ($labels_info['all'] as $clean_name => $data) {
+    $background_color = strtolower($data['color']);
+    list($r, $g, $b) = sscanf($background_color, "%02x%02x%02x");
+    if ($r + $b + $g < 383) {
+      $color = 'ffffff';
+    }
+    else {
+      $color = '000000';
+    }
+    if ($background_color == 'ffffff') {
+      $border_color = 'bfbfbf';
+    }
+    else {
+      $border_color = $background_color;
+    }
+    // @TODO better handling of background color (e.g., "pr - RTBC")
+    $css .= '
+.gh-label-' . $data['clean_name'] . ' {
+  color: #' . $color . ';
+  background-color: #' . $background_color . ';
+  border: 1px solid #' . $border_color . ';
+}
+.gh-label-' . $data['clean_name'] . '::after {
+  content: "' . $data['name'] . '";
+}
+    ';
+  }
+  cache_set('github_labels_css', $css);
+  return $css;
+}
