@@ -182,15 +182,49 @@ function backdropapi_fapi_check_view() {
     $property_nodes_by_property[$node->title] = $node;
   }
 
-  // These properties should be part of any element that has a theme wrapper of
+  // These properties are supported in all form elements. Note, though, that
+  // some of them are only used internally.
+  // @see form_builder()
+  $all_element_properties = array(
+    'process',
+    'after_build',
+    'pre_render',
+    'theme',
+    'theme_wrappers',
+    'post_render',
+    'required',
+    'attributes',
+    'title_display',
+    'weight',
+
+    // Currently commenting out properties that are only used internally.
+
+//    'processed',
+//    'defaults_loaded',
+//    'sorted',
+//    'tree',
+//    'access',
+//    'parents',
+//    'array_parents',
+//    'children',
+//    'after_build_done',
+  );
+
+  // These properties are supported only in input elements.
+  $input_element_properties = array(
+   'value_callback',
+   'disabled',
+   'allow_focus',
+   'value',
+  );
+
+  // These properties are supported in any element that has a theme wrapper of
   // 'form_element'.
   // @see theme_form_element()
   $form_element_properties = array(
     'title',
-    'title_display',
     'description',
-    'required',
-    'children',
+    'id',
     'name',
     'wrapper_attributes',
     'field_prefix',
@@ -211,6 +245,7 @@ function backdropapi_fapi_check_view() {
     // a default value, so we load the entities. Then create a list that's keyed
     // on the property itself.
     $field_fapi_properties = $element_node->field_fapi_properties['und'];
+    $ids = array();
     foreach ($field_fapi_properties as $property) {
       $ids[] = $property['value'];
     }
@@ -254,9 +289,16 @@ function backdropapi_fapi_check_view() {
       }
     }
 
+    // These are properties that are supported in all elements that are processed by function form_builder().
+    foreach ($all_element_properties as $property) {
+      if (!isset($all_element_properties[$property])) {
+        $build_items[] = t('FAPI Element %element is missing property %property.', array('%element' => $element_type, '%property' => $property));
+      }
+    }
+
     // If the element is processed by theme_form_element(), check whether the
     // element node has all the properties that theme_form_element() handles.
-    if (isset($element_info['#theme_wrappers']) && $element_info['#theme_wrappers'][0] == 'form_element') {
+    if (isset($element_info['#theme_wrappers']) && in_array('form_element', $element_info['#theme_wrappers'])) {
       foreach ($form_element_properties as $property) {
         if (!isset($element_node_properties[$property])) {
           $build_items[] = t('FAPI Element %element has theme wrapper %wrapper but is missing property %property.', array('%element' => $element_type, '%wrapper' => 'form_element', '%property' => $property));
