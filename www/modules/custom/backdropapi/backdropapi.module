@@ -288,7 +288,7 @@ function backdropapi_fapi_check_view() {
       }
     }
 
-    // These are properties that are supported in all elements that are processed by function form_building().
+    // These are properties that are supported in all elements that are processed by function form_builder().
     foreach ($all_element_properties as $property) {
       if (!isset($all_element_properties[$property])) {
         $build_items[] = t('FAPI Element %element is missing property %property.', array('%element' => $element_type, '%property' => $property));
