@@ -245,6 +245,7 @@ function backdropapi_fapi_check_view() {
     // a default value, so we load the entities. Then create a list that's keyed
     // on the property itself.
     $field_fapi_properties = $element_node->field_fapi_properties['und'];
+    $ids = array();
     foreach ($field_fapi_properties as $property) {
       $ids[] = $property['value'];
     }
@@ -297,7 +298,7 @@ function backdropapi_fapi_check_view() {
 
     // If the element is processed by theme_form_element(), check whether the
     // element node has all the properties that theme_form_element() handles.
-    if (isset($element_info['#theme_wrappers']) && $element_info['#theme_wrappers'][0] == 'form_element') {
+    if (isset($element_info['#theme_wrappers']) && in_array('form_element', $element_info['#theme_wrappers'])) {
       foreach ($form_element_properties as $property) {
         if (!isset($element_node_properties[$property])) {
           $build_items[] = t('FAPI Element %element has theme wrapper %wrapper but is missing property %property.', array('%element' => $element_type, '%wrapper' => 'form_element', '%property' => $property));
