@@ -10,7 +10,7 @@ description = Check the functionality of CKEditor with right-to-left languages.
 group = CKEditor
 file = ckeditor_rtl.test
 
-; Added by Backdrop CMS packaging script on 2021-09-15
+; Added by Backdrop CMS packaging script on 2022-01-15
 project = backdrop
-version = 1.20.0
-timestamp = 1631745433
+version = 1.21.0
+timestamp = 1642294704
