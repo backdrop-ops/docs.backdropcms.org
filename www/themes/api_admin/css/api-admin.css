@@ -4,3 +4,30 @@
 .form-textarea {
   font-family: Monaco, "Lucida Console", monospace;
 }
+
+/**
+ * FAPI element edit page. Fine-tune CSS to ease editing of longs lists of
+ * properties.
+ */
+.node-fapi-element-form .paragraphs-item-type-fapi-properties td {
+  padding: 5px 20px 10px;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties td > .form-wrapper {
+  display: none;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties .field-name-field-fapi-property {
+  float: left;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties .field-name-field-recommended {
+  float: right;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties .field-name-field-default-value {
+  float: right;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties .form-actions {
+  float: left;
+  margin: 0;
+}
+.node-fapi-element-form .paragraphs-item-type-fapi-properties .form-actions input {
+  margin: 5px 0 0 0;
+}
