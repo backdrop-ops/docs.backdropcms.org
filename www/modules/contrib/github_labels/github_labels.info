@@ -5,7 +5,7 @@ type = module
 
 configure = admin/config/content/github_labels
 
-; Added by Backdrop CMS packaging script on 2021-12-22
+; Added by Backdrop CMS packaging script on 2021-12-30
 project = github_labels
-version = 1.x-1.0-alpha1
-timestamp = 1640209327
+version = 1.x-1.0-alpha2
+timestamp = 1640885449
