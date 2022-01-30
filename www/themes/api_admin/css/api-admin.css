@@ -12,9 +12,6 @@
 .node-fapi-element-form .paragraphs-item-type-fapi-properties td {
   padding: 5px 20px 10px;
 }
-.node-fapi-element-form .paragraphs-item-type-fapi-properties td > .form-wrapper {
-  display: none;
-}
 .node-fapi-element-form .paragraphs-item-type-fapi-properties .field-name-field-fapi-property {
   float: left;
 }
