@@ -184,6 +184,9 @@ function theme_menu_pager_next(array $variables) {
  *   An array with 'previous' and 'next' links, if found.
  */
 function menu_pager_get_navigation($menu_link, $restrict_to_parent = FALSE) {
+  if (!isset($menu_link['menu_name'])) {
+    return array();
+  }
   $menu_name = $menu_link['menu_name'];
   $navigation = &backdrop_static(__FUNCTION__, array());
 
@@ -230,6 +233,9 @@ function menu_pager_get_navigation($menu_link, $restrict_to_parent = FALSE) {
  *   An array of child links.
  */
 function menu_pager_get_children($menu_link) {
+  if (!isset($menu_link['menu_name'])) {
+    return array();
+  }
   $menu_name = $menu_link['menu_name'];
   $children = &backdrop_static(__FUNCTION__, array());
 
@@ -250,7 +256,7 @@ function menu_pager_get_children($menu_link) {
 /**
  * Returns an array representing a flattened menu tree.
  *
- * @param array $menu_name
+ * @param string $menu_name
  *   The name of the menu to get the tree for.
  *
  * @return array
