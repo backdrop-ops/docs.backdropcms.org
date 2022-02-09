@@ -893,7 +893,7 @@ function feeds_system_info_alter(array &$info, $file, $type) {
   // Get the plugins that belong to the current module.
   $module_plugins = array();
   foreach (feeds_get_plugins() as $plugin_id => $plugin) {
-    if ($file->name === $plugin['module']) {
+    if (isset($plugin['module']) && $file->name === $plugin['module']) {
       $module_plugins[$plugin_id] = TRUE;
     }
   }
@@ -1247,7 +1247,7 @@ function feeds_importer($id) {
  *   The node id of a feed node if the source is attached to a feed node.
  *
  * @return FeedsSource
- *   A FeedsSource object or an object of a class defiend by the Backdrop
+ *   A FeedsSource object or an object of a class defined by the Backdrop
  *   variable 'source_class'.
  */
 function feeds_source($importer_id, $feed_nid = 0) {
@@ -1293,7 +1293,7 @@ function feeds_plugin($plugin, $id) {
  */
 
 /**
- * @defgroup include Funtions for loading libraries
+ * @defgroup include functions for loading libraries
  * @{
  */
 

@@ -182,7 +182,7 @@ function feeds_views_data() {
   );
 
   // Add a relationship for each entity type relating the entity's base table
-  // to the feeds_item table whre feeds_item.entity_type = 'entity_type'.
+  // to the feeds_item table where feeds_item.entity_type = 'entity_type'.
   foreach (entity_get_info() as $entity_type => $info) {
     if (!empty($info['base table'])) {
       $data['feeds_item']['table']['join'][$info['base table']] = array(

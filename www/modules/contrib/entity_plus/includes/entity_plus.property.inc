@@ -10,7 +10,7 @@
 /**
  * Get the entity property info array of an entity type.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The entity type, e.g. node, for which the info shall be returned, or NULL
  *   to return an array with info about all types.
  *
@@ -47,7 +47,7 @@ function entity_plus_get_property_info($entity_plus_type = NULL) {
 /**
  * Returns the default information for an entity property.
  *
- * @return
+ * @return array
  *   An array of optional property information keys mapped to their defaults.
  *
  * @see hook_entity_property_info()
@@ -66,10 +66,10 @@ function entity_plus_property_info_defaults() {
  * all properties the entity might have, thus it adds an all properties assigned
  * to entity bundles.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   (optiona) The entity type to return properties for.
  *
- * @return
+ * @return array
  *   An array of info about properties. If the type is ommitted, all known
  *   properties are returned.
  */
@@ -96,16 +96,16 @@ function entity_plus_get_all_property_info($entity_plus_type = NULL) {
 /**
  * Queries for entities having the given property value.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $property
+ * @param string $property
  *   The name of the property to query for.
- * @param $value
+ * @param mixed $value
  *   A single property value or an array of possible values to query for.
- * @param $limit
+ * @param int $limit
  *   Limit the numer of results. Defaults to 30.
  *
- * @return
+ * @return array
  *   An array of entity ids or NULL if there is no information how to query for
  *   the given property.
  */
@@ -162,6 +162,7 @@ function entity_plus_hook_info() {
 
 /**
  * Implements hook_field_info_alter().
+ * 
  * Defines default property types for core field types.
  */
 function entity_plus_field_info_alter(&$field_info) {
@@ -201,10 +202,24 @@ function entity_plus_field_info_alter(&$field_info) {
     $field_info['image']['property_callbacks'][] = 'entity_plus_metadata_field_file_callback';
     $field_info['image']['property_callbacks'][] = 'entity_plus_metadata_field_image_callback';
   }
+  if (module_exists('email')) {
+    $field_info['email']['property_type'] = 'text';
+  }
+  foreach (array('date', 'datetime', 'datestamp') as $date_type) {
+    if (isset($field_info[$date_type])) {
+      $field_info[$date_type]['property_type'] = 'date';
+      $field_info[$date_type]['property_callbacks'][] = 'entity_plus_metadata_field_date_callback';
+    }
+  }
+  if (module_exists('link')) {
+    $field_info['link_field']['property_type'] = 'field_item_link';
+    $field_info['link_field']['property_callbacks'][] = 'entity_plus_metadata_field_link_callback';
+  }
 }
 
 /**
  * Implements hook_field_create_instance().
+ * 
  * Clear the cache when a field instance changed.
  */
 function entity_plus_field_create_instance() {
@@ -213,6 +228,7 @@ function entity_plus_field_create_instance() {
 
 /**
  * Implements hook_field_delete_instance().
+ * 
  * Clear the cache when a field instance changed.
  */
 function entity_plus_field_delete_instance() {
@@ -221,6 +237,7 @@ function entity_plus_field_delete_instance() {
 
 /**
  * Implements hook_field_update_instance().
+ * 
  * Clear the cache when a field instance changed.
  */
 function entity_plus_field_update_instance() {
@@ -228,11 +245,11 @@ function entity_plus_field_update_instance() {
 }
 
 /**
- * Verifies that the given data can be safely used as the given type regardless
- * of the PHP variable type of $data. Example: the string "15" is a valid
- * integer, but "15nodes" is not.
+ * Verifies that the given data can be safely used as the given type regardless of the PHP variable type of $data. 
+ * 
+ * Example: the string "15" is a valid integer, but "15nodes" is not.
  *
- * @return
+ * @return bool
  *   Whether the data is valid for the given type.
  */
 function entity_plus_property_verify_data_type($data, $type) {
@@ -265,36 +282,46 @@ function entity_plus_property_verify_data_type($data, $type) {
     case 'site':
     case 'unknown':
       return TRUE;
+
     case 'date':
     case 'duration':
     case 'integer':
       return is_numeric($data) && strpos($data, '.') === FALSE;
+
     case 'decimal':
       return is_numeric($data);
+
     case 'text':
       return is_scalar($data);
+
     case 'token':
       return is_scalar($data) && preg_match('!^[a-z][a-z0-9_]*$!', $data);
+
     case 'boolean':
       return is_scalar($data) && (is_bool($data) || $data == 0 || $data == 1);
+
     case 'uri':
       return valid_url($data, TRUE);
+
     case 'list':
       return (is_array($data) && array_values($data) == $data) || (is_object($data) && $data instanceof EntityMetadataArrayObject);
+
     case 'entity':
       return is_object($data) && $data instanceof EntityBackdropWrapper;
+
     default:
     case 'struct':
       return is_object($data) || is_array($data);
+
   }
 }
 
 /**
  * Creates the entity object for an array of given property values.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The entity type to create an entity for.
- * @param $values
+ * @param array $values
  *   An array of values as described by the entity's property info. All entity
  *   properties of the given entity type that are marked as required, must be
  *   present.
@@ -334,7 +361,7 @@ function entity_plus_property_values_create_entity($entity_plus_type, $values = 
         }
       }
     }
-    // @todo: Once we require Backdrop 7.7 or later, verify the entity has
+    // @todo: Verify the entity has
     // now a valid bundle and throw the EntityMalformedException if not.
     return $wrapper;
   }
@@ -345,11 +372,11 @@ function entity_plus_property_values_create_entity($entity_plus_type, $values = 
 /**
  * Extracts the contained type for a list type string like list<date>.
  *
- * @return
+ * @return string|bool
  *   The contained type or FALSE, if the given type string is no list.
  */
 function entity_plus_property_list_extract_type($type) {
-  if (strpos($type, 'list<') === 0 && $type[strlen($type)-1] == '>') {
+  if (strpos($type, 'list<') === 0 && $type[strlen($type) - 1] == '>') {
     return substr($type, 5, -1);
   }
   return FALSE;
@@ -358,14 +385,14 @@ function entity_plus_property_list_extract_type($type) {
 /**
  * Extracts the innermost type for a type string like list<list<date>>.
  *
- * @param $type
+ * @param string $type
  *   The type to examine.
  *
- * @return
+ * @return string
  *   For list types, the innermost type. The type itself otherwise.
  */
 function entity_plus_property_extract_innermost_type($type) {
-  while (strpos($type, 'list<') === 0 && $type[strlen($type)-1] == '>') {
+  while (strpos($type, 'list<') === 0 && $type[strlen($type) - 1] == '>') {
     $type = substr($type, 5, -1);
   }
   return $type;
@@ -428,8 +455,7 @@ function entity_plus_property_getter_method($object, array $options, $name) {
 }
 
 /**
- * Sets the property to the given value using the setter method. May be used as
- * 'setter callback'.
+ * Sets the property to the given value using the setter method. May be used as 'setter callback'.
  */
 function entity_plus_property_setter_method($object, $name, $value) {
   // Remove any underscores as classes are expected to use CamelCase.
@@ -468,6 +494,7 @@ function entity_plus_property_create_array($property_name, $context) {
 
 /**
  * Flattens the given options in single dimensional array.
+ * 
  * We don't depend on options module, so we cannot use options_array_flatten().
  *
  * @see options_array_flatten()
@@ -595,6 +622,7 @@ function entity_plus_property_field_item_image_info() {
 
 /**
  * Deprecated.
+ * 
  * Do not make use of this function, instead use the new one.
  */
 function entity_plus_metadata_verbatim_get($data, array $options, $name) {
@@ -603,6 +631,7 @@ function entity_plus_metadata_verbatim_get($data, array $options, $name) {
 
 /**
  * Deprecated.
+ * 
  * Do not make use of this function, instead use the new one.
  */
 function entity_plus_metadata_verbatim_set($data, $name, $value) {
@@ -611,6 +640,7 @@ function entity_plus_metadata_verbatim_set($data, $name, $value) {
 
 /**
  * Deprecated.
+ * 
  * Do not make use of this function, instead use the new one.
  */
 function entity_plus_metadata_getter_method($object, array $options, $name) {
@@ -619,6 +649,7 @@ function entity_plus_metadata_getter_method($object, array $options, $name) {
 
 /**
  * Deprecated.
+ * 
  * Do not make use of this function, instead use the new one.
  */
 function entity_plus_metadata_setter_method($object, $name, $value) {
@@ -627,6 +658,7 @@ function entity_plus_metadata_setter_method($object, $name, $value) {
 
 /**
  * Deprecated.
+ * 
  * Do not make use of this function, instead use the new one.
  */
 function entity_plus_metadata_get_list($data, array $options, $name) {
@@ -635,6 +667,7 @@ function entity_plus_metadata_get_list($data, array $options, $name) {
 
 /**
  * Deprecated.
+ * 
  * Do not make use of this function, instead use the new one.
  */
 function entity_plus_metadata_validate_integer_positive($value) {
@@ -643,6 +676,7 @@ function entity_plus_metadata_validate_integer_positive($value) {
 
 /**
  * Deprecated.
+ * 
  * Do not make use of this function, instead use the new one.
  */
 function entity_plus_metadata_validate_integer_non_negative($value) {
@@ -651,6 +685,7 @@ function entity_plus_metadata_validate_integer_non_negative($value) {
 
 /**
  * Deprecated.
+ * 
  * Do not make use of this function, instead use the new one.
  */
 function entity_plus_metadata_text_formatted_properties() {

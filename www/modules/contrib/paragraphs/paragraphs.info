@@ -8,8 +8,9 @@ configure = admin/structure/paragraphs
 stylesheets[all][] = css/paragraphs.css
 dependencies[] = entity
 dependencies[] = entity_plus (>=1.0.5)
+dependencies[] = system (>=1.20.0)
 
-; Added by Backdrop CMS packaging script on 2020-11-19
+; Added by Backdrop CMS packaging script on 2022-01-06
 project = paragraphs
-version = 1.x-1.1.0
-timestamp = 1605821820
+version = 1.x-1.2.0-beta1
+timestamp = 1641502725

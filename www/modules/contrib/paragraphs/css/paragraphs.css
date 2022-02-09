@@ -1,10 +1,144 @@
-.paragraphs-icon {
-    max-height: 50px;
+html.dialog-open {
+  position: inherit;
 }
 
-.paragraphs-label {
-    font-weight: bold;
+.field-widget-paragraphs-embed .removed {
+  padding-left: 1.5rem;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(231,37,27,.07),
+    rgba(231,37,27,.07) 20px,
+    rgba(231,37,27,.1) 20px,
+    rgba(231,37,27,.1) 40px
+  );
 }
-.paragraphs-machine-name {
-    font-size: smaller;
+.field-widget-paragraphs-embed .unpublished {
+  padding-left: 1.5rem;
+  color: #444;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(0,0,0,.05),
+    rgba(0,0,0,.05) 20px,
+    rgba(0,0,0,.03) 20px,
+    rgba(0,0,0,.03) 40px
+  );
+}
+
+/* Modal Admin styles. */
+
+.paragraphs-item-modal-admin .dropbutton-wrapper {
+  float: right;
+  margin: 2px 2px 10px 10px;
+  display: none;
+  min-height: 2em;
+  position: relative;
+  z-index: 10;
+}
+
+.paragraphs-item-modal-admin > .content {
+  position: relative;
+  z-index: 9;
+}
+
+.paragraphs-item-modal-admin {
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.paragraphs-item-modal-admin::before {
+  position: relative;
+  display: table-cell;
+  content: '';
+  top: 0;
+  left: 0;
+  z-index: -5;
+}
+
+.paragraphs-item-modal-admin:hover::before {
+  border: 1px dashed rgba(0,0,0,.04);
+  position: absolute;
+  display: table-cell;
+  content: '';
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  border: 1px dashed #d0e2d5;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0,0,0,.04),
+    rgba(0,0,0,.04) 20px,
+    rgba(0,0,0,.02) 20px,
+    rgba(0,0,0,.02) 40px
+  );
+  transition: .1s ease-in-out;
+}
+
+.ui-dialog .paragraphs-item-modal-admin:hover {
+  border: 1px solid transparent;
+  background-color: inherit;
+  position: inherit;
+}
+
+.paragraphs-item-modal-admin:hover .dropbutton-wrapper {
+  display: inherit;
+  position: absolute;
+  top: 0;
+  right: 0;
+  text-align: right;
+  z-index: 1000;
+}
+
+.paragraphs-item-modal-admin:hover .dropbutton-widget {
+  left: auto;
+  right: 0;
+  min-width: 6em;
+  padding-right: 2em;
+}
+
+.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton li,
+.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton a {
+  text-align: left;
+}
+
+.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton a {
+  padding: 0.1em 0.5em;
+}
+
+.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton a.font-awesome {
+  padding: 0.1em 0.5em 0.1em 1em;
+}
+
+.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton a.font-awesome:before {
+  font-family: "Font Awesome 5 Free";
+  display: inline-block;
+  padding-right: .5em;
+  vertical-align: middle;
+  font-weight: 900;
+}
+
+.paragraphs-admin-edit a {
+  text-decoration: none;
+}
+
+.ui-dialog-content .paragraphs-dialog-edit img {
+  max-width: 100%;
+  width: auto;
+}
+
+.font-awesome.paragraphs-edit:before {
+  content: '\f304';
+}
+.font-awesome.paragraphs-remove:before {
+  content: '\f2ed';
+}
+.font-awesome.paragraphs-add:before {
+  content: '\f055';
+}
+.font-awesome.paragraphs-sort:before {
+  content: '\f338';
+}
+.font-awesome.paragraphs-unpublish:before {
+  content: '\f070';
 }

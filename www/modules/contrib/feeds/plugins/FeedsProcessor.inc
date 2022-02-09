@@ -1419,7 +1419,7 @@ abstract class FeedsProcessor extends FeedsPlugin {
    * is translated. Use ::createLogEntry instead.
    *
    * @param Exception $e
-   *   The exception that was throwned during processing the item.
+   *   The exception that was thrown during processing the item.
    * @param object $entity
    *   The entity object.
    * @param object $item
@@ -1447,7 +1447,7 @@ abstract class FeedsProcessor extends FeedsPlugin {
    * Creates a log entry for when an exception occurred during import.
    *
    * @param Exception $e
-   *   The exception that was throwned during processing the item.
+   *   The exception that was thrown during processing the item.
    * @param object $entity
    *   The entity object.
    * @param array $item

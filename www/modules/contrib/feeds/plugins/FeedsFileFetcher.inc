@@ -79,7 +79,7 @@ class FeedsFileFetcher extends FeedsFetcher {
    *   no files could be found. Never contains directories.
    */
   protected function listFiles($dir) {
-    // Seperate out string into array of extensions. Make sure its regex safe.
+    // Separate out string into array of extensions. Make sure it's regex safe.
     $config = $this->getConfig();
     $extensions = array_filter(array_map('preg_quote', explode(' ', $config['allowed_extensions'])));
     $regex = '/\.(' . implode('|', $extensions) . ')$/';

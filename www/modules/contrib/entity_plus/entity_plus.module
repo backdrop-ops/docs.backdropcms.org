@@ -6,46 +6,42 @@
 
  /**
   * Define status codes used for exportable entities.
-  *
-  * Temporarily (?) wrapped in a check to see if they are already defined
-  * since Entity UI declares the same.
-  * See: https://github.com/backdrop-contrib/entity_plus/issues/20
   */
 
-if (!defined('ENTITY_CUSTOM') && !module_exists('entity_ui')) {
-  /**
-  * A bit flag used to let us know if an entity is in the database.
-  */
-  define('ENTITY_CUSTOM', 0x01);
+/**
+ * A bit flag used to let us know if an entity is in the database.
+ */
+define('ENTITY_PLUS_CUSTOM', 0x01);
 
-  /**
-  * Deprecated, but still here for backward compatibility.
-  */
-  define('ENTITY_IN_DB', 0x01);
+/**
+* Deprecated, but still here for backward compatibility.
+*/
+define('ENTITY_PLUS_IN_DB', 0x01);
 
-  /**
-  * A bit flag used to let us know if an entity is a 'default' in code.
-  */
-  define('ENTITY_IN_CODE', 0x02);
+/**
+* A bit flag used to let us know if an entity is a 'default' in code.
+*/
+define('ENTITY_PLUS_IN_CODE', 0x02);
 
-  /**
-  * A bit flag used to mark entities as overridden, e.g. they were originally
-  * definded in code and are saved now in the database. Same as
-  * (ENTITY_CUSTOM | ENTITY_IN_CODE).
-  */
-  define('ENTITY_OVERRIDDEN', 0x03);
+/**
+* A bit flag used to mark entities as overridden, e.g. they were originally
+* definded in code and are saved now in the database. Same as
+* (ENTITY_PLUS_CUSTOM | ENTITY_PLUS_IN_CODE).
+*/
+define('ENTITY_PLUS_OVERRIDDEN', 0x03);
 
-  /**
-  * A bit flag used to mark entities as fixed, thus not changeable for any
-  * user.
-  */
-  define('ENTITY_FIXED', 0x04 | 0x02);
-}
+/**
+* A bit flag used to mark entities as fixed, thus not changeable for any user.
+*/
+define('ENTITY_PLUS_FIXED', 0x04 | 0x02);
 
 module_load_include('inc', 'entity_plus', 'modules/callbacks');
 module_load_include('inc', 'entity_plus', 'includes/entity_plus.property');
 module_load_include('inc', 'entity_plus', 'views/entity_plus.views');
 
+/**
+ * Provides an Entity Metadata Wrapper.
+ */
 function entity_metadata_wrapper($type, $data = NULL, array $info = array()) {
   if ($type == 'entity' || (($entity_plus_info = entity_get_info()) && isset($entity_plus_info[$type]))) {
     // If the passed entity is the global $user, we load the user object by only
@@ -80,6 +76,9 @@ function emw($type, $data = NULL, array $info = array()) {
   return entity_metadata_wrapper($type, $data, $info);
 }
 
+/**
+ * Implements hook_autoload_info().
+ */
 function entity_plus_autoload_info() {
   return array(
     'EntityValueWrapper' => 'includes/entity_plus.wrapper.inc',
@@ -97,11 +96,9 @@ function entity_plus_autoload_info() {
     'EntityPlusControllerRevisionableInterface' => 'includes/entity_plus.controller.inc',
     'EntityPlusController' => 'includes/entity_plus.controller.inc',
     'EntityPlusControllerExportable' => 'includes/entity_plus.controller.inc',
-    'EntityPlusControllerInterface' => 'includes/entity_plus.controller.inc',
-    'EntityPlusControllerInterface' => 'includes/entity_plus.controller.inc',
     'EntityPlusFieldHandlerHelper' => 'views/handlers/entity_plus_views_field_handler_helper.inc',
     'entity_plus_views_handler_area_entity' => 'views/handlers/entity_plus_views_handler_area_entity.inc',
-    'entity_plus_views_handler_field_boolean' => 'views/handlers/entity_plus_views_handler_field_boolian.inc',
+    'entity_plus_views_handler_field_boolean' => 'views/handlers/entity_plus_views_handler_field_boolean.inc',
     'entity_plus_views_handler_field_date' => 'views/handlers/entity_plus_views_handler_field_date.inc',
     'entity_plus_views_handler_field_duration' => 'views/handlers/entity_plus_views_handler_field_duration.inc',
     'entity_plus_views_handler_field_entity' => 'views/handlers/entity_plus_views_handler_field_entity.inc',
@@ -151,9 +148,9 @@ function entity_plus_entity_property_info() {
  * Unlike entity_extract_ids() this function returns the name of the entity
  * instead of the numeric id, in case the entity type has specified a name key.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $entity
+ * @param Entity $entity
  *   An entity object.
  *
  * @see entity_extract_ids()
@@ -170,9 +167,8 @@ function entity_plus_id($entity_plus_type, $entity) {
 /**
  * Get the entity info for the entity types provided via the entity CRUD API.
  *
- * @return
- *  An array in the same format as entity_get_info(), containing the entities
- *  whose controller class implements the EntityPlusControllerInterface.
+ * @return array
+ *   An array in the same format as entity_get_info(), containing the entities whose controller class implements the EntityPlusControllerInterface.
  */
 function entity_plus_crud_get_info() {
   $types = array();
@@ -184,10 +180,26 @@ function entity_plus_crud_get_info() {
   return $types;
 }
 
+/**
+ * Helper function that returns an array of core modules.
+ */
 function _entity_plus_metadata_core_modules() {
-  return array_filter(array('book', 'comment', 'field', 'locale', 'node', 'taxonomy', 'user', 'system', 'statistics'), 'module_exists');
+  return array_filter(array(
+    'book',
+    'comment',
+    'field',
+    'locale',
+    'node',
+    'taxonomy',
+    'user',
+    'system',
+    'statistics',
+  ), 'module_exists');
 }
 
+/**
+ * Implements hook_implements_alter().
+ */
 function entity_plus_module_implements_alter(&$implementations, $hook) {
   if ($hook == 'entity_info_alter') {
     // Move our hook implementation to the bottom.
@@ -200,13 +212,12 @@ function entity_plus_module_implements_alter(&$implementations, $hook) {
 /**
  * Determines whether for the given entity type a given operation is available.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $op
- *   One of 'create', 'view', 'save', 'delete', 'revision delete', 'access' or
- *   'form'.
+ * @param string $op
+ *   One of 'create', 'view', 'save', 'delete', 'revision delete', 'access' or 'form'.
  *
- * @return boolean
+ * @return bool
  *   Whether the entity type supports the given operation.
  */
 function entity_plus_type_supports($entity_plus_type, $op) {
@@ -226,8 +237,8 @@ function entity_plus_type_supports($entity_plus_type, $op) {
   if ($op == 'revision delete') {
     return in_array('EntityPlusControllerInterface', class_implements($info['controller class']));
   }
-  if ($op == 'form') {
-    return (bool) entity_plus_ui_controller($entity_plus_type);
+  if ($op == 'form' && module_exists('entity_ui')) {
+    return (bool) entity_ui_controller($entity_plus_type);
   }
   if ($op != 'access') {
     return in_array('EntityPlusControllerInterface', class_implements($info['controller class']));
@@ -251,7 +262,7 @@ function entity_plus_entity_info_alter(&$entity_plus_info) {
 
     if (isset($info['controller class']) && in_array('EntityPlusControllerInterface', class_implements($info['controller class']))) {
       // Automatically disable field cache when entity cache is used.
-      if (!empty($info['entity cache']) && module_exists('entitycache')) {
+      if (!empty($info['entity cache'])) {
         $entity_plus_info[$type]['field cache'] = FALSE;
       }
     }
@@ -275,10 +286,7 @@ function _entity_plus_info_add_metadata(&$entity_plus_info) {
   // Set access callbacks.
   $entity_plus_info['node']['access callback'] = 'entity_plus_metadata_no_hook_node_access';
   $entity_plus_info['user']['access callback'] = 'entity_plus_metadata_user_access';
-  // File entity has it's own entity_plus_access function.
-  if (!module_exists('file_entity')) {
-    $entity_plus_info['file']['access callback'] = 'entity_plus_metadata_file_access';
-  }
+  $entity_plus_info['file']['access callback'] = 'entity_plus_metadata_file_access';
 
   // CRUD function callbacks.
   $entity_plus_info['node']['creation callback'] = 'entity_plus_metadata_create_node';
@@ -324,16 +332,6 @@ function _entity_plus_info_add_metadata(&$entity_plus_info) {
     $entity_plus_info['taxonomy_term']['view callback'] = 'entity_plus_metadata_view_single';
     $entity_plus_info['taxonomy_term']['form callback'] = 'entity_plus_metadata_form_taxonomy_term';
 
-    if (isset($entity_plus_info['taxonomy_vocabulary'])) {
-      $entity_plus_info['taxonomy_vocabulary']['plural label'] = t('Taxonomy vocabularies');
-      $entity_plus_info['taxonomy_vocabulary']['description'] = t('Vocabularies contain related taxonomy terms, which are used for classifying content.');
-      $entity_plus_info['taxonomy_vocabulary']['access callback'] = 'entity_plus_metadata_taxonomy_access';
-      $entity_plus_info['taxonomy_vocabulary']['creation callback'] = 'entity_plus_metadata_create_object';
-      $entity_plus_info['taxonomy_vocabulary']['save callback'] = 'taxonomy_vocabulary_save';
-      $entity_plus_info['taxonomy_vocabulary']['deletion callback'] = 'taxonomy_vocabulary_delete';
-      $entity_plus_info['taxonomy_vocabulary']['form callback'] = 'entity_plus_metadata_form_taxonomy_vocabulary';
-      $entity_plus_info['taxonomy_vocabulary']['token type'] = 'vocabulary';
-    }
     // Token type mapping.
     $entity_plus_info['taxonomy_term']['token type'] = 'term';
   }
@@ -347,16 +345,16 @@ function _entity_plus_info_add_metadata(&$entity_plus_info) {
  * view a single entity without any id, e.g. for generating a preview during
  * creation.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $entities
+ * @param array $entities
  *   An array of entities to render.
- * @param $view_mode
+ * @param string $view_mode
  *   A view mode as used by this entity type, e.g. 'full', 'teaser'...
- * @param $langcode
+ * @param string $langcode
  *   (optional) A language code to use for rendering. Defaults to the global
  *   content language of the current request.
- * @param $page
+ * @param bool $page
  *   (optional) If set will control if the entity is rendered: if TRUE
  *   the entity will be rendered without its title, so that it can be embeded
  *   in another context. If FALSE the entity will be displayed with its title
@@ -365,7 +363,8 @@ function _entity_plus_info_add_metadata(&$entity_plus_info) {
  *   of the entity, as returned by entity_uri().
  *   This parameter is only supported for entities which controller is a
  *   EntityPlusControllerInterface.
- * @return
+ * 
+ * @return array
  *   The renderable array, keyed by the entity type and by entity identifiers,
  *   for which the entity name is used if existing - see entity_plus_id(). If there
  *   is no information on how to view an entity, FALSE is returned.
@@ -393,18 +392,18 @@ function entity_plus_view($entity_plus_type, $entities, $view_mode = 'full', $la
  * $access = entity_plus_access('create', 'node', $node, $account);
  * @endcode
  *
- * @param $op
+ * @param string $op
  *   The operation being performed. One of 'view', 'update', 'create' or
  *   'delete'.
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The entity type of the entity to check for.
- * @param $entity
+ * @param Entity $entity
  *   Optionally an entity to check access for. If no entity is given, it will be
  *   determined whether access is allowed for all entities of the given type.
- * @param $account
+ * @param object $account
  *   The user to check for. Leave it to NULL to check for the global user.
  *
- * @return boolean
+ * @return bool
  *   Whether access is allowed or not. If the entity type does not specify any
  *   access information, NULL is returned.
  *
@@ -419,9 +418,10 @@ function entity_plus_access($op, $entity_plus_type, $entity = NULL, $account = N
 /**
  * Converts the schema information available for the given table to property info.
  *
- * @param $table
+ * @param string $table
  *   The name of the table as used in hook_schema().
- * @return
+ * 
+ * @return array
  *   An array of property info as suiting for hook_entity_property_info().
  */
 function entity_plus_metadata_convert_schema($table) {
@@ -444,15 +444,20 @@ function entity_plus_metadata_convert_schema($table) {
   return $properties;
 }
 
+/**
+ * Helper function that converts a schema type to a type we understand.
+ */
 function _entity_plus_metadata_convert_schema_type($type) {
   switch ($type) {
     case 'int':
     case 'serial':
     case 'date':
       return 'integer';
+
     case 'float':
     case 'numeric':
       return 'decimal';
+
     case 'char':
     case 'varchar':
     case 'text':
@@ -466,7 +471,7 @@ function _entity_plus_metadata_convert_schema_type($type) {
  *
  * @param array $entities
  *   The array of entities to convert.
- * @param $property
+ * @param string $property
  *   The name of entity property, by which the array should be keyed. To get
  *   reasonable results, the property has to have unique values.
  *
@@ -491,16 +496,17 @@ function entity_plus_key_array_by_property(array $entities, $property) {
  * Note: Currently, this only works for entity types provided with the entity
  * CRUD API.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $entity
+ * @param Entity $entity
  *   An entity object.
- * @param $view_mode
+ * @param string $view_mode
  *   A view mode as used by this entity type, e.g. 'full', 'teaser'...
- * @param $langcode
+ * @param string $langcode
  *   (optional) A language code to use for rendering. Defaults to the global
  *   content language of the current request.
- * @return
+ * 
+ * @return array
  *   The renderable array.
  */
 function entity_plus_build_content($entity_plus_type, $entity, $view_mode = 'full', $langcode = NULL) {
@@ -528,11 +534,12 @@ function entity_plus_build_content($entity_plus_type, $entity, $view_mode = 'ful
  * );
  * @endcode
  *
- * @param $entity_plus_id
+ * @param int $entity_plus_id
  *   The ID of the entity to load, passed by the menu URL.
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity to load.
- * @return
+ * 
+ * @return object
  *   A fully loaded entity object, or FALSE in case of error.
  */
 function entity_plus_object_load($entity_plus_id, $entity_plus_type) {
@@ -543,17 +550,17 @@ function entity_plus_object_load($entity_plus_id, $entity_plus_type) {
 /**
  * A wrapper around entity_load() to return entities keyed by name key if existing.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The entity type to load, e.g. node or user.
- * @param $names
+ * @param array $names
  *   An array of entity names or ids, or FALSE to load all entities.
- * @param $conditions
+ * @param array $conditions
  *   (deprecated) An associative array of conditions on the base table, where
  *   the keys are the database fields and the values are the values those
  *   fields must have. Instead, it is preferable to use EntityFieldQuery to
  *   retrieve a list of entity IDs loadable by this function.
  *
- * @return
+ * @return array
  *   An array of entity objects indexed by their names (or ids if the entity
  *   type has no name key).
  *
@@ -571,12 +578,12 @@ function entity_load_multiple_by_name($entity_plus_type, $names = FALSE, $condit
 /**
  * Loads an entity revision.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $revision_id
+ * @param int $revision_id
  *   The id of the revision to load.
  *
- * @return
+ * @return object
  *   The entity object, or FALSE if there is no entity with the given revision
  *   id.
  */
@@ -592,12 +599,12 @@ function entity_plus_revision_load($entity_plus_type, $revision_id) {
 /**
  * Deletes an entity revision.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $revision_id
+ * @param int $revision_id
  *   The revision ID to delete.
  *
- * @return
+ * @return bool
  *   TRUE if the entity revision could be deleted, FALSE otherwise.
  */
 function entity_plus_revision_delete($entity_plus_type, $revision_id) {
@@ -617,12 +624,12 @@ function entity_plus_revision_delete($entity_plus_type, $revision_id) {
  * Note that newly created entities will always be created in default revision,
  * thus TRUE is returned for not yet saved entities.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $entity
+ * @param Entity $entity
  *   The entity object to check.
  *
- * @return boolean
+ * @return bool
  *   A boolean indicating whether the entity is in default revision is returned.
  *   If the entity is not revisionable or is new, TRUE is returned.
  *
@@ -656,9 +663,9 @@ function entity_plus_revision_is_default($entity_plus_type, $entity) {
  * based upon the EntityPlusController, i.e. implementing the
  * EntityPlusControllerRevisionableInterface.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $entity
+ * @param Entity $entity
  *   The entity revision to update.
  *
  * @see entity_revision_is_default()
@@ -674,15 +681,15 @@ function entity_plus_revision_set_default($entity_plus_type, $entity) {
 /**
  * Checks if a given entity has a certain exportable status.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $entity
+ * @param Entity $entity
  *   The entity to check the status on.
- * @param $status
- *   The constant status like ENTITY_CUSTOM, ENTITY_IN_CODE, ENTITY_OVERRIDDEN
- *   or ENTITY_FIXED.
+ * @param int $status
+ *   The constant status like ENTITY_PLUS_CUSTOM, ENTITY_PLUS_IN_CODE, ENTITY_PLUS_OVERRIDDEN
+ *   or ENTITY_PLUS_FIXED.
  *
- * @return
+ * @return bool
  *   TRUE if the entity has the status, FALSE otherwise.
  */
 function entity_plus_has_status($entity_plus_type, $entity, $status) {
@@ -779,7 +786,7 @@ function entity_plus_var_json_export($var, $prefix = '') {
  * unless they have been overridden. In that case the overridden entity is left
  * in the database, but its status gets updated to 'custom'.
  *
- * @param $entity_plus_types
+ * @param array $entity_plus_types
  *   (optional) If specified, only the defaults of the given entity types are
  *   rebuilt.
  */
@@ -804,7 +811,11 @@ function _entity_plus_defaults_rebuild($entity_plus_type) {
   if (lock_acquire('entity_plus_rebuild_' . $entity_plus_type)) {
     $info = entity_get_info($entity_plus_type);
     $hook = isset($info['export']['default hook']) ? $info['export']['default hook'] : 'default_' . $entity_plus_type;
-    $keys = $info['entity keys'] + array('module' => 'module', 'status' => 'status', 'name' => $info['entity keys']['id']);
+    $keys = $info['entity keys'] + array(
+      'module' => 'module',
+      'status' => 'status',
+      'name' => $info['entity keys']['id']
+    );
 
     // Check for the existence of the module and status columns.
     if (!in_array($keys['status'], $info['schema_fields_sql']['base table']) || !in_array($keys['module'], $info['schema_fields_sql']['base table'])) {
@@ -824,13 +835,19 @@ function _entity_plus_defaults_rebuild($entity_plus_type) {
     backdrop_alter($hook, $entities);
 
     // Check for defaults that disappeared.
-    $existing_defaults = entity_load_multiple_by_name($entity_plus_type, FALSE, array($keys['status'] => array(ENTITY_OVERRIDDEN, ENTITY_IN_CODE, ENTITY_FIXED)));
+    $existing_defaults = entity_load_multiple_by_name($entity_plus_type, FALSE, array(
+      $keys['status'] => array(
+        ENTITY_PLUS_OVERRIDDEN,
+        ENTITY_PLUS_IN_CODE,
+        ENTITY_PLUS_FIXED,
+      )
+    ));
 
     foreach ($existing_defaults as $name => $entity) {
       if (empty($entities[$name])) {
         $entity->is_rebuild = TRUE;
-        if (entity_plus_has_status($entity_plus_type, $entity, ENTITY_OVERRIDDEN)) {
-          $entity->{$keys['status']} = ENTITY_CUSTOM;
+        if (entity_plus_has_status($entity_plus_type, $entity, ENTITY_PLUS_OVERRIDDEN)) {
+          $entity->{$keys['status']} = ENTITY_PLUS_CUSTOM;
           entity_plus_save($entity_plus_type, $entity);
         }
         else {
@@ -844,11 +861,11 @@ function _entity_plus_defaults_rebuild($entity_plus_type) {
     $existing_entities = entity_load_multiple_by_name($entity_plus_type, array_keys($entities));
 
     foreach ($existing_entities as $name => $entity) {
-      if (entity_plus_has_status($entity_plus_type, $entity, ENTITY_CUSTOM)) {
+      if (entity_plus_has_status($entity_plus_type, $entity, ENTITY_PLUS_CUSTOM)) {
         // If the entity already exists but is not yet marked as overridden, we
         // have to update the status.
-        if (!entity_plus_has_status($entity_plus_type, $entity, ENTITY_OVERRIDDEN)) {
-          $entity->{$keys['status']} |= ENTITY_OVERRIDDEN;
+        if (!entity_plus_has_status($entity_plus_type, $entity, ENTITY_PLUS_OVERRIDDEN)) {
+          $entity->{$keys['status']} |= ENTITY_PLUS_OVERRIDDEN;
           $entity->{$keys['module']} = $entities[$name]->{$keys['module']};
           $entity->is_rebuild = TRUE;
           entity_plus_save($entity_plus_type, $entity);
@@ -876,10 +893,10 @@ function _entity_plus_defaults_rebuild($entity_plus_type) {
       $originals[$name] = $entity->original;
 
       if (!isset($entity->{$keys['status']})) {
-        $entity->{$keys['status']} = ENTITY_IN_CODE;
+        $entity->{$keys['status']} = ENTITY_PLUS_IN_CODE;
       }
       else {
-        $entity->{$keys['status']} |= ENTITY_IN_CODE;
+        $entity->{$keys['status']} |= ENTITY_PLUS_IN_CODE;
       }
       $entity->is_rebuild = TRUE;
       entity_plus_save($entity_plus_type, $entity);
@@ -918,12 +935,12 @@ function entity_plus_get_extra_fields_controller($type = NULL) {
  *
  * In case of failures, an exception is thrown.
  *
- * @param $entity_plus_type
+ * @param string $entity_plus_type
  *   The type of the entity.
- * @param $entity
+ * @param Entity $entity
  *   The entity to save.
  *
- * @return
+ * @return int
  *   For entity types provided by the CRUD API, SAVED_NEW or SAVED_UPDATED is
  *   returned depending on the operation performed. If there is no information
  *   how to save the entity, FALSE is returned.
@@ -975,5 +992,74 @@ function entity_plus_theme() {
       'path' => backdrop_get_path('module', 'entity_plus') . '/theme',
       'file' => 'entity_plus.theme.inc',
     ),
+    'entity_plus_property' => array(
+      'render element' => 'elements',
+      'path' => backdrop_get_path('module', 'entity_plus') . '/theme',
+      'file' => 'entity_plus.theme.inc',
+    ),
   );
+}
+/**
+ * Checks whether an entity type is fieldable.
+ *
+ * @param string $entity_type
+ *   The type of the entity.
+ *
+ * @return bool
+ *   TRUE if the entity type is fieldable, FALSE otherwise.
+ */
+function entity_plus_type_is_fieldable($entity_type) {
+  $info = entity_get_info($entity_type);
+  return !empty($info['fieldable']);
+}
+
+/**
+ * Returns the language of an entity.
+ *
+ * @param string $entity_type
+ *   The entity type; e.g., 'node' or 'user'.
+ * @param Entity $entity
+ *   The entity for which to get the language.
+ *
+ * @return string
+ *   A valid language code or NULL if the entity has no language support.
+ */
+function entity_plus_language($entity_type, $entity) {
+  $info = entity_get_info($entity_type);
+
+  // Invoke the callback to get the language. If there is no callback, try to
+  // get it from a property of the entity, otherwise NULL.
+  if (isset($info['language callback']) && function_exists($info['language callback'])) {
+    $langcode = $info['language callback']($entity_type, $entity);
+  }
+  elseif (!empty($info['entity keys']['language']) && isset($entity->{$info['entity keys']['language']})) {
+    $langcode = $entity->{$info['entity keys']['language']};
+  }
+  elseif (isset($entity->langcode)) {
+    // Backdrop added the property langcode as default for core entities.
+    $langcode = $entity->langcode;
+  }
+  else {
+    $langcode = LANGUAGE_NONE;
+  }
+
+  return $langcode;
+}
+
+/**
+ * Returns a metadata wrapper for accessing site-wide properties.
+ *
+ * Although there is no 'site' entity or such, modules may provide info about
+ * site-wide properties using hook_entity_property_info(). This function returns
+ * a wrapper for making use of this properties.
+ *
+ * @return EntityMetadataWrapper
+ *   A wrapper for accessing site-wide properties.
+ *
+ * @see entity_metadata_system_entity_property_info()
+ */
+function entity_plus_metadata_site_wrapper() {
+  $site_info = entity_plus_get_property_info('site');
+  $info['property info'] = $site_info['properties'];
+  return entity_metadata_wrapper('site', FALSE, $info);
 }

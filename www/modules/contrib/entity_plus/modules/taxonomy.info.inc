@@ -62,9 +62,37 @@ function entity_plus_metadata_taxonomy_entity_property_info() {
     'label' => t("Vocabulary"),
     'description' => t("The vocabulary the taxonomy term belongs to."),
     'setter callback' => 'entity_plus_metadata_taxonomy_term_setter',
-    'type' => 'taxonomy_vocabulary',
-    'required' => TRUE,
-    'schema field' => 'vid',
+    'getter callback' => 'entity_plus_metadata_taxonomy_term_get_properties',
+    'raw getter callback' => 'entity_plus_property_verbatim_get',
+    'type' => 'struct',
+    'property info' => array(
+      'name' => array(
+        'label' => t("Name"),
+        'description' => t("The name of the taxonomy vocabulary."),
+        'setter callback' => 'entity_plus_property_verbatim_set',
+        'required' => TRUE,
+      ),
+      'machine_name' => array(
+        'label' => t("Machine name"),
+        'type' => 'token',
+        'description' => t("The machine name of the taxonomy vocabulary."),
+        'setter callback' => 'entity_plus_property_verbatim_set',
+        'required' => TRUE,
+      ),
+      'description' => array(
+        'label' => t("Description"),
+        'description' => t("The optional description of the taxonomy vocabulary."),
+        'setter callback' => 'entity_plus_property_verbatim_set',
+        'sanitize' => 'filter_xss',
+      ),
+      'term_count' => array(
+        'label' => t("Term count"),
+        'type' => 'integer',
+        'description' => t("The number of terms belonging to the taxonomy vocabulary."),
+        'getter callback' => 'entity_plus_metadata_taxonomy_vocabulary_get_properties',
+        'computed' => TRUE,
+      ),
+    ),
   );
   $properties['parent'] = array(
     'label' => t("Parent terms"),
@@ -81,44 +109,5 @@ function entity_plus_metadata_taxonomy_entity_property_info() {
     'computed' => TRUE,
   );
 
-  // Add meta-data about the basic vocabulary properties.
-  $properties = &$info['taxonomy_vocabulary']['properties'];
-
-  // Taxonomy vocabulary related variables.
-  $properties['vid'] = array(
-    'label' => t("Vocabulary ID"),
-    'description' => t("The unique ID of the taxonomy vocabulary."),
-    'type' => 'integer',
-    'schema field' => 'vid',
-  );
-  $properties['name'] = array(
-    'label' => t("Name"),
-    'description' => t("The name of the taxonomy vocabulary."),
-    'setter callback' => 'entity_plus_property_verbatim_set',
-    'required' => TRUE,
-    'schema field' => 'name',
-  );
-  $properties['machine_name'] = array(
-    'label' => t("Machine name"),
-    'type' => 'token',
-    'description' => t("The machine name of the taxonomy vocabulary."),
-    'setter callback' => 'entity_plus_property_verbatim_set',
-    'required' => TRUE,
-    'schema field' => 'machine_name',
-  );
-  $properties['description'] = array(
-    'label' => t("Description"),
-    'description' => t("The optional description of the taxonomy vocabulary."),
-    'setter callback' => 'entity_plus_property_verbatim_set',
-    'sanitize' => 'filter_xss',
-    'schema field' => 'description',
-  );
-  $properties['term_count'] = array(
-    'label' => t("Term count"),
-    'type' => 'integer',
-    'description' => t("The number of terms belonging to the taxonomy vocabulary."),
-    'getter callback' => 'entity_plus_metadata_taxonomy_vocabulary_get_properties',
-    'computed' => TRUE,
-  );
   return $info;
 }

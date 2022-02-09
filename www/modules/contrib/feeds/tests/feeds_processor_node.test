@@ -375,7 +375,7 @@ class FeedsRSStoNodesTest extends FeedsWebTestCase {
   }
 
   /**
-   * Check thet contents of the current page for the DS feed.
+   * Check the contents of the current page for the DS feed.
    */
   public function assertDevseedFeedContent() {
     $this->assertText('Open Atrium Translation Workflow: Two Way Translation Updates');

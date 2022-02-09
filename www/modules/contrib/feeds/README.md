@@ -12,9 +12,9 @@ Features
   * CSV, RSS, Atom parsing.
   * Creates nodes or terms.
   * Creates lightweight database records if Data module is installed. <http://drupal.org/project/data>
-  * Additional fetchers/parsers or processors can be added by an object oriented plugin system.
+  * Additional fetchers/parsers or processors can be added by an object-oriented plugin system.
   * Granular mapping of parsed data to content elements.
-* Import configurations can be piggy backed on nodes (thus using nodes to track subscriptions to feeds) or they can be used on a standalone form.
+* Import configurations can be piggybacked on nodes (thus using nodes to track subscriptions to feeds) or they can be used on a standalone form.
 * Unlimited number of import configurations.
 * Export feeds importer configurations.
 * Optional libraries module support.
@@ -58,7 +58,7 @@ Feeds supports the PubSubHubbub publish/subscribe protocol <http://code.google.c
 Libraries support
 -----------------
 
-If you are using Libraries module, you can place external libraries in the Libraries module's search path (for instance /libraries. The only external library used at the moment is SimplePie.
+If you are using the Libraries module, you can place external libraries in the Libraries module's search path (for instance /libraries). The only external library used at the moment is SimplePie.
 
 Libraries found in the libraries search path are preferred over libraries in `feeds/libraries/`.
 

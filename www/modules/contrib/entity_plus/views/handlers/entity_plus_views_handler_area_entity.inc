@@ -31,7 +31,7 @@ class entity_plus_views_handler_area_entity extends views_handler_area {
       '#description' => t('Choose the entity type you want to display in the area.'),
       '#default_value' => $entity_type,
       '#ajax' => array(
-        'path' => views_ui_build_form_url($form_state),
+        'path' => views_ui_build_form_path($form_state),
       ),
       '#submit' => array('views_ui_config_item_form_submit_temporary'),
       '#executes_submit_callback' => TRUE,
@@ -109,7 +109,7 @@ class entity_plus_views_handler_area_entity extends views_handler_area {
     // Replace argument tokens in entity id.
     $entity_id = strtr($entity_id, $tokens);
     if (!empty($entity_type) && !empty($entity_id) && !empty($view_mode)) {
-      $entity = entity_load_single($entity_type, $entity_id);
+      $entity = entity_load($entity_type, $entity_id);
       if (!empty($this->options['bypass_access']) || entity_access('view', $entity_type, $entity)) {
         $render = entity_plus_view($entity_type, array($entity), $view_mode);
         $render_entity = reset($render);

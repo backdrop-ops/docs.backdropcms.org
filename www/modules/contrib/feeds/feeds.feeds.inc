@@ -57,7 +57,7 @@ function feeds_normalize_targets(array &$targets) {
  * Filters the callbacks of a single target array.
  *
  * @param array &$target
- *   The target arary.
+ *   The target array.
  */
 function _feeds_filter_callback_arrays(array &$target) {
   // Migrate keys summary_callback and form_callback to the new keys.

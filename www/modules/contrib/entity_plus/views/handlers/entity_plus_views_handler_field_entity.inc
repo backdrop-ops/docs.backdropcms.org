@@ -150,8 +150,8 @@ class entity_plus_views_handler_field_entity extends views_handler_field {
   /**
    * Render a value as a link to the entity if applicable.
    *
-   * @param $value
-   *   The value to render.
+   * @param $entity
+   *   The the ID of the entity.
    * @param $values
    *   The values for the current row retrieved from the Views query, as an
    *   object.
@@ -159,7 +159,7 @@ class entity_plus_views_handler_field_entity extends views_handler_field {
   public function render_entity_link($entity, $values) {
     $type = $this->field_entity_type;
     if (!is_object($entity) && isset($entity) && $entity !== FALSE) {
-      $entity = entity_load_single($type, $entity);
+      $entity = entity_load($type, $entity);
     }
     if (!$entity) {
       return '';
@@ -180,7 +180,7 @@ class entity_plus_views_handler_field_entity extends views_handler_field {
   public function render_single_value($entity, $values) {
     $type = $this->field_entity_type;
     if (!is_object($entity) && isset($entity) && $entity !== FALSE) {
-      $entity = entity_load_single($type, $entity);
+      $entity = entity_load($type, $entity);
     }
     // Make sure the entity exists and access is either given or bypassed.
     if (!$entity || !(!empty($this->options['bypass_access']) || entity_access('view', $type, $entity))) {

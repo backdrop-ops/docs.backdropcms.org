@@ -784,7 +784,7 @@ class FeedsDateTime extends DateTime {
   /**
    * Returns the string representation.
    *
-   * Will try to use the literal input, if that is a string. Fallsback to
+   * Will try to use the literal input, if that is a string. Falls back to
    * ISO-8601.
    *
    * @return string
@@ -879,7 +879,7 @@ class FeedsDateTime extends DateTime {
 
   /**
    * Returns whether this object has time set. Used primarily for timezone
-   * conversion and fomratting.
+   * conversion and formatting.
    *
    * @todo currently very simplistic, but effective, see usage
    */
@@ -924,7 +924,7 @@ class FeedsDateTime extends DateTime {
  *   A default UNIX timestamp to return if $date could not be parsed.
  *
  * @return
- *   $date as UNIX time if conversion was successful, $dfeault_value otherwise.
+ *   $date as UNIX time if conversion was successful, $default_value otherwise.
  */
 function feeds_to_unixtime($date, $default_value) {
   if (is_numeric($date)) {
