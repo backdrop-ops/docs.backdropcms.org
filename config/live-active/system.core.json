@@ -14,7 +14,7 @@
     "clean_url": "1",
     "config_sync_batch_size": 20,
     "cron_threshold_warning": 172800,
-    "cron_safe_threshold": 10800,
+    "cron_safe_threshold": "3600",
     "cron_max_threshold": 10800,
     "cron_threshold_error": 1209600,
     "default_nodes_main": "10",
