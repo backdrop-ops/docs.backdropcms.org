@@ -131,7 +131,7 @@ function date_feeds_form_callback(array $mapping, $target, array $form, array $f
       '#title' => t('Timezone handling'),
       '#options' => _date_feeds_timezone_options(),
       '#default_value' => $mapping['timezone'],
-      '#description' => t('This value will only be used if the timezone is mising.'),
+      '#description' => t('This value will only be used if the timezone is missing.'),
     ),
   );
 }

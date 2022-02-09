@@ -10,29 +10,29 @@
  * Interface for EntityControllers compatible with the entity API.
  */
 interface EntityPlusControllerInterface extends EntityControllerInterface {
-
   /**
    * Delete permanently saved entities.
    *
    * In case of failures, an exception is thrown.
    *
-   * @param $ids
+   * @param array $ids
    *   An array of entity IDs.
    */
   public function delete($ids);
 
   /**
-   * Invokes a hook on behalf of the entity. For hooks that have a respective
-   * field API attacher like insert/update/.. the attacher is called too.
+   * Invokes a hook on behalf of the entity. 
+   * 
+   * For hooks that have a respective field API attacher like insert/update/.. the attacher is called too.
    */
   public function invoke($hook, $entity);
 
-	/**
+  /**
    * Checks if the entity has a certain exportable status.
    *
-   * @param $status
-   *   A status constant, i.e. one of ENTITY_CUSTOM, ENTITY_IN_CODE,
-   *   ENTITY_OVERRIDDEN or ENTITY_FIXED.
+   * @param int $status
+   *   A status constant, i.e. one of ENTITY_PLUS_CUSTOM, ENTITY_PLUS_IN_CODE,
+   *   ENTITY_PLUS_OVERRIDDEN or ENTITY_PLUS_FIXED.
    *
    * @return bool
    *   For exportable entities TRUE if the entity has the status, else FALSE.
@@ -47,10 +47,10 @@ interface EntityPlusControllerInterface extends EntityControllerInterface {
    *
    * In case of failures, an exception is thrown.
    *
-   * @param $entity
+   * @param object $entity
    *   The entity to save.
    *
-   * @return
+   * @return int
    *   SAVED_NEW or SAVED_UPDATED is returned depending on the operation
    *   performed.
    */
@@ -61,7 +61,8 @@ interface EntityPlusControllerInterface extends EntityControllerInterface {
    *
    * @param array $values
    *   An array of values to set, keyed by property name.
-   * @return
+   * 
+   * @return object
    *   A new instance of the entity type.
    */
   public function create(array $values = array());
@@ -69,12 +70,12 @@ interface EntityPlusControllerInterface extends EntityControllerInterface {
   /**
    * Exports an entity as serialized string.
    *
-   * @param $entity
+   * @param object $entity
    *   The entity to export.
-   * @param $prefix
+   * @param string $prefix
    *   An optional prefix for each line.
    *
-   * @return
+   * @return string
    *   The exported entity as serialized string. The format is determined by
    *   the controller and has to be compatible with the format that is accepted
    *   by the import() method.
@@ -87,7 +88,7 @@ interface EntityPlusControllerInterface extends EntityControllerInterface {
    * @param string $export
    *   An exported entity as serialized string.
    *
-   * @return
+   * @return object
    *   An entity object not yet saved.
    */
   public function import($export);
@@ -98,14 +99,15 @@ interface EntityPlusControllerInterface extends EntityControllerInterface {
    * The content built for the entity will vary depending on the $view_mode
    * parameter.
    *
-   * @param $entity
+   * @param object $entity
    *   An entity object.
-   * @param $view_mode
+   * @param string $view_mode
    *   View mode, e.g. 'full', 'teaser'...
-   * @param $langcode
+   * @param string $langcode
    *   (optional) A language code to use for rendering. Defaults to the global
    *   content language of the current request.
-   * @return
+   * 
+   * @return array
    *   The renderable array.
    */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL);
@@ -113,14 +115,14 @@ interface EntityPlusControllerInterface extends EntityControllerInterface {
   /**
    * Generate an array for rendering the given entities.
    *
-   * @param $entities
+   * @param array $entities
    *   An array of entities to render.
-   * @param $view_mode
+   * @param string $view_mode
    *   View mode, e.g. 'full', 'teaser'...
-   * @param $langcode
+   * @param string $langcode
    *   (optional) A language code to use for rendering. Defaults to the global
    *   content language of the current request.
-   * @param $page
+   * @param bool $page
    *   (optional) If set will control if the entity is rendered: if TRUE
    *   the entity will be rendered without its title, so that it can be embeded
    *   in another context. If FALSE the entity will be displayed with its title
@@ -129,7 +131,8 @@ interface EntityPlusControllerInterface extends EntityControllerInterface {
    *   of the entity, as returned by entity_uri().
    *   This parameter is only supported for entities which controller is a
    *   EntityPlusControllerInterface.
-   * @return
+   * 
+   * @return array
    *   The renderable array, keyed by entity name or numeric id.
    */
   public function view($entities, $view_mode = 'full', $langcode = NULL, $page = NULL);
@@ -145,10 +148,10 @@ interface EntityPlusControllerRevisionableInterface extends EntityPlusController
    *
    * Note that the default revision of an entity cannot be deleted.
    *
-   * @param $revision_id
+   * @param int $revision_id
    *   The ID of the revision to delete.
    *
-   * @return boolean
+   * @return bool
    *   TRUE if the entity revision could be deleted, FALSE otherwise.
    */
   public function deleteRevision($revision_id);
@@ -170,8 +173,8 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
    * Overridden.
    * @see DefaultEntityController#__construct()
    */
-  public function __construct($entityType) {
-    parent::__construct($entityType);
+  public function __construct($entity_type) {
+    parent::__construct($entity_type);
     // If this is the bundle of another entity, set the bundle key.
     if (isset($this->entityInfo['bundle of'])) {
       $info = entity_get_info($this->entityInfo['bundle of']);
@@ -203,7 +206,8 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
   /**
    * Builds and executes the query for loading.
    *
-   * @return The results in a Traversable object.
+   * @return object
+   *   The results in a Traversable object.
    */
   public function query($ids, $conditions, $revision_id = FALSE) {
     // Build the query.
@@ -216,11 +220,9 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
   }
 
   /**
-   * Overridden.
-   * @see BackdropDefaultEntityController#load($ids, $conditions)
-   *
-   * In contrast to the parent implementation we factor out query execution, so
-   * fetching can be further customized easily.
+   * Overridden. In contrast to the parent implementation we factor out query execution, so fetching can be further customized easily.
+   * 
+   * @see BackdropDefaultEntityController::load()
    */
   public function load($ids = array(), $conditions = array()) {
     $entities = array();
@@ -408,7 +410,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
   /**
    * Implements EntityPlusControllerInterface.
    *
-   * @param $transaction
+   * @param object $transaction
    *   Optionally a DatabaseTransaction object to use. Allows overrides to pass
    *   in their transaction object.
    */
@@ -468,7 +470,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
     return FALSE;
   }
 
-	/**
+  /**
    * {@inheritdoc}
    */
   public function hasStatus($status) {
@@ -480,7 +482,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
   /**
    * Implements EntityPlusControllerInterface.
    *
-   * @param $transaction
+   * @param object $transaction
    *   Optionally a DatabaseTransaction object to use. Allows overrides to pass
    *   in their transaction object.
    */
@@ -555,8 +557,6 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
     $entity->revision = &$entity->is_new_revision;
     $entity->{$this->defaultRevisionKey} = !empty($entity->{$this->defaultRevisionKey}) || $entity->is_new;
 
-
-
     // When saving a new revision, set any existing revision ID to NULL so as to
     // ensure that a new revision will actually be created.
     if ($entity->is_new_revision && isset($record[$this->revisionKey])) {
@@ -601,7 +601,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
   /**
    * Implements EntityPlusControllerInterface.
    *
-   * @return
+   * @return string
    *   A serialized string in JSON format suitable for the import() method.
    */
   public function export($entity, $prefix = '') {
@@ -613,7 +613,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
   /**
    * Implements EntityPlusControllerInterface.
    *
-   * @param $export
+   * @param string $export
    *   A serialized string in JSON format as produced by the export() method.
    */
   public function import($export) {
@@ -627,7 +627,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
   /**
    * Implements EntityPlusControllerInterface.
    *
-   * @param $content
+   * @param array $content
    *   Optionally. Allows pre-populating the built content to ease overridding
    *   this method.
    */
@@ -668,7 +668,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
       field_attach_prepare_view($this->entityType, array($key => $entity), $view_mode);
       $entity->content += field_attach_view($this->entityType, $entity, $view_mode, $langcode);
     }
-    // Invoke hook_ENTITY_view() to allow modules to add their additions.
+    // Invoke hook_ENTITY_PLUS_view() to allow modules to add their additions.
     if (module_exists('rules')) {
       rules_invoke_all($this->entityType . '_view', $entity, $view_mode, $langcode);
     }
@@ -682,21 +682,24 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
   }
 
   /**
-   * Renders a single entity property.
+   * Creates a render array for a single entity property.
    */
   protected function renderEntityProperty($wrapper, $name, $property, $view_mode, $langcode, &$content) {
     $info = $property->info();
 
     $content[$name] = array(
-      '#label_hidden' => FALSE,
+      // Options are 'above', 'inline', 'hidden'.
+      '#label_display' => 'above',
       '#label' => $info['label'],
       '#entity_plus_wrapped' => $wrapper,
       '#theme' => 'entity_plus_property',
       '#property_name' => $name,
       '#access' => $property->access('view'),
-      '#entity_plus_type' => $this->entityType,
+      '#entity_type' => $this->entityType,
+      // Hide display for empty properties.
+      '#access' => !(empty($property->value())),
     );
-    $content['#attached']['css']['entity.theme'] = backdrop_get_path('module', 'entity') . '/theme/entity.theme.css';
+    $content['#attached']['css']['entity_plus.theme'] = backdrop_get_path('module', 'entity_plus') . '/theme/entity_plus.theme.css';
   }
 
   /**
@@ -741,7 +744,9 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
 class EntityPlusControllerExportable extends EntityPlusController {
 
   protected $entityCacheByName = array();
-  protected $nameKey, $statusKey, $moduleKey;
+  protected $nameKey;
+  protected $statusKey;
+  protected $moduleKey;
 
   /**
    * Overridden.
@@ -749,8 +754,8 @@ class EntityPlusControllerExportable extends EntityPlusController {
    * Allows specifying a name key serving as uniform identifier for this entity
    * type while still internally we are using numeric identifieres.
    */
-  public function __construct($entityType) {
-    parent::__construct($entityType);
+  public function __construct($entity_type) {
+    parent::__construct($entity_type);
     // Use the name key as primary identifier.
     $this->nameKey = isset($this->entityInfo['entity keys']['name']) ? $this->entityInfo['entity keys']['name'] : $this->idKey;
     if (!empty($this->entityInfo['exportable'])) {
@@ -844,6 +849,9 @@ class EntityPlusControllerExportable extends EntityPlusController {
     return array();
   }
 
+  /**
+   * Filters entities by property conditions.
+   */
   protected function applyConditions($entities, $conditions = array()) {
     if ($conditions) {
       foreach ($entities as $key => $entity) {
@@ -878,11 +886,9 @@ class EntityPlusControllerExportable extends EntityPlusController {
   }
 
   /**
-   * Overridden.
+   * Overridden. Changed to call type-specific hook with the entities keyed by name if they have one.
+   * 
    * @see BackdropDefaultEntityController::attachLoad()
-   *
-   * Changed to call type-specific hook with the entities keyed by name if they
-   * have one.
    */
   protected function attachLoad(&$queried_entities, $revision_id = FALSE) {
     // Attach fields.
@@ -917,6 +923,9 @@ class EntityPlusControllerExportable extends EntityPlusController {
     }
   }
 
+  /**
+   * Resets the cache.
+   */
   public function resetCache(array $ids = NULL) {
     $this->cacheComplete = FALSE;
     if (isset($ids)) {
@@ -940,7 +949,7 @@ class EntityPlusControllerExportable extends EntityPlusController {
       parent::delete($ids, $transaction);
 
       foreach ($entities as $id => $entity) {
-        if (entity_plus_has_status($this->entityType, $entity, ENTITY_IN_CODE)) {
+        if (entity_plus_has_status($this->entityType, $entity, ENTITY_PLUS_IN_CODE)) {
           entity_plus_defaults_rebuild(array($this->entityType));
           break;
         }
@@ -956,10 +965,10 @@ class EntityPlusControllerExportable extends EntityPlusController {
       // To ease figuring out whether this is a revert, make sure that the
       // entity status is updated in case the providing module has been
       // disabled.
-      if (entity_plus_has_status($this->entityType, $entity, ENTITY_IN_CODE) && !module_exists($entity->{$this->moduleKey})) {
-        $entity->{$this->statusKey} = ENTITY_CUSTOM;
+      if (entity_plus_has_status($this->entityType, $entity, ENTITY_PLUS_IN_CODE) && !module_exists($entity->{$this->moduleKey})) {
+        $entity->{$this->statusKey} = ENTITY_PLUS_CUSTOM;
       }
-      $is_revert = entity_plus_has_status($this->entityType, $entity, ENTITY_IN_CODE);
+      $is_revert = entity_plus_has_status($this->entityType, $entity, ENTITY_PLUS_IN_CODE);
     }
 
     if (!empty($this->entityInfo['fieldable']) && function_exists($function = 'field_attach_' . $hook)) {
@@ -999,8 +1008,8 @@ class EntityPlusControllerExportable extends EntityPlusController {
       $entity->original = entity_load_unchanged($this->entityType, $entity->{$this->nameKey});
     }
     // Update the status for entities getting overridden.
-    if (entity_plus_has_status($this->entityType, $entity, ENTITY_IN_CODE) && empty($entity->is_rebuild)) {
-      $entity->{$this->statusKey} |= ENTITY_CUSTOM;
+    if (entity_plus_has_status($this->entityType, $entity, ENTITY_PLUS_IN_CODE) && empty($entity->is_rebuild)) {
+      $entity->{$this->statusKey} |= ENTITY_PLUS_CUSTOM;
     }
     return parent::save($entity, $transaction);
   }

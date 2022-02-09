@@ -147,7 +147,7 @@ class PuSHSubscriber {
     /**
      * Verification steps:
      *
-     * 1) Verify that this is indeed a POST reuest.
+     * 1) Verify that this is indeed a POST request.
      * 2) Verify that posted string is XML.
      * 3) Per default verify sender of message by checking the message's
      *    signature against the shared secret.
@@ -225,7 +225,7 @@ class PuSHSubscriber {
   }
 
   /**
-   * Issue a subscribe or unsubcribe request to a PubsubHubbub hub.
+   * Issue a subscribe or unsubscribe request to a PubsubHubbub hub.
    *
    * Compare to http://pubsubhubbub.googlecode.com/svn/trunk/pubsubhubbub-core-0.2.html#anchor5
    *

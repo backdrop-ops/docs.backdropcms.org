@@ -6,22 +6,127 @@
  */
 
 /**
- * Theme process function for theme_entity_plus_property().
+ * Returns HTML for an entity property.
  *
- * Taken over from template_process_field()
+ * This is the default theme implementation to display the value of a property.
+ * This function can be overridden with varying levels of specificity. For
+ * example, for a property named 'title' displayed on the 'article' bundle,
+ * any of the following functions will override this default implementation.
+ * The first of these functions that exists is used:
+ * - THEMENAME_entity_plus_property__article__title()
+ * - THEMENAME_entity_plus_property__title()
+ * - THEMENAME_entity_plus_property()
+ *
+ *  Including
+ *  'extra fields controller class' => 'EntityDefaultExtraFieldsController'
+ *  within hook_entity_info for a given custom entity will call this theme to render all its properties.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - label_hidden: A boolean indicating to show or hide the property label.
+ *   - label: The label for the property
+ *   - property_name: The name of the property
+ *   - content: The rendered property value.
+ *   - title_attributes_array: An array containing the attributes for the title.
+ *   - content_attributes_array: An array containing the attributes for the content's
+ *     div.
+ *   - attributes_array: A string containing the attributes for the top-level wrapping div.
+ *
+ * @ingroup themeable
+ */
+function theme_entity_plus_property($variables) {
+  $output = '';
+
+  $attributes = empty($variables['attributes_array']) ? '' : backdrop_attributes($variables['attributes_array']);
+  $title_attributes = empty($variables['title_attributes_array']) ? '' : backdrop_attributes($variables['title_attributes_array']);
+  $content_attributes = empty($variables['content_attributes_array']) ? '' : backdrop_attributes($variables['content_attributes_array']);
+
+  // Render the label, if it's not hidden.
+  if (!$variables['label_hidden']) {
+    $output .= '<div' . $title_attributes . '>' . $variables['label'] . ':&nbsp;</div>';
+  }
+
+  // Render the content.
+  $content_suffix = '';
+  if (!$variables['label_hidden'] || $content_attributes) {
+    $output .= '<div' . $content_attributes . '>';
+    $content_suffix = '</div>';
+  }
+  $output .= $variables['content'] . $content_suffix;
+
+  // Render the top-level DIV.
+  return '<div' . $attributes . '>' . $output . '</div>';
+}
+
+
+/**
+ * Theme preprocess function for theme_entity_plus_property().
  *
  * @see theme_entity_plus_property()
  */
-function template_process_entity_plus_property(&$variables, $hook) {
+function template_preprocess_entity_plus_property(&$variables, $hook) {
   $element = $variables['elements'];
-  // The default theme implementation is a function, so template_process() does
-  // not automatically run, so we need to flatten the classes and attributes
-  // here. For best performance, only call backdrop_attributes() when needed, and
-  // note that template_preprocess_field() does not initialize the
-  // *_attributes_array variables.
-  $variables['attributes'] = empty($variables['attributes_array']) ? '' : backdrop_attributes($variables['attributes_array']);
-  $variables['title_attributes'] = empty($variables['title_attributes_array']) ? '' : backdrop_attributes($variables['title_attributes_array']);
-  $variables['content_attributes'] = empty($variables['content_attributes_array']) ? '' : backdrop_attributes($variables['content_attributes_array']);
+
+  $variables += array(
+    'theme_hook_suggestions' => array(),
+    'attributes_array' => array(),
+  );
+  // Generate variables from element properties.
+  foreach (array('label', 'property_name') as $name) {
+    $variables[$name] = check_plain($element['#' . $name]);
+  }
+
+  $variables['label_hidden'] = ($element['#label_display'] == 'hidden');
+
+  $variables['title_attributes_array']['class'][] = 'entity-property-label';
+  $variables['content_attributes_array']['class'][] = 'entity-property-item';
+  $variables['attributes_array'] = array_merge($variables['attributes_array'], isset($element['#attributes']) ? $element['#attributes'] : array());
+
+  $variables['property_name_css'] = strtr($element['#property_name'], '_', '-');
+  $variables['attributes_array']['class'][] = 'entity-property';
+  $variables['attributes_array']['class'][] = 'entity-property-' . $element['#label_display'];
+  $variables['attributes_array']['class'][] = 'entity-property-' . $variables['property_name_css'];
+  if ($element['#label_display'] == 'inline') {
+    $variables['attributes_array']['class'][]  = 'clearfix';
+  }
+
+  // Add specific suggestions that can override the default implementation.
+  $variables['theme_hook_suggestions'] += array(
+    'entity_plus_property__' . $element['#property_name'],
+    'entity_plus_property__' . $element['#entity_type'] . '__' . $element['#property_name'],
+  );
+  // Populate the content with sensible defaults.
+  if (!isset($element['#content'])) {
+    $variables['content'] = entity_plus_property_default_render_value_by_type($element['#entity_plus_wrapped']->{$element['#property_name']});
+  }
+  else {
+    $variables['content'] = $element['#content'];
+  }
+}
+
+/**
+ * Renders a property using simple defaults based upon the property type.
+ *
+ * @return string
+ *   The rendered property value.
+ */
+function entity_plus_property_default_render_value_by_type(EntityMetadataWrapper $property) {
+  // If there is an options list or entity label, render that by default.
+  if ($label = $property->label()) {
+    if ($property instanceof EntityBackdropWrapper && $uri = entity_uri($property->type(), $property->value())) {
+      return l($label, $uri['path'], $uri['options']);
+    }
+    else {
+      return check_plain($label);
+    }
+  }
+  switch ($property->type()) {
+    case 'boolean':
+      return $property->value() ? t('yes') : t('no');
+
+    default:
+      return check_plain($property->value());
+  }
 }
 
 /**
@@ -67,7 +172,7 @@ function template_preprocess_entity_plus(&$variables) {
 
   // Add RDF type and about URI.
   if (module_exists('rdf')) {
-    $variables['attributes_array']['about'] = empty($uri['path']) ? NULL: url($uri['path']);
+    $variables['attributes_array']['about'] = empty($uri['path']) ? NULL : url($uri['path']);
     $variables['attributes_array']['typeof'] = empty($entity->rdf_mapping['rdftype']) ? NULL : $entity->rdf_mapping['rdftype'];
   }
 
@@ -86,22 +191,22 @@ function template_preprocess_entity_plus(&$variables) {
 function theme_entity_plus_status($variables) {
   $status = $variables['status'];
   $html = $variables['html'];
-  if (($status & ENTITY_FIXED) == ENTITY_FIXED) {
+  if (($status & ENTITY_PLUS_FIXED) == ENTITY_PLUS_FIXED) {
     $label = t('Fixed');
     $help = t('The configuration is fixed and cannot be changed.');
     return $html ? "<span class='entity-status-fixed' title='$help'>" . $label . "</span>" : $label;
   }
-  elseif (($status & ENTITY_OVERRIDDEN) == ENTITY_OVERRIDDEN) {
+  elseif (($status & ENTITY_PLUS_OVERRIDDEN) == ENTITY_PLUS_OVERRIDDEN) {
     $label = t('Overridden');
     $help = t('This configuration is provided by a module, but has been changed.');
     return $html ? "<span class='entity-status-overridden' title='$help'>" . $label . "</span>" : $label;
   }
-  elseif ($status & ENTITY_IN_CODE) {
+  elseif ($status & ENTITY_PLUS_IN_CODE) {
     $label = t('Default');
     $help = t('A module provides this configuration.');
     return $html ? "<span class='entity-status-default' title='$help'>" . $label . "</span>" : $label;
   }
-  elseif ($status & ENTITY_CUSTOM) {
+  elseif ($status & ENTITY_PLUS_CUSTOM) {
     $label = t('Custom');
     $help = t('A custom configuration by a user.');
     return $html ? "<span class='entity-status-custom' title='$help'>" . $label . "</span>" : $label;

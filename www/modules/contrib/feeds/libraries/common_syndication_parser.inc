@@ -17,7 +17,7 @@
  *   The feed object (contains the URL or the parsed XML structure).
  *
  * @return array|false
- *   The structured datas extracted from the feed or FALSE in case of failures.
+ *   The structured data extracted from the feed or FALSE in case of failures.
  */
 function common_syndication_parser_parse($string) {
   // SimpleXML can only deal with XML declaration at the start of the document,

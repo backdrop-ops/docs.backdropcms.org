@@ -71,7 +71,7 @@ function http_request_get_common_syndication($url, $options = array()) {
   $download = feeds_http_request($url, $options);
 
   // Cannot get the feed, return.
-  // feeds_http_request() always returns 200 even if its 304.
+  // feeds_http_request() always returns 200 even if it's 304.
   if ($download->code != 200) {
     return FALSE;
   }
@@ -541,7 +541,7 @@ function http_request_find_feeds($html) {
     // @TODO: could/should use http_request_is_feed ??
     if (isset($candidate['rel']) && $candidate['rel'] == 'alternate') {
       if (isset($candidate['href']) && isset($candidate['type']) && strpos($candidate['type'], 'xml') !== FALSE) {
-        // All tests pass, its a valid candidate.
+        // All tests pass, it's a valid candidate.
         $valid_links[] = $candidate['href'];
       }
     }

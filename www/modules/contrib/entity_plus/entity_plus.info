@@ -4,7 +4,7 @@ description = Functions and wrappers to extend core Entity functionality.
 backdrop = 1.x
 type = module
 
-; Added by Backdrop CMS packaging script on 2021-03-09
+; Added by Backdrop CMS packaging script on 2022-01-15
 project = entity_plus
-version = 1.x-1.0.12
-timestamp = 1615294938
+version = 1.x-1.0.14
+timestamp = 1642298584

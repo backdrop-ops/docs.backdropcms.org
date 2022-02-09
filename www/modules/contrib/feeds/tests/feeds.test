@@ -417,7 +417,7 @@ class FeedsWebTestCase extends BackdropWebTestCase {
    * @deprecated:
    *   Use setPlugin() instead.
    *
-   * @todo Refactor users of assertPlugin() and make them use setPugin() instead.
+   * @todo Refactor users of assertPlugin() and make them use setPlugin() instead.
    */
   public function assertPlugins($id, $fetcher, $parser, $processor) {
     // Assert actual configuration.

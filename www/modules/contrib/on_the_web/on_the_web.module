@@ -178,7 +178,16 @@ function on_the_web_display_block($delta, $settings = array(), $contexts = array
         $title = t('Find !us on !service', array('!us' => $name, '!service' => $info['name']));
       }
       else {
-        $title = t('!us RSS feed', array('!us' => $name));
+        if ($config->get('sitename') == 1) {
+          $rss_name = $name;
+        }
+        elseif ($config->get('sitename') == 0) {
+          $rss_name = t('Our');
+        }
+        elseif ($config->get('sitename') == 2) {
+          $rss_name = t('My');
+        }
+        $title = t('!us RSS feed', array('!us' => $rss_name));
       }
 
       $size = $config->get('size');
@@ -189,9 +198,13 @@ function on_the_web_display_block($delta, $settings = array(), $contexts = array
         if (isset($info['fa-icon'])) {
           $icon = $info['fa-icon'];
         }
-        // Only use a square version if it exists.
+        // Only use a square icon if it exists.
         if ($config->get('square') == TRUE && isset($info['fa-icon-square'])) {
           $icon = $info['fa-icon-square'];
+
+          if ($config->get('version') == '5.x.x' && $service == 'linkedin') {
+            $icon = $info['fa-icon'];
+          }
         }
       }
 
@@ -206,15 +219,37 @@ function on_the_web_display_block($delta, $settings = array(), $contexts = array
         '#weight' => $config->get($service . '_weight'),
       );
     }
+  }
 
-    if ($type == 'anchor') {
-      $links['#attached']['css'][] = backdrop_get_path('module', 'on_the_web') . '/css/on_the_web.css';
-    }
-    elseif ($type == 'font') {
-      if (!module_exists('font_awesome')) {
-        $links['#attached']['css']['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'] = array(
-          'type' => 'external',
-        );
+  // Add the assets.
+  if ($type == 'anchor') {
+    $links['#attached']['css'][] = backdrop_get_path('module', 'on_the_web') . '/css/on_the_web.css';
+  }
+  elseif ($type == 'font') {
+    if (!module_exists('font_awesome')) {
+
+      $version = $config->get('version');
+      switch ($version) {
+        case '4.7.0':
+          $font_url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css';
+          break;
+        case '1.2.0':
+          $font_url = 'https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css';
+          break;
+        case '5.x.x':
+          //$font_url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css';
+          // Add V4 shims?
+          //$links['#attached']['css']['https://use.fontawesome.com/releases/v5.15.4/css/v4-shims.css'] = array('type' => 'external');
+          $hash = $config->get('kit_hash');
+          if (!empty($hash)) {
+            $font_js_url = 'https://kit.fontawesome.com/' . $hash . '.js';
+            $links['#attached']['js'][$font_js_url] = array('type' => 'external');
+          }
+          break;
+      }
+
+      if (isset($font_url)) {
+        $links['#attached']['css'][$font_url] = array('type' => 'external');
       }
     }
   }

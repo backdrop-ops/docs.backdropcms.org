@@ -1,8 +1,10 @@
 <?php
 
 /**
+ * @file
  * Provide relationship handler for paragraphs fields.
  */
+
 class paragraphs_handler_relationship extends views_handler_relationship {
 
   /**

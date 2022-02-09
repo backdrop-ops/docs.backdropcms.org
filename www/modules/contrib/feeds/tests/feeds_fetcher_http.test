@@ -65,7 +65,7 @@ class FeedsFileHTTPTestCase extends FeedsWebTestCase {
   }
 
   /**
-   * Configures the evironment so that multiple cron runs are needed to complete
+   * Configures the environment so that multiple cron runs are needed to complete
    * an import.
    *
    * @param string $source_url

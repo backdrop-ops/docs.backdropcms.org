@@ -80,7 +80,7 @@ function entity_plus_metadata_user_entity_property_info() {
   $properties['roles'] = array(
     'label' => t("User roles"),
     'description' => t("The roles of the user."),
-    'type' => 'list<integer>',
+    'type' => 'list<token>',
     'getter callback' => 'entity_plus_metadata_user_get_properties',
     'setter callback' => 'entity_plus_metadata_user_set_properties',
     'options list' => 'entity_plus_metadata_user_roles',
@@ -107,4 +107,3 @@ function entity_plus_metadata_user_entity_property_info() {
   );
   return $info;
 }
-

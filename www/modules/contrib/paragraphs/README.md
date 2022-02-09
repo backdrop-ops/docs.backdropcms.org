@@ -39,8 +39,14 @@ Some more examples:
 ## Installation and Usage
 
 - Install this module using the [official Backdrop CMS instructions](https://backdropcms.org/guide/modules)
-
 - Usage instructions can be [viewed and edited in the Wiki](https://github.com/backdrop-contrib/paragraphs/wiki).
+
+## Paragraphs-Related Modules
+(Open a PR to request your Paragraphs-related module to be listed here.)
+
+ - [Feeds Paragraphs Mapper](https://github.com/backdrop-contrib/feeds_para_mapper)
+ - [Paragraphs jQuery UI Accordion](https://github.com/backdrop-contrib/paragraphs_jquery_ui_accordion)
+ - [Replicate Paragraphs](https://github.com/backdrop-contrib/replicate_paragraphs)
 
 ## Issues
 
@@ -49,16 +55,15 @@ Some more examples:
 ## Current Maintainers
 
  - [Laryn Kragt Bakker](https://github.com/laryn) - [CEDC.org](https://cedc.org)
+ - Collaboration and co-maintainers welcome!
 
 ## Credits
 
  - Ported to BackdropCMS by [@docwilmot](https://github.com/docwilmot)
-
- - Maintainers on drupal.org
-    - [berdir](https://www.drupal.org/u/berdir)
-    - [miro_dietiker](https://www.drupal.org/u/miro_dietiker)
-    - [primsi](https://www.drupal.org/u/primsi)
-    - [jeroenb](https://www.drupal.org/u/jeroenb)
+ - Maintainers on drupal.org include [berdir](https://www.drupal.org/u/berdir),
+   [miro_dietiker](https://www.drupal.org/u/miro_dietiker),
+   [primsi](https://www.drupal.org/u/primsi), and
+   [jeroenb](https://www.drupal.org/u/jeroenb).
 
 ## License
 

@@ -49,6 +49,12 @@ function paragraphs_schema() {
         'default' => 0,
         'size' => 'tiny',
       ),
+      'allow_unpublish' => array(
+        'description' => 'A boolean indicating whether the administrator can show/hide published status.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
     ),
     'primary key' => array('bundle'),
   );
@@ -79,10 +85,16 @@ function paragraphs_schema() {
         'not null' => TRUE,
       ),
       'archived' => array(
-        'description' => 'Boolean indicating whether the Paragraph item is archived.',
+        'description' => 'Boolean indicating whether the Paragraphs item is archived.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'Boolean indicating whether the Paragraphs item is published.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
       ),
     ),
     'primary key' => array('item_id'),
@@ -113,6 +125,12 @@ function paragraphs_schema() {
       ),
     ),
   );
+
+  // Entity Cache is now in core, include the entity cache schema by default.
+  $cache_schema = backdrop_get_schema_unprocessed('system', 'cache');
+  $cache_schema['description'] = 'Cache table used to store paragraphs_item entity records.';
+  $schema['cache_entity_paragraphs_item'] = $cache_schema;
+
   return $schema;
 }
 
@@ -169,8 +187,6 @@ function paragraphs_requirements($phase) {
  * Implements hook_uninstall().
  */
 function paragraphs_uninstall() {
-  // We can't use paragraphs_remove_entitycache_table() here.
-  // The module isn't loaded here.
   if (db_table_exists('cache_entity_paragraphs_item')) {
     db_drop_table('cache_entity_paragraphs_item');
   }
@@ -220,6 +236,7 @@ function paragraphs_update_last_removed() {
  * Updates paragraphs bundle to CMI.
  */
 function paragraphs_update_1001() {
+  $bundles = array();
   $query = db_select('paragraphs_bundle', 'pb')
         ->fields('pb')
         ->orderBy('pb.bundle', 'ASC');
@@ -230,4 +247,29 @@ function paragraphs_update_1001() {
     paragraphs_bundle_save($bundle);
   }
   db_drop_table('paragraphs_bundle');
+}
+
+/**
+ * Ensure entity cache table is created for Paragraphs items.
+ */
+function paragraphs_update_1002() {
+  if (!db_table_exists('cache_entity_paragraphs_item')) {
+    $cache_schema = backdrop_get_schema_unprocessed('system', 'cache');
+    $cache_schema['description'] = 'Cache table used to store paragraphs_item entity records.';
+    db_create_table('cache_entity_paragraphs_item', $cache_schema);
+  }
+}
+
+/**
+ * Add status field for paragraphs bundle and item.
+ */
+function paragraphs_update_1003() {
+  $status = array(
+    'description' => 'Boolean indicating whether the paragraph item is published.',
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 1,
+  );
+
+  db_add_field('paragraphs_item', 'status', $status);
 }
