@@ -31,6 +31,7 @@ function feeds_jsonpath_parser_autoload_info() {
 function feeds_jsonpath_parser_feeds_plugins() {
   return array(
     'FeedsJSONPathParser' => array(
+      'module' => 'feeds_jsonpath_parser',
       'name' => t('JSONPath parser'),
       'description' => t('Parse JSON files using JSONPath.'),
       'handler' => array(
