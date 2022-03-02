@@ -6,10 +6,10 @@
     "status": "1",
     "weight": "-9",
     "roles": {
-        "authenticated": "authenticated",
         "4": "4",
         "3": "3",
-        "anonymous": 0
+        "anonymous": 0,
+        "authenticated": 0
     },
     "filters": {
         "api_filter": {
@@ -67,6 +67,12 @@
                 "allowed_html": "<a> <em> <strong> <cite> <blockquote> <code> <ul> <ol> <li> <br> <div> <p> <pre> <span> <table> <thead> <tbody> <td> <tr> <th> <h1> <h2> <h3> <h4> <img>"
             },
             "module": "filter"
+        },
+        "filter_tokens": {
+            "status": 1,
+            "weight": 0,
+            "module": "token_filter",
+            "settings": []
         }
     },
     "editor": "",
