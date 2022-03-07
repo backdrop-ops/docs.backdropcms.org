@@ -27,6 +27,10 @@ feeds_jsonpath_parser - Prevent PHP notice by adding missing module key
 
 field validation -- running latest -dev (no releases yet)
 
+markdown - prevent PHP notice
+  https://github.com/backdrop-contrib/markdown/issues/4
+  https://github.com/backdrop-contrib/markdown/pull/7.patch
+
 menu_pager - excess logs in watchdog
   https://github.com/backdrop-contrib/menu_pager/issues/4
   https://github.com/backdrop-contrib/menu_pager/pull/5.patch
