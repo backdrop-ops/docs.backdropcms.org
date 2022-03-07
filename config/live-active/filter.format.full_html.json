@@ -4,7 +4,7 @@
     "name": "HTML code",
     "cache": true,
     "status": "1",
-    "weight": "-8",
+    "weight": "-7",
     "roles": {
         "4": "4",
         "3": "3",
@@ -20,25 +20,21 @@
         },
         "codefilter": {
             "status": 1,
-            "weight": -48,
-            "module": "codefilter",
-            "settings": []
+            "weight": 0,
+            "settings": {
+                "nowrap_expand": 0
+            },
+            "module": "codefilter"
         },
-        "filter_image_caption": {
-            "status": 1,
-            "weight": -44,
+        "filter_url": {
+            "status": 0,
+            "weight": -46,
             "module": "filter",
             "settings": []
         },
         "filter_autop": {
             "status": 0,
             "weight": -45,
-            "module": "filter",
-            "settings": []
-        },
-        "filter_url": {
-            "status": 0,
-            "weight": -46,
             "module": "filter",
             "settings": []
         },

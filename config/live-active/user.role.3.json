@@ -143,6 +143,7 @@
         "use text format documentation",
         "view any unpublished content",
         "administer feeds_tamper",
-        "tamper documentation"
+        "tamper documentation",
+        "use text format markdown"
     ]
 }
