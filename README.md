@@ -6,7 +6,7 @@ This repository holds the codebase for
 ## Issues
 
 This project contains an
-[issue tracker](https://github.com/backdrop-ops/dcos.backdropcms.org/issues)
+[issue tracker](https://github.com/backdrop-ops/docs.backdropcms.org/issues)
 specifically for docs.backdropcms.org. Please use this issue tracker when:
 * filing bug reports
 * requesting new features
