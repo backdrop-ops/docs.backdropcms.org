@@ -29,22 +29,17 @@
   display: none;
 }
 
-@media (min-width: 34em) { /* 544px @ 16px font size -- SM */
+@media (min-width: 48em) {  /* 768px @ 16px font size  -- MD */
   .l-header .block-system-user-menu {
     display: block;
     top: -5px;
     right: 0;
-    width: 33%;
-  }
-}
-@media (min-width: 48em) {  /* 768px @ 16px font size  -- MD */
-  .l-header .block-system-user-menu {
-    width: 49%;
+    width: 25%;
   }
 }
 @media (min-width: 62em) { /* 992px @ 16px font size -- LG */
   .l-header .block-system-user-menu {
-    width: 15%;
+    width: 30%;
   }
 }
 
@@ -66,7 +61,7 @@
     clear: left;
   }
 }
-@media (min-width: 62em) { /* 992px @ 16px font size -- LG */
+@media (min-width: 75em) { /* 1200px @ 16px font size -- XL */
   .site-slogan {
     margin-left: 30px;
     clear: none;
