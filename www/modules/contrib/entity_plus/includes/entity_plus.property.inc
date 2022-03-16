@@ -309,6 +309,9 @@ function entity_plus_property_verify_data_type($data, $type) {
     case 'entity':
       return is_object($data) && $data instanceof EntityBackdropWrapper;
 
+    case 'taxonomy_vocabulary':
+      return (is_object($data) && $data instanceof EntityVocabularyWrapper) || is_a($data, 'TaxonomyVocabulary') || is_scalar($data) && preg_match('!^[a-z][a-z0-9_]*$!', $data);
+
     default:
     case 'struct':
       return is_object($data) || is_array($data);

@@ -607,7 +607,7 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
   }
 
   /**
-   * Overrides EntityBackdropWrapper:setup().
+   * Sets up the entity info.
    */
   protected function setUp() {
     $this->propertyInfo = entity_plus_get_property_info($this->type) + array('properties' => array());
@@ -1192,6 +1192,185 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
       }
     }
     return isset($labels) ? implode(', ', $labels) : NULL;
+  }
+}
+
+/** 
+ * Wrapper for Taxonomy Vocabularies.
+ */
+class EntityVocabularyWrapper extends EntityStructureWrapper {
+
+  protected $machineName;
+
+  /**
+   * Overrides EntityStructureWrapper::__construct().
+   */
+  public function __construct($type, $data = NULL, $info = array()) {
+    parent::__construct($type, $data, $info);
+    $this->setUp();
+  }
+
+  /**
+   * Set up the property info.
+   */
+  public function setUp() {
+    $this->propertyInfo = entity_plus_get_property_info('taxonomy_vocabulary') + array('properties' => array());
+    $info = $this->info + array('property info' => array());
+    $this->propertyInfo['properties'] += $info['property info'];
+  }
+
+  /**
+   * Overridden to support setting the entity by either the object or the id.
+   */
+  public function set($value) {
+    if (!$this->validate($value)) {
+      throw new EntityMetadataWrapperException('Invalid data value given. Be sure it matches the required data type and format.');
+    }
+
+    $previous_machine_name = $this->machineName;
+    // Set value, so we get the identifier and pass it to the normal setter.
+    $this->clear();
+    $this->setVocabulary($value);
+
+    // In case the vocabulary has been unset, we cannot properly detect changes as
+    // the previous name defaults to FALSE for unloaded vocabularies too. So in that
+    // case we just always update the parent.
+    if ($this->machineName === FALSE && !$this->data) {
+      $this->updateParent(NULL);
+    }
+    elseif ($previous_machine_name !== $this->machineName) {
+      $this->updateParent($this->machineName);
+    }
+    return $this;
+  }
+
+  /**
+   * Overridden.
+   */
+  public function clear() {
+    $this->machineName = NULL;
+    parent::clear();
+  }
+
+  /**
+   * Sets the vocabulary internally accepting both the machine_name and object.
+   */
+  protected function setVocabulary($data) {
+    // For vocabularies we allow getter callbacks to return FALSE, which we
+    // interpret like NULL values as unset properties.
+    if (isset($data) && $data !== FALSE && !is_object($data)) {
+      $this->machineName = $data;
+      $this->data = FALSE;
+    }
+    elseif (is_object($data) && $data instanceof EntityVocabularyWrapper) {
+      // We got a wrapped vocabulary passed, so take over its values.
+      $this->machineName = $data->machine_name;
+      $this->data = $data->data;
+    }
+    elseif (is_object($data)) {
+      // We got the entity object passed.
+      $this->data = $data;
+      $machine_name = $data->machine_name;
+      $this->machineName = isset($machine_name) ? $machine_name : FALSE;
+    }
+    else {
+      $this->machineName = FALSE;
+      $this->data = NULL;
+    }
+  }
+
+  /**
+   * Permanently saves the wrapped vocabulary.
+   *
+   * @return EntityVocabularyWrapper
+   *   The saved vocabulary wrapper. 
+   */
+  public function save() {
+    if ($this->data) {
+      $this->data->save();
+    }
+    // If the entity hasn't been loaded yet, don't bother saving it.
+    return $this;
+  }
+
+  /**
+   * Overridden.
+   *
+   * @param array $options
+   *   An array of options. Known keys:
+   *   - identifier: If set to TRUE, the vocabulary identifier is returned.
+   */
+  public function value(array $options = array()) {
+    // Try loading the data via the getter callback if there is none yet.
+    if (!isset($this->data)) {
+      $this->setVocabulary(parent::value());
+    }
+    if (!empty($options['identifier'])) {
+      return $this->machineName;
+    }
+    elseif (!$this->data && !empty($this->machineName)) {
+      // Lazy load the vocabulary if necessary.
+      $return = taxonomy_vocabulary_load($this->machineName);
+      // In case the vocabulary cannot be loaded, we return NULL just as for empty
+      // properties.
+      $this->data = $return ? $return : NULL;
+    }
+    return $this->data;
+  }
+
+  /**
+   * Returns the identifier of the wrapped vocabulary.
+   */
+  public function getIdentifier() {
+    return $this->dataAvailable() ? $this->value(array('identifier' => TRUE)) : NULL;
+  }
+
+  /**
+   * Returns the human readable name of the vocabulary. 
+   */
+  public function label() {
+    if ($vocabulary = $this->value()) {
+      return $vocabulary->name;
+    }
+  }
+
+  /**
+   * Permanently delete the wrapped vocabulary.
+   *
+   * @return EntityVocabularyWrapper
+   *   An entity wrapper for the deleted entity.
+   */
+  public function delete() {
+    if ($this->dataAvailable() && $this->value()) {
+      taxonomy_vocabulary_delete($this->machineName);
+    }
+    return $this;
+  }
+
+  /**
+   * Prepare for serializiation.
+   */
+  public function __sleep() {
+    $vars = parent::__sleep();
+    // Don't serialize the loaded vocabulary and its property info.
+    unset($vars['data'], $vars['propertyInfo'], $vars['propertyInfoAltered']);
+    // In case the vocabulary is not saved yet, serialize the unsaved data.
+    if ($this->dataAvailable() && !taxonomy_vocabulary_load($this->machineName)) {
+      $vars['data'] = 'data';
+    }
+    return $vars;
+  }
+
+  /**
+   * Magic wake up function.
+   */
+  public function __wakeup() {
+    $this->setUp();
+    if (taxonomy_vocabulary_load($this->machineName)) {
+      // This vocabulary was previously saved, therefore
+      // make sure data is set, so the vocabulary will be loaded when needed.
+      $this->data = FALSE;
+    }
   }
 }
 

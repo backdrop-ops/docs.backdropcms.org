@@ -57,6 +57,9 @@ function entity_metadata_wrapper($type, $data = NULL, array $info = array()) {
   elseif (isset($info['property info'])) {
     return new EntityStructureWrapper($type, $data, $info);
   }
+  elseif ($type == 'taxonomy_vocabulary') {
+    return new EntityVocabularyWrapper($type, $data, $info);
+  }
   else {
     return new EntityValueWrapper($type, $data, $info);
   }
@@ -86,6 +89,7 @@ function entity_plus_autoload_info() {
     'EntityListWrapper' => 'includes/entity_plus.wrapper.inc',
     'EntityBackdropWrapper' => 'includes/entity_plus.wrapper.inc',
     'EntityMetadataWrapper' => 'includes/entity_plus.wrapper.inc',
+    'EntityVocabularyWrapper' => 'includes/entity_plus.wrapper.inc',
     'EntityMetadataWrapperException' => 'includes/entity_plus.wrapper.inc',
     'EntityMetadataWrapperIterator' => 'includes/entity_plus.wrapper.inc',
     'EntityMetadataArrayObject' => 'includes/entity_plus.wrapper.inc',
@@ -294,7 +298,7 @@ function _entity_plus_info_add_metadata(&$entity_plus_info) {
   $entity_plus_info['node']['deletion callback'] = 'node_delete';
   $entity_plus_info['node']['revision deletion callback'] = 'node_revision_delete';
   $entity_plus_info['user']['creation callback'] = 'entity_plus_metadata_create_object';
-  $entity_plus_info['user']['save callback'] = 'entity_plus_metadata_user_save';
+  $entity_plus_info['user']['save callback'] = 'user_save';
   $entity_plus_info['user']['deletion callback'] = 'user_delete';
   $entity_plus_info['file']['save callback'] = 'file_save';
   $entity_plus_info['file']['deletion callback'] = 'entity_plus_metadata_delete_file';
@@ -999,6 +1003,57 @@ function entity_plus_theme() {
     ),
   );
 }
+
+/**
+ * Exports an entity.
+ *
+ * Note: Currently, this only works for entity types provided with the entity
+ * CRUD API.
+ *
+ * @param string $entity_type
+ *   The type of the entity.
+ * @param EntityInterface $entity
+ *   The entity to export.
+ * @param string $prefix
+ *   An optional prefix for each line.
+ * 
+ * @return EntityPlusControllerInterface
+ *   The exported entity as serialized string. The format is determined by the
+ *   respective entity controller, e.g. it is JSON for the EntityAPIController.
+ *   The output is suitable for entity_import().
+ */
+function entity_plus_export($entity_type, $entity, $prefix = '') {
+  if (method_exists($entity, 'export')) {
+    return $entity->export($prefix);
+  }
+  $info = entity_get_info($entity_type);
+  if (in_array('EntityPlusControllerInterface', class_implements($info['controller class']))) {
+    return entity_get_controller($entity_type)->export($entity, $prefix);
+  }
+}
+
+/**
+ * Imports an entity.
+ *
+ * Note: Currently, this only works for entity types provided with the entity
+ * CRUD API.
+ *
+ * @param string $entity_type
+ *   The type of the entity.
+ * @param string $export
+ *   The string containing the serialized entity as produced by
+ *   entity_export().
+ * 
+ * @return EntityInterface
+ *   The imported entity object not yet saved.
+ */
+function entity_plus_import($entity_type, $export) {
+  $info = entity_get_info($entity_type);
+  if (in_array('EntityPlusControllerInterface', class_implements($info['controller class']))) {
+    return entity_get_controller($entity_type)->import($export);
+  }
+}
+
 /**
  * Checks whether an entity type is fieldable.
  *
@@ -1062,4 +1117,79 @@ function entity_plus_metadata_site_wrapper() {
   $site_info = entity_plus_get_property_info('site');
   $info['property info'] = $site_info['properties'];
   return entity_metadata_wrapper('site', FALSE, $info);
+}
+
+/**
+ * Implements hook_modules_enabled().
+ */
+function entity_plus_modules_enabled($modules) {
+  foreach (_entity_plus_modules_get_default_types($modules) as $type) {
+    _entity_plus_defaults_rebuild($type);
+  }
+}
+
+/**
+ * Gets all entity types for which defaults are provided by the $modules.
+ */
+function _entity_plus_modules_get_default_types($modules) {
+  $types = array();
+  foreach (entity_plus_crud_get_info() as $entity_type => $info) {
+    if (!empty($info['exportable'])) {
+      $hook = isset($info['export']['default hook']) ? $info['export']['default hook'] : 'default_' . $entity_type;
+      foreach ($modules as $module) {
+        if (module_hook($module, $hook) || module_hook($module, $hook . '_alter')) {
+          $types[] = $entity_type;
+        }
+      }
+    }
+  }
+  return $types;
+}
+
+/**
+ * Implements hook_modules_disabled().
+ */
+function entity_plus_modules_disabled($modules) {
+  foreach (_entity_plus_modules_get_default_types($modules) as $entity_type) {
+    $info = entity_get_info($entity_type);
+
+    // Do nothing if the module providing the entity type has been disabled too.
+    if (isset($info['module']) && in_array($info['module'], $modules)) {
+      return;
+    }
+
+    $keys = $info['entity keys'] + array(
+      'module' => 'module',
+      'status' => 'status',
+      'name' => $info['entity keys']['id'],
+    );
+    // Remove entities provided in code by one of the disabled modules.
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', $entity_type, '=')
+          ->propertyCondition($keys['module'], $modules, 'IN')
+          ->propertyCondition($keys['status'], array(ENTITY_PLUS_IN_CODE, ENTITY_PLUS_FIXED), 'IN');
+    $result = $query->execute();
+    if (isset($result[$entity_type])) {
+      $entities = entity_load_multiple($entity_type, array_keys($result[$entity_type]));
+      entity_delete_multiple($entity_type, array_keys($entities));
+    }
+
+    // Update overridden entities to be now custom.
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', $entity_type, '=')
+          ->propertyCondition($keys['module'], $modules, 'IN')
+          ->propertyCondition($keys['status'], ENTITY_PLUS_OVERRIDDEN, '=');
+    $result = $query->execute();
+    if (isset($result[$entity_type])) {
+      foreach (entity_load_multiple($entity_type, array_keys($result[$entity_type])) as $name => $entity) {
+        $entity->{$keys['status']} = ENTITY_PLUS_CUSTOM;
+        $entity->{$keys['module']} = NULL;
+        entity_plus_save($entity_type, $entity);
+      }
+    }
+
+    // Rebuild the remaining defaults so any alterations of the disabled modules
+    // are gone.
+    _entity_plus_defaults_rebuild($entity_type);
+  }
 }

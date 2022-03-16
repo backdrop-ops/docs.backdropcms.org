@@ -110,7 +110,7 @@ interface EntityPlusControllerInterface extends EntityControllerInterface {
    * @return array
    *   The renderable array.
    */
-  public function buildContent($entity, $view_mode = 'full', $langcode = NULL);
+  public function buildContent(EntityInterface $entity, $view_mode = 'full', $langcode = NULL);
 
   /**
    * Generate an array for rendering the given entities.
@@ -631,7 +631,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
    *   Optionally. Allows pre-populating the built content to ease overridding
    *   this method.
    */
-  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+  public function buildContent(EntityInterface $entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
     // Remove previously built content, if exists.
     $entity->content = $content;
     $langcode = isset($langcode) ? $langcode : $GLOBALS['language_content']->langcode;

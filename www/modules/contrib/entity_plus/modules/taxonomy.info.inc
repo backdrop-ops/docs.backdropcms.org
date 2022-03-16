@@ -61,38 +61,11 @@ function entity_plus_metadata_taxonomy_entity_property_info() {
   $properties['vocabulary'] = array(
     'label' => t("Vocabulary"),
     'description' => t("The vocabulary the taxonomy term belongs to."),
+    'type' => 'taxonomy_vocabulary',
     'setter callback' => 'entity_plus_metadata_taxonomy_term_setter',
     'getter callback' => 'entity_plus_metadata_taxonomy_term_get_properties',
-    'raw getter callback' => 'entity_plus_property_verbatim_get',
-    'type' => 'struct',
-    'property info' => array(
-      'name' => array(
-        'label' => t("Name"),
-        'description' => t("The name of the taxonomy vocabulary."),
-        'setter callback' => 'entity_plus_property_verbatim_set',
-        'required' => TRUE,
-      ),
-      'machine_name' => array(
-        'label' => t("Machine name"),
-        'type' => 'token',
-        'description' => t("The machine name of the taxonomy vocabulary."),
-        'setter callback' => 'entity_plus_property_verbatim_set',
-        'required' => TRUE,
-      ),
-      'description' => array(
-        'label' => t("Description"),
-        'description' => t("The optional description of the taxonomy vocabulary."),
-        'setter callback' => 'entity_plus_property_verbatim_set',
-        'sanitize' => 'filter_xss',
-      ),
-      'term_count' => array(
-        'label' => t("Term count"),
-        'type' => 'integer',
-        'description' => t("The number of terms belonging to the taxonomy vocabulary."),
-        'getter callback' => 'entity_plus_metadata_taxonomy_vocabulary_get_properties',
-        'computed' => TRUE,
-      ),
-    ),
+    'raw getter callback' => 'entity_plus_metadata_taxonomy_term_get_raw_properties',
+    'schema field' => 'vocabulary',
   );
   $properties['parent'] = array(
     'label' => t("Parent terms"),
@@ -106,6 +79,46 @@ function entity_plus_metadata_taxonomy_entity_property_info() {
     'description' => t("Ancestors of the term, i.e. parent of all above hierarchy levels."),
     'getter callback' => 'entity_plus_metadata_taxonomy_term_get_properties',
     'type' => 'list<taxonomy_term>',
+    'computed' => TRUE,
+  );
+
+  // Add meta-data about the basic vocabulary properties.
+  $properties = &$info['taxonomy_vocabulary']['properties'];
+
+  // Taxonomy vocabulary related variables.
+  $properties['name'] = array(
+    'label' => t("Name"),
+    'description' => t("The name of the taxonomy vocabulary."),
+    'setter callback' => 'entity_plus_property_verbatim_set',
+    'required' => TRUE,
+  );
+  $properties['machine_name'] = array(
+    'label' => t("Machine name"),
+    'type' => 'token',
+    'description' => t("The machine name of the taxonomy vocabulary."),
+    'required' => TRUE,
+  );
+  $properties['hierarchy'] = array(
+    'label' => t('Hierarchy'),
+    'type' => 'integer',
+    'description' => t('The type of hierarchy allowed within the vocabulary.'),
+  );
+  $properties['description'] = array(
+    'label' => t("Description"),
+    'description' => t("The optional description of the taxonomy vocabulary."),
+    'setter callback' => 'entity_plus_property_verbatim_set',
+    'sanitize' => 'filter_xss',
+  );
+  $properties['weight'] = array(
+    'label' => t('Weight'),
+    'description' => t('The weight of this vocabulary in relation to other vocabularies.'),
+    'type' => 'integer',
+  );
+  $properties['term_count'] = array(
+    'label' => t("Term count"),
+    'type' => 'integer',
+    'description' => t("The number of terms belonging to the taxonomy vocabulary."),
+    'getter callback' => 'entity_plus_metadata_taxonomy_vocabulary_get_properties',
     'computed' => TRUE,
   );
 
