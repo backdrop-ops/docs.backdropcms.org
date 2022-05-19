@@ -7,5 +7,9 @@
     "show_performance_statistics": false,
     "always_live_preview": true,
     "display_embed": false,
-    "custom_theme": "_default"
+    "custom_theme": "_default",
+    "wizard_default_display": {
+        "page": "page",
+        "block": 0
+    }
 }

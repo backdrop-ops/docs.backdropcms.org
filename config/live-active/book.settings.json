@@ -11,6 +11,7 @@
         "pager"
     ],
     "book_links": [
-        "book_add_child"
+        "book_add_child",
+        "book_reorder"
     ]
 }
