@@ -102,3 +102,10 @@ article {
   border-bottom: 1px solid #ccc;
   padding: 10px;
 }
+
+/*******************************************************************************
+ * Change Records exposed filters.
+ ******************************************************************************/
+.view-change-record .views-exposed-form .views-widget-filter-combine input.form-text {
+  width: 220px;
+}
