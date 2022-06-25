@@ -16,7 +16,13 @@ description = Tests the UI for syncing, diffing, importing, and exporting config
 group = Configuration
 file = config.test
 
-; Added by Backdrop CMS packaging script on 2020-11-25
+[ConfigurationSyncTest]
+name = Configuration sync
+description = Tests that hook_config_create() is run during configuration sync.
+group = Configuration
+file = config.test
+
+; Added by Backdrop CMS packaging script on 2022-05-15
 project = backdrop
-version = 1.17.4
-timestamp = 1606364093
+version = 1.22.0
+timestamp = 1652672169

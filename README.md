@@ -1,20 +1,20 @@
-# api.BackdropCMS.org
+# BackdropCMS Documentation
 
 This repository holds the codebase for
-[api.backdropcms.org](https://api.backdropcms.org).
+[docs.backdropcms.org](https://docs.backdropcms.org).
 
 ## Issues
 
 This project contains an
-[issue tracker](https://github.com/backdrop-ops/api.backdropcms.org/issues)
-specifically for api.backdropcms.org. Please use this issue tracker when:
+[issue tracker](https://github.com/backdrop-ops/docs.backdropcms.org/issues)
+specifically for docs.backdropcms.org. Please use this issue tracker when:
 * filing bug reports
 * requesting new features
 * requesting content changes
 
 ## Pull Requests
 
-You can help make improvements to api.backdropcms.org by submitting pull
+You can help make improvements to docs.backdropcms.org by submitting pull
 requests to this repository.
 
 Please do not create pull requests for content changes, instead please create an
@@ -26,7 +26,7 @@ A list of currently applied patches are located in PATCHES.md
 
 ## Contributing
 
-To contribute to the development of api.backdropcms.org, fork this repository
+To contribute to the development of docs.backdropcms.org, fork this repository
 into your own GitHub account, then clone it to your local environment. Use
 [Lando](https://lando.dev/) to build a local copy of the site, then run the
 following commands to get the latest sanitized database and files directory:

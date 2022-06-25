@@ -5,40 +5,6 @@
     "cache": true,
     "status": 0,
     "filters": {
-        "api_filter": {
-            "status": 1,
-            "weight": 0,
-            "module": "api",
-            "settings": []
-        },
-        "codefilter": {
-            "status": 1,
-            "weight": 0,
-            "settings": {
-                "nowrap_expand": 0
-            },
-            "module": "codefilter"
-        },
-        "filter_autop": {
-            "status": 0,
-            "weight": 0,
-            "module": "filter",
-            "settings": []
-        },
-        "filter_url": {
-            "status": 0,
-            "weight": 0,
-            "settings": {
-                "filter_url_length": "72"
-            },
-            "module": "filter"
-        },
-        "filter_htmlcorrector": {
-            "status": 0,
-            "weight": 10,
-            "module": "filter",
-            "settings": []
-        },
         "filter_html_escape": {
             "status": 0,
             "weight": -10,
@@ -54,6 +20,40 @@
                 "filter_html_nofollow": 0
             },
             "module": "filter"
+        },
+        "filter_autop": {
+            "status": 0,
+            "weight": 0,
+            "module": "filter",
+            "settings": []
+        },
+        "filter_url": {
+            "status": 0,
+            "weight": 0,
+            "settings": {
+                "filter_url_length": "72"
+            },
+            "module": "filter"
+        },
+        "api_filter": {
+            "status": 1,
+            "weight": 0,
+            "module": "api",
+            "settings": []
+        },
+        "codefilter": {
+            "status": 1,
+            "weight": 0,
+            "settings": {
+                "nowrap_expand": 0
+            },
+            "module": "codefilter"
+        },
+        "filter_htmlcorrector": {
+            "status": 0,
+            "weight": 10,
+            "module": "filter",
+            "settings": []
         }
     },
     "roles": {
@@ -62,5 +62,7 @@
         "3": "3",
         "anonymous": 0
     },
-    "weight": 0
+    "weight": "-5",
+    "editor": null,
+    "editor_settings": []
 }

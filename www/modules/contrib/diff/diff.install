@@ -1,0 +1,124 @@
+<?php
+
+/**
+ * Implements hook_uninstall().
+ */
+function diff_uninstall() {
+  // Clear diff config entries from all node type settings.
+  $node_types = node_type_get_types();
+  foreach ($node_types as $type_name => $node_data) {
+    $config = config("node.type.$type_name");
+    $config->clear('settings.diff_show_preview_changes_node');
+    $config->clear('settings.diff_enable_revisions_page_node');
+    $config->clear('settings.diff_view_mode_preview_node');
+    $config->save();
+  }
+}
+
+/**
+ * Some config settings were incorrect in diff version 1.x-3.2.0
+ * Recover any incorrect existing settings.
+ */
+function diff_update_1001()
+{
+  $config = config('diff.settings');
+  $settings = $config->get();
+  if (isset($settings['diff_admin_path_node'])) {
+    $config->set('diff_admin_path.node', $config->get('diff_admin_path_node'));
+    $config->clear('diff_admin_path_node');
+  }
+  if (isset($settings['diff_admin_path_user'])) {
+    $config->set('diff_admin_path.user', $config->get('diff_admin_path_user'));
+    $config->clear('diff_admin_path_user');
+  }
+  if (isset($settings['diff_default_state_node'])) {
+    $config->set('diff_default_state.node', $config->get('diff_default_state_node'));
+    $config->clear('diff_default_state_node');
+  }
+  if (isset($settings['diff_default_state_user'])) {
+    $config->set('diff_default_state.user', $config->get('diff_default_state_user'));
+    $config->clear('diff_default_state_user');
+  }
+  if (isset($settings['diff_show_header_node'])) {
+    $config->set('diff_show_header.node', $config->get('diff_show_header_node'));
+    $config->clear('diff_show_header_node');
+  }
+  if (isset($settings['diff_show_header_user'])) {
+    $config->set('diff_show_header.user', $config->get('diff_show_header_user'));
+    $config->clear('diff_show_header_user');
+  }
+  $config->clear('diff_additional_options_node');
+  $config->clear('diff_additional_options_user');
+
+  foreach (field_info_fields() as $field) {
+    $setting_name = $field['module'] . '_field_' . $field['type'];
+    if (isset($settings['diff_' . $setting_name . '_default_options'])) {
+      $config->set("diff_field_default_options.$setting_name", $config->get('diff_' . $setting_name . '_default_options'));
+      $config->clear('diff_' . $setting_name . '_default_options');
+    }
+  }
+  $config->save();
+
+  // Make sure no diff variables are left in database.
+  db_delete('variable')
+    ->condition('name','diff'. '%', 'LIKE')
+    ->execute();
+}
+
+/**
+ * Move diff settings from variables to config.
+ */
+function diff_update_1000()
+{
+  // Migrate variables to config.
+  $config = config('diff.settings');
+  $config->set('diff_theme', update_variable_get('diff_theme', 'default'));
+  $config->set('diff_radio_behavior', update_variable_get('diff_radio_behavior', 'simple'));
+  $config->set('diff_context_lines_leading', update_variable_get('diff_context_lines_leading', '2'));
+  $config->set('diff_context_lines_trailing', update_variable_get('diff_context_lines_trailing', '2'));
+  $config->set('diff_show_diff_inline_node_bundles', update_variable_get('diff_show_diff_inline_node_bundles', array()));
+
+  $config->set('diff_admin_path.node', update_variable_get('diff_admin_path_node', 1));
+  $config->set('diff_admin_path.user', update_variable_get('diff_admin_path_user', 1));
+  $config->set('diff_default_state.node', update_variable_get('diff_default_state_node', 'raw'));
+  $config->set('diff_default_state.user', update_variable_get('diff_default_state_user', 'raw'));
+  $config->set('diff_show_header.node', update_variable_get('diff_show_header_node', 1));
+  $config->set('diff_show_header.user', update_variable_get('diff_show_header_user', 0));
+  $config->set('diff_additional_options.node', update_variable_get('diff_additional_options_node', array()));
+  $config->set('diff_additional_options.user', update_variable_get('diff_additional_options_user', array()));
+
+  foreach (field_info_fields() as $field) {
+    $setting_name = $field['module'] . '_field_' . $field['type'];
+    $config->set("diff_field_default_options.$setting_name", update_variable_get("diff_{$field['module']}_field_{$field['type']}_default_options", array()));
+  }
+  $config->save();
+
+  // Delete variables.
+  update_variable_del('diff_theme');
+  update_variable_del('diff_radio_behavior');
+  update_variable_del('diff_context_lines_leading');
+  update_variable_del('diff_context_lines_trailing');
+  update_variable_del('diff_show_diff_inline_node_bundles');
+
+  update_variable_del('diff_admin_path_node');
+  update_variable_del('diff_admin_path_user');
+  update_variable_del('diff_default_state_node');
+  update_variable_del('diff_default_state_user');
+  update_variable_del('diff_show_header_node');
+  update_variable_del('diff_show_header_user');
+  update_variable_del('diff_additional_options_node');
+  update_variable_del('diff_additional_options_user');
+
+  update_variable_del('diff_additional_options_user');
+  foreach (field_info_fields() as $field) {
+    update_variable_del("diff_{$field['module']}_field_{$field['type']}_default_options");
+  }
+}
+
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function diff_update_last_removed() {
+  return 7306;
+}

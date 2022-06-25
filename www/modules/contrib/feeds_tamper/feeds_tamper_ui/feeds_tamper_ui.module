@@ -1,0 +1,135 @@
+<?php
+
+/**
+ * @file
+ * Feeds Tamper UI - Defines the user interface for Feeds Tamper.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function feeds_tamper_ui_menu() {
+  $defaults = array(
+    'page callback' => 'backdrop_get_form',
+    'access callback' => 'feeds_tamper_access',
+    'access arguments' => array(3),
+    'title arguments' => array(3),
+    'file' => 'feeds_tamper_ui.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items = array();
+  $items['admin/structure/feeds/%feeds_importer/tamper'] = array(
+    'title' => 'Tamper',
+    'title arguments' => array(),
+    'page arguments' => array('feeds_tamper_ui_list_form', 3),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
+  ) + $defaults;
+
+  $items['admin/structure/feeds/%feeds_importer/tamper/manage'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/structure/feeds/%feeds_importer/tamper/add/%feeds_tamper_ui_source'] = array(
+    'title callback' => 'feeds_tamper_ui_add_title',
+    'title arguments' => array(6),
+    'page arguments' => array('feeds_tamper_ui_add_plugin_form', 3, 6),
+  ) + $defaults;
+
+  $items['admin/structure/feeds/%feeds_importer/tamper/%/edit'] = array(
+    'title callback' => 'feeds_tamper_ui_edit_title',
+    'title arguments' => array(3, 5),
+    'page arguments' => array('feeds_tamper_ui_edit_plugin_form', 3, 5),
+    'access arguments' => array(3),
+  ) + $defaults;
+
+  $items['admin/structure/feeds/%feeds_importer/tamper/%/delete'] = array(
+    'title callback' => 'feeds_tamper_ui_delete_title',
+    'title arguments' => array(3, 5),
+    'page arguments' => array('feeds_tamper_ui_delete_form', 3, 5),
+    'access arguments' => array(3),
+  ) + $defaults;
+
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function feeds_tamper_ui_theme($existing, $type, $theme, $path) {
+  return array(
+    'feeds_tamper_ui_list_form' => array(
+      'render element' => 'form',
+      'file' => 'feeds_tamper_ui.admin.inc',
+    ),
+  );
+}
+
+/**
+ * Menu loader callback for grabbing the source from the URL.
+ */
+function feeds_tamper_ui_source_load($source) {
+  // We've HEX encoded the source to allow all possible characters.
+  return pack('H*', $source);
+}
+
+/**
+ * Add plugin title callback.
+ */
+function feeds_tamper_ui_add_title($source) {
+  // Title callbacks get check_plain'ed already.
+  return t('Add plugin to: !source', array('!source' => $source));
+}
+
+/**
+ * Edit plugin title callback.
+ */
+function feeds_tamper_ui_edit_title($importer, $instance_id) {
+  $instance = feeds_tamper_load_instance($importer, $instance_id);
+  return t('Edit: @id', array('@id' => $instance->description));
+}
+
+/**
+ * Delete plugin title callback.
+ */
+function feeds_tamper_ui_delete_title($importer, $instance_id) {
+  $instance = feeds_tamper_load_instance($importer, $instance_id);
+  return t('Delete plugin: @id', array('@id', $instance->id));
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Modify feeds_ui_overview_form(), adding Tamper links if the user has access.
+ */
+function feeds_tamper_ui_form_feeds_ui_overview_form_alter(&$form, &$form_state) {
+  if (!empty($form['enabled'])) {
+    foreach ($form['enabled'] as $id => &$table) {
+      $importer = feeds_importer($id);
+      if (feeds_tamper_access($importer)) {
+        $table['operations']['#links']['tamper'] = array(
+          'title' => t('Tamper'),
+          'href' => 'admin/structure/feeds/' . $id . '/tamper',
+          'query' => array('destination' => current_path()),
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Calculate display name for source.
+ *
+ * @param FeedsImporter $importer
+ *
+ * @param string $source_id
+ *
+ * @return string
+ *   The unsanitized name to display for a Feeds source.
+ */
+function feeds_tamper_ui_source_name(FeedsImporter $importer, $source_id) {
+  $sources = $importer->parser->getMappingSources();
+  return !empty($sources[$source_id]['name']) ? $sources[$source_id]['name'] : $source_id;
+}

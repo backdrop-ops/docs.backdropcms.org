@@ -14,8 +14,8 @@
 
 $user = getenv('SANITIZE_USER');
 $pass = getenv('SANITIZE_PASS');
-$db_url = 'https://sanitize.backdropcms.org/api.backdropcms.org/sanitized/api_backdrop-latest-sanitized.sql.gz';
-$files_url = 'https://sanitize.backdropcms.org/api.backdropcms.org/files_backups/api_backdrop-files-latest.tar.gz';
+$db_url = 'https://sanitize.backdropcms.org/docs.backdropcms.org/sanitized/docs-latest-sanitized.sql.gz';
+$files_url = 'https://sanitize.backdropcms.org/docs.backdropcms.org/files_backups/docs-files-latest.tar.gz';
 
 if (empty($user) || empty($pass)) {
   print "\n\t\033[33mWarning\033[0m: You don't seem to have the credentials set in your \033[1m.env\033[0m file.\n"

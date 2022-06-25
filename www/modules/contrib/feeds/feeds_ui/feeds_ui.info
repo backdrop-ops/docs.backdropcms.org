@@ -1,0 +1,14 @@
+name = Feeds Admin UI
+description = Administrative UI for Feeds module.
+package = Feeds
+backdrop = 1.x
+type = module
+dependencies[] = feeds
+configure = admin/structure/feeds
+
+files[] = feeds_ui.test
+
+; Added by Backdrop CMS packaging script on 2021-07-30
+project = feeds
+version = 1.x-1.1.2
+timestamp = 1627673925

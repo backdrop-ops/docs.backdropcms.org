@@ -1,0 +1,12 @@
+name = Feeds Import
+description = An example of a node importer and a user importer.
+backdrop = 1.x
+type = module
+package = Feeds
+dependencies[] = feeds
+files[] = feeds_import.test
+
+; Added by Backdrop CMS packaging script on 2021-07-30
+project = feeds
+version = 1.x-1.1.2
+timestamp = 1627673925

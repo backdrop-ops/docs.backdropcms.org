@@ -181,7 +181,7 @@ class EntityPlusMetadataTestCase extends EntityPlusHelperTestCase {
     language_save($language);
 
     $body['en'][0] = array('value' => '<b>English body.</b>', 'summary' => '<b>The body.</b>');
-    $node = $this->backdropCreateNode(array('body' => $body, 'language' => 'en', 'type' => 'page'));
+    $node = $this->backdropCreateNode(array('body' => $body, 'langcode' => 'en', 'type' => 'page'));
     $wrapper = entity_metadata_wrapper('node', $node);
 
     $wrapper->language('de');
@@ -229,7 +229,7 @@ class EntityPlusMetadataTestCase extends EntityPlusHelperTestCase {
     $this->assertFalse($return, "Node has been successfully deleted.");
 
     // Ensure changing the bundle changes available wrapper properties.
-    $wrapper->type->set('article');
+    $wrapper->type->set('post');
     $this->assertTrue(isset($wrapper->field_tags), 'Changing bundle changes available wrapper properties.');
 
     // Test labels.
@@ -237,8 +237,8 @@ class EntityPlusMetadataTestCase extends EntityPlusHelperTestCase {
     user_save($user, array('roles' => array()));
     $wrapper->author = $user->uid;
     $this->assertEqual($wrapper->label(), $node->title, 'Entity label returned.');
-    $this->assertEqual($wrapper->author->roles[0]->label(), t('authenticated user'), 'Label from options list returned');
-    $this->assertEqual($wrapper->author->roles->label(), t('authenticated user'), 'Label for a list from options list returned');
+    $this->assertEqual($wrapper->author->roles[0]->label(), t('Authenticated'), 'Label from options list returned');
+    $this->assertEqual($wrapper->author->roles->label(), t('Authenticated'), 'Label for a list from options list returned');
   }
 
   /**
@@ -364,7 +364,7 @@ class EntityPlusMetadataTestCase extends EntityPlusHelperTestCase {
     }
 
     // Property access of entity references takes entity access into account.
-    $node = $this->backdropCreateNode(array('type' => 'article'));
+    $node = $this->backdropCreateNode(array('type' => 'post'));
     $wrapper = entity_metadata_wrapper('node', $node);
     $unprivileged_user = $this->backdropCreateUser();
     $privileged_user = $this->backdropCreateUser(array('access user profiles'));
@@ -424,9 +424,10 @@ class EntityPlusMetadataTestCase extends EntityPlusHelperTestCase {
 
     $results = entity_plus_property_query('node', $this->field_name, array('foo', 'bar'));
     $this->assertEqual($results, array($node->nid), 'Queried nodes with a list of possible values.');
-
-    $results = entity_plus_property_query('node', 'author', $GLOBALS['user']);
-    $this->assertEqual($results, array($node->nid), 'Queried nodes with a given auhtor.');
+ 
+    $results = entity_plus_property_query('node', 'author', $GLOBALS['user']->uid);
+    // Backdrop provides 2 nodes with uid == 1 on clean install, meaning that assertEqual will not work
+    $this->assertTrue(in_array($node->nid, $results), 'Queried nodes with a given author.');
 
     // Create another test node and try querying for tags.
     $vocab = $this->createVocabulary();
@@ -435,7 +436,7 @@ class EntityPlusMetadataTestCase extends EntityPlusHelperTestCase {
           'vocabulary' => $vocab->machine_name,
     ))->save();
     $field_tag_value[LANGUAGE_NONE][0]['tid'] = $tag->getIdentifier();
-    $node = $this->backdropCreateNode(array('type' => 'article', 'field_tags' => $field_tag_value));
+    $node = $this->backdropCreateNode(array('type' => 'post', 'field_tags' => $field_tag_value));
 
     // Try query-ing with a single value.
     $results = entity_plus_property_query('node', 'field_tags', $tag->getIdentifier());
@@ -472,5 +473,49 @@ class EntityPlusMetadataTestCase extends EntityPlusHelperTestCase {
 
     $value = unserialize($s)->value();
     $this->assertNull($value, 'Tried to load not existing node.');
+  }
+
+  /**
+   * Tests the functionality of the vocabulary metadata wrapper.
+   */
+  public function testEntityVocabularyWrapper() {
+    $vocabulary = $this->createVocabulary();
+    $machine_name = $vocabulary->machine_name;
+    $vocabulary_wrapper = emw('taxonomy_vocabulary', $vocabulary);
+
+    // Check that wrapper has correctly wrapped the vocabulary.
+    $this->assertEqual($vocabulary, $vocabulary_wrapper->value(), 'Vocabulary wrapper value matches the original vocabulary.');
+    
+    // Access the name property.
+    $this->assertEqual($vocabulary->name, $vocabulary_wrapper->name->value(), 'Vocabulary name matches the value of the name property of the wrapper.');
+
+    // Change the name property via wrapper. 
+    $new_name = 'A new name';
+    $vocabulary_wrapper->name = $new_name;
+    $this->assertEqual($new_name, $vocabulary_wrapper->name->value(), 'Vocabulary name was changed correctly.');
+
+    // Save vocabulary with wrapper save method.
+    $vocabulary_wrapper->save();
+    // Remove 'original' to allow comparison
+    unset($vocabulary->original);
+    $vocabulary2 = taxonomy_vocabulary_load($machine_name);
+    $this->assertEqual($vocabulary2, $vocabulary, 'Vocabulary was saved correctly.');
+
+    // Lazy-load a vocabulary.
+    $vocabulary_wrapper2 = emw('taxonomy_vocabulary', $machine_name);
+    $this->assertEqual($vocabulary, $vocabulary_wrapper2->value(), 'Wrapper lazy-loaded the vocabulary from machine_name.');
+
+    // Access the vocabulary and vocabulary name via a term.
+    $term_wrapper = entity_plus_property_values_create_entity('taxonomy_term', array('vocabulary' => $machine_name, 'name' => 'A term',));    
+    $this->assertEqual($term_wrapper->vocabulary->value(), $vocabulary, 'Accessed the vocabulary object through a term wrapper.');
+    $this->assertEqual($term_wrapper->vocabulary->name->value(), $vocabulary->name, 'Accessed the vocabulary name through a term wrapper.');
+
+    // Test the term_count calculated property of the wrapper.
+    $term_wrapper->save();
+    $efq = new EntityFieldQuery();
+    $count = $efq->entityCondition('entity_type', 'taxonomy_term')
+        ->propertyCondition('vocabulary', $machine_name)
+        ->count()->execute();
+    $this->assertEqual($vocabulary_wrapper->term_count->value(), $count, 'Correctly calculated the total number of terms in vocabulary.');
   }
 }

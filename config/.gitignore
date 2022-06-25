@@ -1,2 +1,8 @@
 # Ignore the dev-active directory
 dev-active/*.json
+dev-active/.htaccess
+
+# Ignore devel settings
+staging/devel.settings.json
+
+

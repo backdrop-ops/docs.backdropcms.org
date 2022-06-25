@@ -33,5 +33,7 @@
     "codesnippet_create": [],
     "codesnippet_before": "",
     "codesnippet_after": "",
-    "debug": false
+    "debug": false,
+    "disable_cookies": false,
+    "premium": false
 }

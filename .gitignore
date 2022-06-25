@@ -9,5 +9,8 @@
 *.tar
 *.tar.gz
 
+# Ignore modules for development.
+www/modules/contrib/devel
+
 # Ignore env vars.
 .env

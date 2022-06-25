@@ -1,0 +1,244 @@
+[CommonSyndicationParserTestCase]
+name = Common Syndication Parser
+description = Unit tests for Common Syndication Parser.
+group = Feeds
+file = common_syndication_parser.test
+
+[FeedsWebTestCase]
+name = FeedsWebTestCase
+description = TBD
+group = Feeds
+file = feeds.test
+
+[FeedsUnitTestCase]
+name = FeedsUnitTestCase
+description = TBD
+group = Feeds
+file = feeds.test
+
+[FeedsContentTypeTest]
+name = Feed content type
+description = Tests behavior for when an importer is attached to a content type.
+group = Feeds
+file = feeds_content_type.test
+
+[FeedsDateTimeTest]
+name = FeedsDateTimeTest
+description = TBD
+group = Feeds
+file = feeds_date_time.test
+
+[FeedsFileFetcherTestCase]
+name = FeedsFileFetcherTestCase
+description = TBD
+group = Feeds
+file = feeds_fetcher_file.test
+
+[FeedsFileHTTPTestCase]
+name = FeedsFileHTTPTestCase
+description = TBD
+group = Feeds
+file = feeds_fetcher_http.test
+
+[Feedsi18nNodeTestCase]
+name = Feedsi18nNodeTestCase
+description = TBD
+group = Feeds
+file = feeds_i18n_node.test
+
+[Feedsi18nTaxonomyTestCase]
+name = Feedsi18nTaxonomyTestCase
+description = TBD
+group = Feeds
+file = feeds_i18n_taxonomy.test
+
+[FeedsMapperConfigTestCase]
+name = FeedsMapperConfigTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_config.test
+
+[FeedsMapperDateTestCase]
+name = FeedsMapperDateTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_date.test
+
+[FeedsMapperDateMultipleTestCase]
+name = FeedsMapperDateMultipleTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_date_multiple.test
+
+[FeedsMapperFieldTestCase]
+name = FeedsMapperFieldTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_field.test
+
+[FeedsMapperFileTestCase]
+name = FeedsMapperFileTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_file.test
+
+[FeedsMapperFormatConfig]
+name = FeedsMapperFormatConfig
+description = TBD
+group = Feeds
+file = feeds_mapper_format_config.test
+
+[FeedsMapperHookTestCase]
+name = FeedsMapperHookTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_hooks.test
+
+[FeedsMapperLinkTestCase]
+name = FeedsMapperLinkTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_link.test
+
+[FeedsMapperListTestCase]
+name = FeedsMapperListTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_list.test
+
+[FeedsMapperMultilingualFieldsTestCase]
+name = FeedsMapperMultilingualFieldsTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_multilingual_fields.test
+
+[FeedsMapperPathTestCase]
+name = FeedsMapperPathTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_path.test
+
+[FeedsMapperPathPathautoTestCase]
+name = FeedsMapperPathPathautoTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_path.test
+
+[FeedsMapperProfileTestCase]
+name = FeedsMapperProfileTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_profile.test
+
+[FeedsMapperNodeSummaryTestCase]
+name = FeedsMapperNodeSummaryTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_summary.test
+
+[FeedsMapperTaxonomyTestCase]
+name = FeedsMapperTaxonomyTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_taxonomy.test
+
+[FeedsMapperUniqueTestCase]
+name = FeedsMapperUniqueTestCase
+description = TBD
+group = Feeds
+file = feeds_mapper_unique.test
+
+[FeedsCSVParserTestCase]
+name = FeedsCSVParserTestCase
+description = TBD
+group = Feeds
+file = feeds_parser_csv.test
+
+[FeedsSitemapParserTestCase]
+name = FeedsSitemapParserTestCase
+description = TBD
+group = Feeds
+file = feeds_parser_sitemap.test
+
+[FeedsSyndicationParserTestCase]
+name = FeedsSyndicationParserTestCase
+description = TBD
+group = Feeds
+file = feeds_parser_syndication.test
+
+[FeedsRSStoNodesTest]
+name = FeedsRSStoNodesTest
+description = TBD
+group = Feeds
+file = feeds_processor_node.test
+
+[FeedsCSVtoTermsTest]
+name = FeedsCSVtoTermsTest
+description = TBD
+group = Feeds
+file = feeds_processor_term.test
+
+[FeedsCSVtoUsersTest]
+name = FeedsCSVtoUsersTest
+description = TBD
+group = Feeds
+file = feeds_processor_user.test
+
+[FeedsPushTest]
+name = FeedsPushTest
+description = TBD
+group = Feeds
+file = feeds_push.test
+
+[FeedsSchedulerTestCase]
+name = FeedsSchedulerTestCase
+description = TBD
+group = Feeds
+file = feeds_scheduler.test
+
+[FeedsAccountSwitcherTest]
+name = Feeds account switcher test
+description = Tests if switching accounts during import happens properly.
+group = Feeds
+file = FeedsAccountSwitcherTest.test
+
+[FeedsEnclosureTest]
+name = FeedsEnclosure class test
+description = Covers class FeedsEnclosure.
+group = Feeds
+file = FeedsEnclosureTest.test
+
+[FeedsFetcherResultTest]
+name = FeedsFetcherResult class test
+description = Covers class FeedsFetcherResult.
+group = Feeds
+file = FeedsFetcherResultTest.test
+
+[FeedsHTTPCacheTest]
+name = FeedsHTTPCache class test
+description = Covers class FeedsHTTPCache.
+group = Feeds
+file = FeedsHTTPCacheTest.test
+
+[FeedsSourceTest]
+name = FeedsSource class test
+description = Covers class FeedsSource.
+group = Feeds
+file = FeedsSourceTest.test
+
+[FeedsHTTPRequestTestCase]
+name = FeedsHTTPRequestTestCase
+description = TBD
+group = Feeds
+file = http_request.test
+
+[ParserCSVTest]
+name = ParserCSVTest
+description = TBD
+group = Feeds
+file = parser_csv.test
+
+; Added by Backdrop CMS packaging script on 2021-07-30
+project = feeds
+version = 1.x-1.1.2
+timestamp = 1627673925

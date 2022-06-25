@@ -1,8 +1,10 @@
 <?php
 
 /**
+ * @file
  * Provides basic class for importing Paragraphs via Migrate API.
  */
+
 class MigrateDestinationParagraphsItem extends MigrateDestinationEntity {
 
   /**
@@ -63,7 +65,7 @@ class MigrateDestinationParagraphsItem extends MigrateDestinationEntity {
   }
 
   /**
-   * Returns a list of fields available to be mapped for the node type (bundle)
+   * Returns a list of fields available to be mapped for the node type (bundle).
    *
    * @param Migration $migration
    *   Optionally, the migration containing this destination.
@@ -119,7 +121,7 @@ class MigrateDestinationParagraphsItem extends MigrateDestinationEntity {
     if (isset($row->migrate_map_destid1)) {
       if (isset($paragraphs_item->item_id)) {
         if ($paragraphs_item->item_id != $row->migrate_map_destid1) {
-          throw new MigrateException(t("Incoming item_id !item_id and map destination item_id !destid1 don't match", 
+          throw new MigrateException(t("Incoming item_id !item_id and map destination item_id !destid1 don't match",
             array('!item_id' => $paragraphs_item->item_id, '!destid1' => $row->migrate_map_destid1)));
         }
       }
@@ -135,7 +137,7 @@ class MigrateDestinationParagraphsItem extends MigrateDestinationEntity {
           ->execute()
           ->fetchAssoc();
         if (empty($values)) {
-          throw new MigrateException(t("Incoming paragraphs ID !item_id no longer exists", 
+          throw new MigrateException(t("Incoming paragraphs ID !item_id no longer exists",
             array('!item_id' => $paragraphs_item->item_id)));
         }
         $paragraphs_item->revision_id = $values['revision_id'];
@@ -154,7 +156,7 @@ class MigrateDestinationParagraphsItem extends MigrateDestinationEntity {
       // This entity will be the one, we party on.
       $entity = paragraphs_item_load($paragraphs_item->item_id);
       if (empty($entity)) {
-        throw new MigrateException(t('System-of-record is DESTINATION, but paragraphs item !item_id does not exist', 
+        throw new MigrateException(t('System-of-record is DESTINATION, but paragraphs item !item_id does not exist',
           array('!item_id' => $paragraphs_item->item_id)));
       }
     }
@@ -166,6 +168,7 @@ class MigrateDestinationParagraphsItem extends MigrateDestinationEntity {
         'bundle' => $this->bundle,
         'field_name' => $this->field_name,
         'archived' => 0,
+        'status' => 1,
       );
       foreach ($defaults as $field => $value) {
         if (!isset($paragraphs_item->$field)) {

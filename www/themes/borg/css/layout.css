@@ -87,6 +87,14 @@
 }
 
 /*******************************************************************************
+ * Top region
+ ******************************************************************************/
+.l-top-inner {
+  padding-right: 2rem;
+  padding-left: 2rem;
+}
+
+/*******************************************************************************
  * Page title.
  ******************************************************************************/
 .page-title {
@@ -132,7 +140,7 @@ main {
 
 @media (min-width: 75em) { /* 1200px @ 16px font size -- XL */
   .l-content p,
-  .l-content li {
+  .l-content ul li {
     max-width: 750px;
   }
 }
@@ -182,6 +190,7 @@ main {
 .l-footer {
   border-top: 3px solid #E8E6E5;
   border-bottom: 84px solid #E8E6E5;
+  font-size: 1rem; /* 16px */
 }
 .l-footer-inner {
   position: relative;

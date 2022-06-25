@@ -17,7 +17,6 @@
 }
 .l-header-inner {
   position: relative;
-  box-sizing: border-box;
   width: 100%;
 }
 .l-header a {

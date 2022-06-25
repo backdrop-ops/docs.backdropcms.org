@@ -39,6 +39,15 @@ $config_directories['active'] = '../config/dev-active';
 $config_directories['staging'] = '../config/staging';
 
 /**
+ * Skip the configuration staging directory cleanup
+ *
+ * For some development workflows (such as when the configuration files are in
+ * version control) it may be necessary to not delete the staging config files
+ * after each configuration sync.
+ */
+$config['system.core']['config_sync_clear_staging'] = 0;
+
+/**
  * Access control for update.php script.
  *
  * If you are updating your Backdrop installation using the update.php script
@@ -116,7 +125,7 @@ $settings['hash_salt'] = 'ZBjJaY1BS0_iX0Q3VqGCCUAIA1AAF4TKiftCGHEGmgQ';
  * @see backdrop_check_trusted_hosts()
  * @see system_requirements()
  */
-$settings['trusted_host_patterns'] = array('^api\.backdropcms\.org$');
+$settings['trusted_host_patterns'] = array('^docs\.backdropcms\.org$');
 
 /**
  * Base URL (optional).

@@ -18,11 +18,11 @@ abstract class EntityMetadataWrapper {
   /**
    * Construct a new wrapper object.
    *
-   * @param $type
+   * @param string $type
    *   The type of the passed data.
-   * @param $data
+   * @param mixed $data
    *   Optional. The data to wrap.
-   * @param $info
+   * @param array $info
    *   Optional. Used internally to pass info about properties down the tree.
    */
   public function __construct($type, $data = NULL, $info = array()) {
@@ -39,7 +39,7 @@ abstract class EntityMetadataWrapper {
   /**
    * Gets info about the wrapped data.
    *
-   * @return Array
+   * @return array
    *   Keys set are all keys as specified for a property in hook_entity_plus_info()
    *   as well as possible the following keys:
    *    - name: If this wraps a property, the name of the property.
@@ -58,25 +58,26 @@ abstract class EntityMetadataWrapper {
   }
 
   /**
-   * Returns the wrapped data. If no options are given the data is returned as
-   * described in the info.
+   * Returns the wrapped data. 
+   * 
+   * If no options are given the data is returned as described in the info.
    *
-   * @param $options
+   * @param array $options
    *   (optional) A keyed array of options:
    *   - sanitize: A boolean flag indicating that textual properties should be
    *     sanitized for display to a web browser. Defaults to FALSE.
    *   - decode: If set to TRUE and some textual data is already sanitized, it
    *     strips HTML tags and decodes HTML entities. Defaults to FALSE.
    *
-   *  @return
-   *    The value of the wrapped data. If the data property is not set, NULL
-   *    is returned.
+   * @return object
+   *   The value of the wrapped data. If the data property is not set, NULL
+   *   is returned.
    *
-   *  @throws EntityMetadataWrapperException
-   *    In case there are no data values available to the wrapper, an exception
-   *    is thrown. E.g. if the value for an entity property is to be retrieved
-   *    and there is no entity available, the exception is thrown. However, if
-   *    an entity is available but the property is not set, NULL is returned.
+   * @throws EntityMetadataWrapperException
+   *   In case there are no data values available to the wrapper, an exception
+   *   is thrown. E.g. if the value for an entity property is to be retrieved
+   *   and there is no entity available, the exception is thrown. However, if
+   *   an entity is available but the property is not set, NULL is returned.
    */
   public function value(array $options = array()) {
     if (!$this->dataAvailable() && isset($this->info['parent'])) {
@@ -89,9 +90,9 @@ abstract class EntityMetadataWrapper {
   }
 
   /**
-   * Returns the raw, unprocessed data. Most times this is the same as returned
-   * by value(), however for already processed and sanitized textual data, this
-   * will return the unprocessed data in contrast to value().
+   * Returns the raw, unprocessed data. 
+   * 
+   * Most times this is the same as returned by value(), however for already processed and sanitized textual data, this will return the unprocessed data in contrast to value().
    */
   public function raw() {
     if (!$this->dataAvailable()) {
@@ -107,7 +108,7 @@ abstract class EntityMetadataWrapper {
   /**
    * Returns whether data is available to work with.
    *
-   * @return
+   * @return bool
    *   If we operate without any data FALSE, else TRUE.
    */
   protected function dataAvailable() {
@@ -155,6 +156,9 @@ abstract class EntityMetadataWrapper {
     return !isset($this->info['validation callback']) || call_user_func($this->info['validation callback'], $value, $this->info);
   }
 
+  /**
+   * Returns this property name or type as string.
+   */
   public function __toString() {
     return isset($this->info) ? 'Property ' . $this->info['name'] : $this->type;
   }
@@ -170,10 +174,9 @@ abstract class EntityMetadataWrapper {
   }
 
   /**
-   * Returns the options list specifying possible values for the property, if
-   * defined.
+   * Returns the options list specifying possible values for the property, if defined.
    *
-   * @param $op
+   * @param string $op
    *   (optional) One of 'edit' or 'view'. In case the list of possible values
    *   a user could set for a property differs from the list of values a
    *   property could have, $op determines which options should be returned.
@@ -183,7 +186,7 @@ abstract class EntityMetadataWrapper {
    *   account. So their options would be included for 'view', but for 'edit'
    *   not.
    *
-   * @return
+   * @return array|bool
    *   An array as used by hook_options_list() or FALSE.
    */
   public function optionsList($op = 'edit') {
@@ -195,8 +198,7 @@ abstract class EntityMetadataWrapper {
   }
 
   /**
-   * Returns the label for the currently set property value if there is one
-   * available, i.e. if an options list has been specified.
+   * Returns the label for the currently set property value if there is one available, i.e. if an options list has been specified.
    */
   public function label() {
     if ($options = $this->optionsList('view')) {
@@ -210,6 +212,7 @@ abstract class EntityMetadataWrapper {
 
   /**
    * Determines whether the given user has access to view or edit this property.
+   * 
    * Apart from relying on access metadata of properties, this takes into
    * account information about entity level access, if available:
    *  - Referenced entities can only be viewed, when the user also has
@@ -217,11 +220,12 @@ abstract class EntityMetadataWrapper {
    *  - A property may be only edited, if the user has permission to update the
    *    entity containing the property.
    *
-   * @param $op
+   * @param string $op
    *   The operation being performed. One of 'view' or 'edit.
-   * @param $account
+   * @param object $account
    *   The user to check for. Leave it to NULL to check for the global user.
-   * @return boolean
+   * 
+   * @return bool
    *   Whether access to entity property is allowed for the given operation.
    *   However if we wrap no data, it returns whether access is allowed to the
    *   property of all entities of this type.
@@ -247,7 +251,8 @@ abstract class EntityMetadataWrapper {
 class EntityValueWrapper extends EntityMetadataWrapper {
 
   /**
-   * Overrides EntityMetadataWrapper#value().
+   * Overrides EntityMetadataWrapper::value().
+   * 
    * Sanitizes or decode textual data if necessary.
    */
   public function value(array $options = array()) {
@@ -267,12 +272,12 @@ class EntityValueWrapper extends EntityMetadataWrapper {
 }
 
 /**
- * Provides a general wrapper for any data structure. For this to work the
- * metadata has to be passed during construction.
+ * Provides a general wrapper for any data structure. For this to work the metadata has to be passed during construction.
  */
 class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAggregate {
 
-  protected $propertyInfo = array(), $propertyInfoAltered = FALSE;
+  protected $propertyInfo = array();
+  protected $propertyInfoAltered = FALSE;
   protected $langcode = LANGUAGE_NONE;
 
   protected $propertyInfoDefaults = array(
@@ -284,11 +289,11 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
   /**
    * Construct a new EntityStructureWrapper object.
    *
-   * @param $type
+   * @param string $type
    *   The type of the passed data.
-   * @param $data
+   * @param mixed $data
    *   Optional. The data to wrap.
-   * @param $info
+   * @param array $info
    *   Used to for specifying metadata about the data and internally to pass
    *   info about properties down the tree. For specifying metadata known keys
    *   are:
@@ -304,8 +309,7 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
   }
 
   /**
-   * May be used to lazy-load additional info about the data, depending on the
-   * concrete passed data.
+   * May be used to lazy-load additional info about the data, depending on the concrete passed data.
    */
   protected function spotInfo() {
     // Apply the callback if set, such that the caller may alter the info.
@@ -318,12 +322,14 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
   /**
    * Gets the info about the given property.
    *
-   * @param $name
+   * @param string $name
    *   The name of the property. If not given, info about all properties will
    *   be returned.
+   * 
    * @throws EntityMetadataWrapperException
    *   If there is no such property.
-   * @return
+   * 
+   * @return array
    *   An array of info about the property.
    */
   public function getPropertyInfo($name = NULL) {
@@ -351,9 +357,11 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
   /**
    * Sets a new language to use for retrieving properties.
    *
-   * @param $langcode
+   * @param string $langcode
    *   The language code of the language to set.
+   * 
    * @return EntityWrapper
+   *   An EntityWrapper.
    */
   public function language($langcode = LANGUAGE_NONE) {
     if ($langcode != $this->langcode) {
@@ -366,7 +374,7 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
   /**
    * Gets the language used for retrieving properties.
    *
-   * @return String
+   * @return string
    *   The language object of the language or NULL for the default language.
    *
    * @see EntityStructureWrapper::language()
@@ -383,14 +391,19 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
   /**
    * Get the wrapper for a property.
    *
-   * @return
+   * @return EntityMetadataWrapper
    *   An instance of EntityMetadataWrapper.
    */
   public function get($name) {
     // Look it up in the cache if possible.
     if (!array_key_exists($name, $this->cache)) {
       if ($info = $this->getPropertyInfo($name)) {
-        $info += array('parent' => $this, 'name' => $name, 'langcode' => $this->langcode, 'property defaults' => array());
+        $info += array(
+          'parent' => $this,
+          'name' => $name,
+          'langcode' => $this->langcode,
+          'property defaults' => array()
+        );
         $info['property defaults'] += $this->info['property defaults'];
         $this->cache[$name] = entity_metadata_wrapper($info['type'], NULL, $info);
       }
@@ -494,6 +507,9 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
     }
   }
 
+  /**
+   * Checks for access privileges to a property.
+   */
   protected function propertyAccess($name, $op, $account = NULL) {
     $info = $this->getPropertyInfo($name);
 
@@ -527,14 +543,16 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
     return isset($this->propertyInfo['properties'][$name]);
   }
 
+  /**
+   * Retrieve an external iterator.
+   */
   public function getIterator() {
     $this->spotInfo();
     return new EntityMetadataWrapperIterator($this, array_keys($this->propertyInfo['properties']));
   }
 
   /**
-   * Returns the identifier of the data structure. If there is none, NULL is
-   * returned.
+   * Returns the identifier of the data structure. If there is none, NULL is returned.
    */
   public function getIdentifier() {
     return isset($this->id) && $this->dataAvailable() ? $this->id->value() : NULL;
@@ -549,6 +567,9 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
     return $vars;
   }
 
+  /**
+   * Overrides EntityStructureWrapper:clear().
+   */
   public function clear() {
     $this->propertyInfoAltered = FALSE;
     parent::clear();
@@ -556,7 +577,7 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
 }
 
 /**
- * Provides a wrapper for entities registrered in hook_entity_plus_info().
+ * Provides a wrapper for entities registered in hook_entity_plus_info().
  *
  * The wrapper eases applying getter and setter callbacks of entity properties
  * specified in hook_entity_property_info().
@@ -573,11 +594,11 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
   /**
    * Construct a new EntityBackdropWrapper object.
    *
-   * @param $type
+   * @param string $type
    *   The type of the passed data.
-   * @param $data
+   * @param mixed $data
    *   Optional. The entity to wrap or its identifier.
-   * @param $info
+   * @param array $info
    *   Optional. Used internally to pass info about properties down the tree.
    */
   public function __construct($type, $data = NULL, $info = array()) {
@@ -585,6 +606,9 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
     $this->setUp();
   }
 
+  /**
+   * Sets up the entity info.
+   */
   protected function setUp() {
     $this->propertyInfo = entity_plus_get_property_info($this->type) + array('properties' => array());
     $info = $this->info + array('property info' => array(), 'bundle' => NULL);
@@ -628,8 +652,7 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
   }
 
   /**
-   * Used to lazy-load bundle info. So the wrapper can be loaded e.g. just
-   * for setting without the data being loaded.
+   * Used to lazy-load bundle info. So the wrapper can be loaded e.g. just for setting without the data being loaded.
    */
   protected function spotInfo() {
     if (!$this->propertyInfoAltered) {
@@ -646,7 +669,7 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
   /**
    * Tries to determine the bundle and adds in the according property info.
    *
-   * @param $load
+   * @param bool $load
    *   Whether the entity should be loaded to spot the info if necessary.
    */
   protected function spotBundleInfo($load = TRUE) {
@@ -698,7 +721,7 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
   /**
    * Overridden.
    *
-   * @param $options
+   * @param array $options
    *   An array of options. Known keys:
    *   - identifier: If set to TRUE, the entity identifier is returned.
    */
@@ -848,6 +871,7 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
    *   If the entity type does not support saving.
    *
    * @return EntityBackdropWrapper
+   *   The saved entity wrapper. 
    */
   public function save() {
     if ($this->data) {
@@ -857,7 +881,7 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
       $this->data->save();
       // On insert, update the identifier afterwards.
       if (!$this->id) {
-        list($this->id, , ) = entity_extract_ids($this->type, $this->data);
+        list($this->id, ,) = entity_extract_ids($this->type, $this->data);
       }
     }
     // If the entity hasn't been loaded yet, don't bother saving it.
@@ -868,6 +892,7 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
    * Permanently delete the wrapped entity.
    *
    * @return EntityBackdropWrapper
+   *   An entity wrapper for the deleted entity.
    */
   public function delete() {
     if ($this->dataAvailable() && $this->value()) {
@@ -889,9 +914,10 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
   /**
    * Returns the name of the key used by the entity for given entity key.
    *
-   * @param $name
+   * @param string $name
    *   One of 'id', 'name', 'bundle' or 'revision'.
-   * @return
+   * 
+   * @return string
    *   The name of the key used by the entity.
    */
   public function entityKey($name) {
@@ -923,6 +949,9 @@ class EntityBackdropWrapper extends EntityStructureWrapper {
     return $vars;
   }
 
+  /**
+   * Magic wake up function.
+   */
   public function __wakeup() {
     $this->setUp();
     if ($this->id !== FALSE) {
@@ -947,12 +976,20 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
   protected $itemType;
 
   /**
-   * Whether this is a list of entities with a known entity type, i.e. for
-   * generic list of entities (list<entity>) this is FALSE.
+   * Whether this is a list of entities with a known entity type, i.e. for generic list of entities (list<entity>) this is FALSE.
    */
   protected $isEntityList;
 
-
+  /**
+   * Constructs a new EntityListWrapper object.
+   *
+   * @param string $type
+   *   The type of the passed data.
+   * @param mixed $data
+   *   Optional. The data to wrap.
+   * @param array $info
+   *   Optional. Used internally to pass info about properties down the tree.
+   */
   public function __construct($type, $data = NULL, $info = array()) {
     parent::__construct($type, NULL, $info);
 
@@ -970,7 +1007,7 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
   /**
    * Get the wrapper for a single item.
    *
-   * @return
+   * @return EntityMetadataWrapper
    *   An instance of EntityMetadataWrapper.
    */
   public function get($delta) {
@@ -992,6 +1029,9 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
     return $this->cache[$delta];
   }
 
+  /**
+   * Overrides EntityMetadataWrapper::getPropertyValue().
+   */
   protected function getPropertyValue($delta) {
     // Make use parent::value() to easily by-pass any entity-loading.
     $data = parent::value();
@@ -1000,10 +1040,16 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
     }
   }
 
+  /**
+   * Gets the raw value of a property.
+   */
   protected function getPropertyRaw($delta) {
     return $this->getPropertyValue($delta);
   }
 
+  /**
+   * Overrides EntityMetadataWrapper::setProperty().
+   */
   protected function setProperty($delta, $value) {
     $data = parent::value();
     if (is_numeric($delta)) {
@@ -1012,6 +1058,9 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
     }
   }
 
+  /**
+   * Checks for access privileges to a property.
+   */
   protected function propertyAccess($delta, $op, $account = NULL) {
     return $this->access($op, $account);
   }
@@ -1025,7 +1074,7 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
    * there may be NULL values in lists of entity objects due to stale entity
    * references.
    *
-   * @param $options
+   * @param array $options
    *   An array of options. Known keys:
    *   - identifier: If set to TRUE for a list of entities, it won't be returned
    *     as list of fully loaded entity objects, but as a list of entity ids.
@@ -1048,6 +1097,9 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
     return parent::value();
   }
 
+  /**
+   * Overrides EntityMetadataWrapper::set().
+   */
   public function set($values) {
     // Support setting lists of fully loaded entities.
     if ($this->isEntityList && $values && is_object(reset($values))) {
@@ -1077,14 +1129,23 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
     return $this->get($delta);
   }
 
+  /**
+   * Implements the ArrayAccess interface.
+   */
   public function offsetExists($delta) {
     return $this->dataAvailable() && ($data = $this->value()) && array_key_exists($delta, $data);
   }
 
+  /**
+   * Implements the ArrayAccess interface.
+   */
   public function offsetSet($delta, $value) {
     $this->get($delta)->set($value);
   }
 
+  /**
+   * Implements the ArrayAccess interface.
+   */
   public function offsetUnset($delta) {
     if ($this->offsetExists($delta)) {
       unset($this->data[$delta]);
@@ -1092,6 +1153,9 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
     }
   }
 
+  /**
+   * Implements the Countable interface.
+   */
   public function count() {
     return $this->dataAvailable() ? count($this->value()) : 0;
   }
@@ -1131,10 +1195,190 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
   }
 }
 
+/** 
+ * Wrapper for Taxonomy Vocabularies.
+ */
+class EntityVocabularyWrapper extends EntityStructureWrapper {
+
+  protected $machineName;
+
+  /**
+   * Overrides EntityStructureWrapper::__construct().
+   */
+  public function __construct($type, $data = NULL, $info = array()) {
+    parent::__construct($type, $data, $info);
+    $this->setUp();
+  }
+
+  /**
+   * Set up the property info.
+   */
+  public function setUp() {
+    $this->propertyInfo = entity_plus_get_property_info('taxonomy_vocabulary') + array('properties' => array());
+    $info = $this->info + array('property info' => array());
+    $this->propertyInfo['properties'] += $info['property info'];
+  }
+
+  /**
+   * Overridden to support setting the entity by either the object or the id.
+   */
+  public function set($value) {
+    if (!$this->validate($value)) {
+      throw new EntityMetadataWrapperException('Invalid data value given. Be sure it matches the required data type and format.');
+    }
+
+    $previous_machine_name = $this->machineName;
+    // Set value, so we get the identifier and pass it to the normal setter.
+    $this->clear();
+    $this->setVocabulary($value);
+
+    // In case the vocabulary has been unset, we cannot properly detect changes as
+    // the previous name defaults to FALSE for unloaded vocabularies too. So in that
+    // case we just always update the parent.
+    if ($this->machineName === FALSE && !$this->data) {
+      $this->updateParent(NULL);
+    }
+    elseif ($previous_machine_name !== $this->machineName) {
+      $this->updateParent($this->machineName);
+    }
+    return $this;
+  }
+
+  /**
+   * Overridden.
+   */
+  public function clear() {
+    $this->machineName = NULL;
+    parent::clear();
+  }
+
+  /**
+   * Sets the vocabulary internally accepting both the machine_name and object.
+   */
+  protected function setVocabulary($data) {
+    // For vocabularies we allow getter callbacks to return FALSE, which we
+    // interpret like NULL values as unset properties.
+    if (isset($data) && $data !== FALSE && !is_object($data)) {
+      $this->machineName = $data;
+      $this->data = FALSE;
+    }
+    elseif (is_object($data) && $data instanceof EntityVocabularyWrapper) {
+      // We got a wrapped vocabulary passed, so take over its values.
+      $this->machineName = $data->machine_name;
+      $this->data = $data->data;
+    }
+    elseif (is_object($data)) {
+      // We got the entity object passed.
+      $this->data = $data;
+      $machine_name = $data->machine_name;
+      $this->machineName = isset($machine_name) ? $machine_name : FALSE;
+    }
+    else {
+      $this->machineName = FALSE;
+      $this->data = NULL;
+    }
+  }
+
+  /**
+   * Permanently saves the wrapped vocabulary.
+   *
+   * @return EntityVocabularyWrapper
+   *   The saved vocabulary wrapper. 
+   */
+  public function save() {
+    if ($this->data) {
+      $this->data->save();
+    }
+    // If the entity hasn't been loaded yet, don't bother saving it.
+    return $this;
+  }
+
+  /**
+   * Overridden.
+   *
+   * @param array $options
+   *   An array of options. Known keys:
+   *   - identifier: If set to TRUE, the vocabulary identifier is returned.
+   */
+  public function value(array $options = array()) {
+    // Try loading the data via the getter callback if there is none yet.
+    if (!isset($this->data)) {
+      $this->setVocabulary(parent::value());
+    }
+    if (!empty($options['identifier'])) {
+      return $this->machineName;
+    }
+    elseif (!$this->data && !empty($this->machineName)) {
+      // Lazy load the vocabulary if necessary.
+      $return = taxonomy_vocabulary_load($this->machineName);
+      // In case the vocabulary cannot be loaded, we return NULL just as for empty
+      // properties.
+      $this->data = $return ? $return : NULL;
+    }
+    return $this->data;
+  }
+
+  /**
+   * Returns the identifier of the wrapped vocabulary.
+   */
+  public function getIdentifier() {
+    return $this->dataAvailable() ? $this->value(array('identifier' => TRUE)) : NULL;
+  }
+
+  /**
+   * Returns the human readable name of the vocabulary. 
+   */
+  public function label() {
+    if ($vocabulary = $this->value()) {
+      return $vocabulary->name;
+    }
+  }
+
+  /**
+   * Permanently delete the wrapped vocabulary.
+   *
+   * @return EntityVocabularyWrapper
+   *   An entity wrapper for the deleted entity.
+   */
+  public function delete() {
+    if ($this->dataAvailable() && $this->value()) {
+      taxonomy_vocabulary_delete($this->machineName);
+    }
+    return $this;
+  }
+
+  /**
+   * Prepare for serializiation.
+   */
+  public function __sleep() {
+    $vars = parent::__sleep();
+    // Don't serialize the loaded vocabulary and its property info.
+    unset($vars['data'], $vars['propertyInfo'], $vars['propertyInfoAltered']);
+    // In case the vocabulary is not saved yet, serialize the unsaved data.
+    if ($this->dataAvailable() && !taxonomy_vocabulary_load($this->machineName)) {
+      $vars['data'] = 'data';
+    }
+    return $vars;
+  }
+
+  /**
+   * Magic wake up function.
+   */
+  public function __wakeup() {
+    $this->setUp();
+    if (taxonomy_vocabulary_load($this->machineName)) {
+      // This vocabulary was previously saved, therefore
+      // make sure data is set, so the vocabulary will be loaded when needed.
+      $this->data = FALSE;
+    }
+  }
+}
+
 /**
  * Provide a separate Exception so it can be caught separately.
  */
-class EntityMetadataWrapperException extends Exception { }
+class EntityMetadataWrapperException extends Exception {
+}
 
 
 /**
@@ -1143,37 +1387,62 @@ class EntityMetadataWrapperException extends Exception { }
 class EntityMetadataWrapperIterator implements RecursiveIterator {
 
   protected $position = 0;
-  protected $wrapper, $keys;
+  protected $wrapper;
+  protected $keys;
 
+  /**
+   * Constructor.
+   */
   public function __construct(EntityMetadataWrapper $wrapper, array $keys) {
     $this->wrapper = $wrapper;
     $this->keys = $keys;
   }
 
-  function rewind() {
+  /**
+   * Implements RecursiveIterator.
+   */
+  public function rewind() {
     $this->position = 0;
   }
 
-  function current() {
+  /**
+   * Implements RecursiveIterator.
+   */
+  public function current() {
     return $this->wrapper->get($this->keys[$this->position]);
   }
 
-  function key() {
+  /**
+   * Implements RecursiveIterator.
+   */
+  public function key() {
     return $this->keys[$this->position];
   }
 
-  function next() {
+  /**
+   * Implements RecursiveIterator.
+   */
+  public function next() {
     $this->position++;
   }
 
-  function valid() {
+  /**
+   * Implements RecursiveIterator.
+   */
+  public function valid() {
     return isset($this->keys[$this->position]);
   }
 
+  /**
+   * Implements RecursiveIterator.
+   */
   public function hasChildren() {
     return $this->current() instanceof IteratorAggregate;
   }
 
+  /**
+   * Implements RecursiveIterator.
+   */
   public function getChildren() {
     return $this->current()->getIterator();
   }
@@ -1187,10 +1456,16 @@ class EntityMetadataArrayObject implements ArrayAccess, Countable, IteratorAggre
 
   protected $data;
 
+  /**
+   * Constructor.
+   */
   public function __construct(&$array) {
     $this->data =& $array;
   }
 
+  /**
+   * Gets array data.
+   */
   public function &getArray() {
     return $this->data;
   }
@@ -1202,22 +1477,37 @@ class EntityMetadataArrayObject implements ArrayAccess, Countable, IteratorAggre
     return $this->data[$delta];
   }
 
+  /**
+   * Implements the ArrayAccess interface.
+   */
   public function offsetExists($delta) {
     return array_key_exists($delta, $this->data);
   }
 
+  /**
+   * Implements the ArrayAccess interface.
+   */
   public function offsetSet($delta, $value) {
     $this->data[$delta] = $value;
   }
 
+  /**
+   * Implements the ArrayAccess interface.
+   */
   public function offsetUnset($delta) {
     unset($this->data[$delta]);
   }
 
+  /**
+   * Implements the Coutable interface.
+   */
   public function count() {
     return count($this->data);
   }
 
+  /**
+   * Implements IteratorAggregate interface.
+   */
   public function getIterator() {
     return new ArrayIterator($this->data);
   }
@@ -1228,13 +1518,20 @@ class EntityMetadataArrayObject implements ArrayAccess, Countable, IteratorAggre
  */
 class EntityDefaultMetadataController {
 
-  protected $type, $info;
+  protected $type;
+  protected $info;
 
+  /**
+   * Contructor.
+   */
   public function __construct($type) {
     $this->type = $type;
     $this->info = entity_get_info($type);
   }
 
+  /**
+   * Generates some basic metadata.
+   */
   public function entityPropertyInfo() {
     $entity_label = backdrop_strtolower($this->info['label']);
 
@@ -1300,7 +1597,7 @@ class EntityDefaultMetadataController {
   }
 
   /**
-   * Return a set of properties for an entity based on the schema definition
+   * Return a set of properties for an entity based on the schema definition.
    */
   protected function convertSchema() {
     return entity_plus_metadata_convert_schema($this->info['base table']);
@@ -1318,7 +1615,7 @@ interface EntityExtraFieldsControllerInterface {
   /**
    * Returns extra fields for this entity type.
    *
-   * @see hook_field_extra_fields().
+   * @see hook_field_extra_fields()
    */
   public function fieldExtraFields();
 }

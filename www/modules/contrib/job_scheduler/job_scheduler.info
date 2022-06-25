@@ -1,0 +1,10 @@
+name = Job Scheduler
+description = Scheduler API
+backdrop = 1.x
+version = 1.x-1.1
+type = module
+
+; Added by Backdrop CMS packaging script on 2020-08-10
+project = job_scheduler
+version = 1.x-1.1.4
+timestamp = 1597071411

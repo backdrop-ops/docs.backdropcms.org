@@ -13,6 +13,7 @@ define('PARAGRAPHS_DEFAULT_TITLE_MULTIPLE', 'Paragraphs');
 define('PARAGRAPHS_DEFAULT_EDIT_MODE', 'open');
 define('PARAGRAPHS_DEFAULT_EDIT_MODE_OVERRIDE', 1);
 define('PARAGRAPHS_DEFAULT_ADD_MODE', 'select');
+define('PARAGRAPHS_DEFAULT_MODAL_ADMIN', FALSE);
 
 // Modules should return this value from hook_paragraphs_item_access() to allow
 // access to a paragraphs item.
@@ -79,15 +80,6 @@ function paragraphs_item_load_multiple(array $ids = array(), $conditions = array
 }
 
 /**
- * Implements hook_ctools_plugin_directory().
- */
-function paragraphs_ctools_plugin_directory($module, $plugin) {
-  if ($module == 'panelizer' && $plugin == 'entity') {
-    return 'plugins/panelizer/entity';
-  }
-}
-
-/**
  * Implements hook_config_info().
  */
 function paragraphs_config_info() {
@@ -95,7 +87,7 @@ function paragraphs_config_info() {
     'paragraphs.type' => array(
       'name_key' => 'bundle',
       'label_key' => 'name',
-      'group' => t('Paragraphs types'),
+      'group' => t('Paragraph types'),
     ),
   );
 }
@@ -109,7 +101,7 @@ function paragraphs_entity_info() {
     'label callback' => 'entity_class_label',
     'uri callback' => 'entity_class_uri',
     'entity class' => 'ParagraphsItemEntity',
-    'controller class' => 'EntityPlusController',
+    'controller class' => 'ParagraphsItemEntityController',
     'base table' => 'paragraphs_item',
     'revision table' => 'paragraphs_item_revision',
     'fieldable' => TRUE,
@@ -118,6 +110,7 @@ function paragraphs_entity_info() {
     'redirect' => FALSE,
     'entity keys' => array(
       'id' => 'item_id',
+      'label' => 'label',
       'revision' => 'revision_id',
       'bundle' => 'bundle',
       'field_name' => 'field_name',
@@ -158,25 +151,23 @@ function paragraphs_entity_info() {
     );
   }
 
-  if (module_exists('entitycache')) {
-    $return['paragraphs_item']['field cache'] = FALSE;
-    $return['paragraphs_item']['entity cache'] = TRUE;
-  }
+  $return['paragraphs_item']['field cache'] = FALSE;
+  $return['paragraphs_item']['entity cache'] = TRUE;
 
   return $return;
 }
 
 /**
- * Access check for paragraphs.
+ * Access check for Paragraphs items.
  *
  * Most of the time the access callback is on the host entity.
  * In some cases you want specific access checks on paragraphs.
  * You can do this by implementing hook_paragraphs_item_access().
  *
  * @return bool
- *   Whether the user has access to a paragraphs item.
+ *   Whether the user has access to a Paragraphs item.
  */
-function paragraphs_item_access($op, $entity, $account, $entity_type) {
+function paragraphs_item_access($op, $entity, $account = NULL) {
   // If no user object is supplied, the access check is for the current user.
   if (empty($account)) {
     $account = $GLOBALS['user'];
@@ -187,9 +178,13 @@ function paragraphs_item_access($op, $entity, $account, $entity_type) {
   if (!in_array($op, array('view', 'update', 'delete', 'create'), TRUE)) {
     return FALSE;
   }
+  // If $op view and Paragraphs item not published, we return access denied.
+  if ($op == 'view' && !$entity->status) {
+    return FALSE;
+  }
 
   // When we have no entity, create a generic cid.
-  if (empty($entity)) {
+  if (empty($entity) || !is_object($entity)) {
     $cid = 'all_entities:' . $op;
   }
   // When OP is create, or the entity is new, the bundle is the cache key.
@@ -248,6 +243,11 @@ function paragraphs_paragraphs_item_access(ParagraphsItemEntity $entity, $op, $a
   // Update/Delete/Create access requires update access on the parent.
   if (in_array($op, array('update', 'delete', 'create'), TRUE)) {
     $check_parent_op = 'update';
+  }
+
+  // If $op view and Paragraphs item not published, we return access denied.
+  if ($op == 'view' && !$entity->status) {
+    return FALSE;
   }
 
   // When we have no entity, create a generic cid.
@@ -344,7 +344,7 @@ function paragraphs_permission() {
 function paragraphs_menu() {
   $items = array();
   $items['admin/structure/paragraphs'] = array(
-    'title' => 'Paragraph Types',
+    'title' => 'Paragraphs types',
     'description' => 'Manage Paragraph types',
     'page callback' => 'paragraphs_admin_bundle_overview',
     'access arguments' => array('administer paragraphs bundles'),
@@ -352,13 +352,13 @@ function paragraphs_menu() {
   );
 
   $items['admin/structure/paragraphs/list'] = array(
-    'title' => 'List',
+    'title' => 'List Paragraphs types',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
 
   $items['admin/structure/paragraphs/add'] = array(
-    'title' => 'Add Paragraph Type',
+    'title' => 'Add Paragraphs type',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('paragraphs_admin_bundle_form'),
     'access arguments' => array('administer paragraphs bundles'),
@@ -367,7 +367,7 @@ function paragraphs_menu() {
   );
 
   $items['admin/structure/paragraphs/%paragraphs_bundle'] = array(
-    'title' => 'Edit Paragraph type',
+    'title' => 'Edit Paragraphs type',
     'title callback' => 'paragraphs_bundle_title_callback',
     'title arguments' => array(3),
     'page callback' => 'backdrop_get_form',
@@ -376,20 +376,109 @@ function paragraphs_menu() {
     'file' => 'paragraphs.admin.inc',
   );
 
-  $items['admin/structure/paragraphs/%paragraphs_bundle/edit'] = array(
-    'title' => 'Edit',
+  $items['admin/structure/paragraphs/%paragraphs_bundle/configure'] = array(
+    'title' => 'Configure',
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 
   $items['admin/structure/paragraphs/%paragraphs_bundle/delete'] = array(
-    'title' => 'Delete Paragraph Type',
+    'title' => 'Delete Paragraphs type',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('paragraphs_admin_bundle_delete_form', 3),
     'access arguments' => array('administer paragraphs bundles'),
+    'type' => MENU_VISIBLE_IN_BREADCRUMB,
+    'file' => 'paragraphs.admin.inc',
+  );
+
+  $items['paragraphs/%paragraphs_item/edit'] = array(
+    'title' => 'Edit',
+    'type' => MENU_LOCAL_ACTION,
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('paragraphs_modal_admin_edit', 1),
+    'access callback' => 'paragraphs_modal_admin_access',
+    'access arguments' => array(1),
+    'file' => 'paragraphs.admin.inc',
+  );
+
+  $items['paragraphs/%paragraphs_item/remove'] = array(
+    'title' => 'Remove',
+    'type' => MENU_LOCAL_ACTION,
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('paragraphs_modal_admin_remove_confirm', 1),
+    'access callback' => 'paragraphs_modal_admin_access',
+    'access arguments' => array(1),
+    'file' => 'paragraphs.admin.inc',
+  );
+
+  $items['paragraphs/%paragraphs_item/unpublish'] = array(
+    'title' => 'Unpublish',
+    'type' => MENU_LOCAL_ACTION,
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('paragraphs_modal_admin_unpublish_confirm', 1),
+    'access callback' => 'paragraphs_modal_admin_access',
+    'access arguments' => array(1),
+    'file' => 'paragraphs.admin.inc',
+  );
+
+  $items['paragraphs/%paragraphs_item/sort'] = array(
+    'title' => 'Sort',
+    'type' => MENU_LOCAL_ACTION,
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('paragraphs_modal_admin_sort_form', 1),
+    'access callback' => 'paragraphs_modal_admin_access',
+    'access arguments' => array(1),
+    'file' => 'paragraphs.admin.inc',
+  );
+
+  $items['paragraphs/add/%/%paragraphs_bundle/%/%/%'] = array(
+    'title' => 'Add paragraph',
+    'title callback' => 'paragraphs_add_title',
+    'title arguments' => array(3),
+    'type' => MENU_LOCAL_ACTION,
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('paragraphs_modal_admin_add_form', 2, 3, 4, 5, 6),
+    'access callback' => 'paragraphs_separate_create_access',
+    'access arguments' => array(2, 3, 4, 5, 6),
     'file' => 'paragraphs.admin.inc',
   );
 
   return $items;
+}
+
+/**
+ * Title callback for separate add page.
+ */
+function paragraphs_add_title($paragraphs_bundle) {
+  return t('Add !bundle', array('!bundle' => $paragraphs_bundle->name));
+}
+
+/**
+ * Implements hook_admin_bar_map().
+ */
+function paragraphs_admin_bar_map() {
+  if (!user_access('administer paragraphs bundles')) {
+    return;
+  }
+  $types = paragraphs_bundle_load();
+  $type_keys = array();
+  foreach ($types as $key => $type) {
+    $type_keys[] = str_replace('_', '-', $key);
+  }
+  $map = array(
+    'admin/structure/paragraphs/%paragraphs_bundle' => array(
+      'parent' => 'admin/structure/paragraphs',
+      'arguments' => array(
+        array('%paragraphs_bundle' => $type_keys),
+      ),
+    ),
+    'admin/structure/paragraphs/%paragraphs_bundle/edit' => array(
+      'parent' => 'admin/structure/paragraphs/%paragraphs_bundle',
+      'arguments' => array(
+        array('%paragraphs_bundle' => $type_keys),
+      ),
+    ),
+  );
+  return $map;
 }
 
 /**
@@ -421,7 +510,7 @@ function paragraphs_form_field_ui_field_edit_form_alter(&$form, $form_state) {
     $form['#theme'] = array('paragraphs_bundle_settings_form');
     array_unshift($form['#submit'], 'paragraphs_bundle_settings_form_submit');
   }
-  else if ($form['#instance']['entity_type'] == 'paragraphs_item') {
+  elseif ($form['#instance']['entity_type'] == 'paragraphs_item') {
     $form['actions']['delete']['#submit'][] = 'paragraphs_field_edit_form_submit';
   }
 }
@@ -433,6 +522,7 @@ function paragraphs_form_field_ui_field_edit_form_alter(&$form, $form_state) {
  */
 function paragraphs_field_edit_form_submit($form, &$form_state) {
   $instance = $form['#instance'];
+  $destination = backdrop_get_destination();
   $form_state['redirect'] = array('admin/structure/paragraphs/' . $instance['bundle'] . '/fields/' . $instance['field_name'] . '/delete', array('query' => $destination));
 }
 
@@ -575,6 +665,13 @@ function paragraphs_field_instance_settings_form($field, $instance) {
     ),
     '#default_value' => isset($settings['add_mode']) ? $settings['add_mode'] : PARAGRAPHS_DEFAULT_ADD_MODE,
     '#required' => TRUE,
+  );
+
+  $element['modal_admin'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable modal administration (experimental)'),
+    '#description' => t('Enables a dropbutton per paragraph for performing administrative tasks in a modal dialog on the front end.'),
+    '#default_value' => isset($settings['modal_admin']) ? $settings['modal_admin'] : PARAGRAPHS_DEFAULT_MODAL_ADMIN,
   );
 
   if (!count($bundles)) {
@@ -746,6 +843,11 @@ function paragraphs_field_presave($host_entity_type, $host_entity, $field, $inst
         unset($items[$key]);
       }
       else {
+        // Update status from form item.
+        if (isset($item['status'])) {
+          $entity->status = $item['status'];
+        }
+
         $entity->save(TRUE);
 
         $item = array(
@@ -975,15 +1077,6 @@ function paragraphs_bundle_load($name = NULL, $rebuild = FALSE) {
 }
 
 /**
- * Menu load callback to scrub a paragraphs bundle from the URL safe equivalent.
- */
-function paragraphs_panelizer_bundle_name_load($name) {
-  if (($bundle = paragraphs_bundle_load($name))) {
-    return $bundle->bundle;
-  }
-}
-
-/**
  * Function to create or update an paragraphs bundle.
  *
  * @param object $bundle
@@ -1010,6 +1103,7 @@ function paragraphs_bundle_save($bundle) {
     'label' => (string) $bundle->label,
     'description' => (string) $bundle->description,
     'locked' => (int) $bundle->locked,
+    'allow_unpublish' => (int) $bundle->allow_unpublish,
   );
   foreach ($bundle_data as $key => $value) {
     $config->set($key, $value);
@@ -1030,7 +1124,7 @@ function paragraphs_bundle_save($bundle) {
 function paragraphs_bundle_delete($bundle_machine_name) {
   $bundle = paragraphs_bundle_load($bundle_machine_name);
   if (is_object($bundle)) {
-    // delete config files
+    // Delete config files.
     $config = config('paragraphs.type.' . $bundle->bundle);
     $config->delete();
     $sub_names = config_get_names_with_prefix('field.instance.paragraphs_item.' . $bundle->bundle . '.');
@@ -1047,16 +1141,15 @@ function paragraphs_bundle_delete($bundle_machine_name) {
 /**
  * Helper to get the title of a bundle.
  *
- * @param $bundle
- *   The bundle.
+ * @param object $bundle
+ *   The object of the bundle to get the title for.
  */
 function paragraphs_bundle_title_callback($bundle) {
-  return t('Edit Paragraph type !name', array('!name' => $bundle->name));
+  return t('!name', array('!name' => $bundle->name));
 }
 
 /**
  * Entity property info setter callback for the host entity property.
- *
  *
  * As the property is of type entity, the value will be passed as a wrapped
  * entity.
@@ -1217,7 +1310,7 @@ function theme_paragraphs_field_multiple_value_form(array $variables) {
   $required = !empty($element['#required']) ? theme('form_required_marker', $variables) : '';
 
   // Sort items according to '_weight' (needed when the form comes back after
-  // preview or failed validation)
+  // preview or failed validation).
   $items = array();
   foreach (element_children($element) as $key) {
     if ($key === 'add_more') {
@@ -1339,6 +1432,9 @@ function paragraphs_theme() {
     'paragraphs_bundle_settings_form' => array(
       'render element' => 'form',
     ),
+    'paragraphs_modal_admin_sort_form' => array(
+      'render element' => 'form',
+    ),
     'paragraphs_items' => array(
       'render element' => 'element',
       'template' => 'paragraphs-items',
@@ -1350,10 +1446,6 @@ function paragraphs_theme() {
       'template' => 'paragraphs-item',
       'path' => backdrop_get_path('module', 'paragraphs') . '/theme',
       'file' => 'paragraphs.theme.inc',
-    ),
-    'paragraphs_admin_overview' => array(
-      'variables' => array('bundle' => NULL),
-      'file' => 'paragraphs.admin.inc',
     ),
   );
 }
@@ -1461,9 +1553,11 @@ function paragraphs_field_prepare_translation($entity_type, $entity, $field, $in
   if (!module_exists("paragraphs_i18n")) {
     list($id, ,) = entity_extract_ids($entity_type, $entity);
 
-    // field_attach_prepare_translation() copied the entity ids from the source,
-    // as we need a new entity for a new translation, we cannot reuse that.
-    // @todo clone existing paragraphs to new translation
+    // The field_attach_prepare_translation() function copied the entity ids
+    // from the source, but as we need a new entity for a new translation, we
+    // cannot reuse that.
+    // To clone existing paragraphs to the new translation, see the Replicate
+    // and Replicate Paragraphs modules.
     if (empty($id)) {
       $items = array();
     }
@@ -1471,20 +1565,6 @@ function paragraphs_field_prepare_translation($entity_type, $entity, $field, $in
   else {
     paragraphs_i18n_field_prepare_translation($entity_type, $entity, $field, $instance, $langcode, $items, $source_entity, $source_langcode);
   }
-}
-
-/**
- * Implements hook_features_api().
- */
-function paragraphs_features_api() {
-  return array(
-    'paragraphs' => array(
-      'name' => t('Paragraphs Types'),
-      'feature_source' => TRUE,
-      'default_hook' => 'paragraphs_info',
-      'file' => backdrop_get_path('module', 'paragraphs') . '/paragraphs.features.inc',
-    ),
-  );
 }
 
 /**
@@ -1547,15 +1627,329 @@ function paragraphs_modules_uninstalled($modules) {
 }
 
 /**
+ * Access callback for separate edit/sort/delete form.
+ *
+ * @var ParagraphsItemEntity $paragraphs_item
+ */
+function paragraphs_modal_admin_access($paragraphs_item) {
+  $paragraphs_item->hostEntity();
+  $host_entity_type = $paragraphs_item->hostEntityType();
+  $instance = $paragraphs_item->instanceInfo();
+
+  // Check separate forms are enabled and that the user has access to update
+  // the host entity as well as the paragraph item itself.
+  return !empty($instance['settings']['modal_admin']) && entity_access('update', $host_entity_type, $paragraphs_item->hostEntity()) && entity_access('update', 'paragraphs_item', $paragraphs_item);
+}
+
+/**
+ * Access callback for separate add form.
+ */
+function paragraphs_separate_create_access($mode, $paragraphs_bundle, $host_entity_type, $entity_id, $field_name) {
+  if (!$entity_id && !in_array($mode, array('scratch', 'before', 'after'))) {
+    return FALSE;
+  }
+
+  if ($mode == 'scratch') {
+    // Load host entity to get field instance info.
+    $host_entity = entity_load($host_entity_type, array($entity_id));
+    $host_entity = reset($host_entity);
+    $entity_info = entity_extract_ids($host_entity_type, $host_entity);
+    $instance = field_info_instance($host_entity_type, $field_name, $entity_info[2]);
+  }
+  else {
+    // Load paragraphs item to get field instance info.
+    $paragraphs_item = paragraphs_item_load_multiple(array($entity_id));
+    $paragraphs_item = reset($paragraphs_item);
+    $host_entity = $paragraphs_item->hostEntity();
+    $instance = $paragraphs_item->instanceInfo();
+  }
+
+  // Check if separate forms are enabled and we can update the host entity.
+  return !empty($instance['settings']['modal_admin']) && entity_access('update', $host_entity_type, $host_entity);
+}
+
+
+/**
+ * Generate dropbuttons for modal administration.
+ */
+function paragraphs_modal_admin_links($paragraphs_item) {
+  $paragraph_id = $paragraphs_item->item_id;
+  $field_info = $paragraphs_item->fieldInfo();
+  $bundle = paragraphs_bundle_load($paragraphs_item->bundle);
+  $access = paragraphs_modal_admin_access($paragraphs_item);
+  $host_entity = $paragraphs_item->hostEntity();
+  $host_entity_type = $paragraphs_item->hostEntityType();
+  $host_entity_id = $paragraphs_item->hostEntityId();
+  $host_entity_bundle = $paragraphs_item->hostEntityBundle();
+  $field_name = $paragraphs_item->field_name;
+  $langcode = $paragraphs_item->langcode;
+  $field = field_info_field($field_name);
+  $instance = field_info_instance($host_entity_type, $field_name, $host_entity_bundle);
+  $admin_links = array();
+
+  // Set up array of links.
+  $classes = array(
+    'use-ajax',
+  );
+  if (module_exists('font_awesome')) {
+    $classes[] = 'font-awesome';
+  }
+  if (is_numeric($paragraph_id) && $access) {
+    $admin_links = array(
+      '#type' => 'dropbutton',
+      '#attributes' => array(
+        'class' => array('paragraphs-admin-dropbutton'),
+      ),
+      '#links' => array(
+        'paragraphs_admin_edit' => array(
+          'title' => t('Edit'),
+          'href' => 'paragraphs/' . $paragraph_id . '/edit',
+          'attributes' => array(
+            'class' => array_merge(array('paragraphs-edit'), $classes),
+            'data-dialog' => TRUE,
+            'data-dialog-options' => json_encode(array(
+              'dialogClass' => 'paragraphs-admin-links-dialog',
+              'width' => 700,
+              'draggable' => TRUE,
+            )),
+          ),
+        ),
+        'paragraphs_admin_remove' => array(
+          'title' => t('Remove'),
+          'href' => 'paragraphs/' . $paragraph_id . '/remove',
+          'attributes' => array(
+            'class' => array_merge(array('paragraphs-remove'), $classes),
+            'data-dialog' => TRUE,
+            'data-dialog-options' => json_encode(array(
+              'dialogClass' => 'paragraphs-admin-links-dialog',
+              'width' => 700,
+              'draggable' => TRUE,
+            )),
+          ),
+        ),
+      ),
+    );
+    if (!empty($bundle->allow_unpublish)) {
+      $admin_links['#links']['paragraphs_admin_unpublish'] = array(
+        'title' => t('Unpublish'),
+        'href' => 'paragraphs/' . $paragraph_id . '/unpublish',
+        'attributes' => array(
+          'class' => array_merge(array('paragraphs-unpublish'), $classes),
+          'data-dialog' => TRUE,
+          'data-dialog-options' => json_encode(array(
+            'dialogClass' => 'paragraphs-admin-links-dialog',
+            'width' => 700,
+            'draggable' => TRUE,
+          )),
+        ),
+      );
+    }
+    if ($field_info['cardinality'] != '1' && count($host_entity->{$field_info['field_name']}[$langcode]) > 1) {
+      $admin_links['#links']['paragraphs_admin_sort'] = array(
+        'title' => t('Sort'),
+        'href' => 'paragraphs/' . $paragraph_id . '/sort',
+        'attributes' => array(
+          'class' => array_merge(array('paragraphs-sort'), $classes),
+          'data-dialog' => TRUE,
+          'data-dialog-options' => json_encode(array(
+            'dialogClass' => 'paragraphs-admin-links-dialog',
+            'width' => 700,
+            'draggable' => TRUE,
+          )),
+        ),
+      );
+    }
+
+    // Determine which bundles can be added.
+    $available_bundles = paragraphs_bundle_load();
+    $select_bundles = array();
+    $select_bundles_weighted = array();
+
+    // By default, consider that no bundle has been explicitly picked.
+    $explicitly_enabled = FALSE;
+    foreach ($instance['settings']['allowed_bundles'] as $allowed_bundle_key => $allowed_bundle_value) {
+      if ($allowed_bundle_key === $allowed_bundle_value && isset($available_bundles[$allowed_bundle_key])) {
+        $select_bundles[$available_bundles[$allowed_bundle_key]->bundle] = $available_bundles[$allowed_bundle_key]->label;
+
+        // If an item has been explicitly selected, raise our flag.
+        $explicitly_enabled = TRUE;
+      }
+      elseif (isset($available_bundles[$allowed_bundle_key]->bundle)) {
+        $select_bundles_weighted[$available_bundles[$allowed_bundle_key]->bundle] = $available_bundles[$allowed_bundle_key]->label;
+      }
+    }
+
+    // If no bundle has been explicitly selected, give access to all of them.
+    if (!$explicitly_enabled) {
+      $select_bundles = $select_bundles_weighted;
+      foreach ($available_bundles as $bundle) {
+        if (!isset($select_bundles[$bundle->bundle])) {
+          $select_bundles[$bundle->bundle] = $bundle->label;
+        }
+      }
+    }
+
+    $removed_a_bundle = FALSE;
+
+    $weight = 0;
+
+    foreach ($select_bundles as $machine_name => $bundle) {
+      $select_bundles[$machine_name] = array(
+        'name' => $bundle,
+        'weight' => $weight,
+      );
+
+      /* @var $entity_shell ParagraphsItemEntity */
+      $entity_shell = entity_create('paragraphs_item', array('bundle' => $machine_name, 'field_name' => $field_name));
+      $entity_shell->setHostEntity($host_entity_type, $host_entity, $langcode, FALSE);
+
+      if (!entity_access('create', 'paragraphs_item', $entity_shell)) {
+        unset($select_bundles[$machine_name]);
+        $removed_a_bundle = TRUE;
+      }
+      elseif (isset($instance['settings']['bundle_weights'][$machine_name])) {
+        $select_bundles[$machine_name]['weight'] = $instance['settings']['bundle_weights'][$machine_name];
+      }
+      $weight++;
+    }
+
+    if (count($select_bundles)) {
+      backdrop_sort($select_bundles, array('weight' => SORT_NUMERIC));
+
+      if ($field['cardinality'] == FIELD_CARDINALITY_UNLIMITED || $field_state['real_items_count'] < $field['cardinality']) {
+        foreach ($select_bundles as $key => $bundle) {
+          $admin_links['#links']['paragraphs_admin_add_' . $key] = array(
+            'title' => t('Add new') . ' ' . $bundle['name'],
+            'href' => "paragraphs/add/scratch/$key/$host_entity_type/$host_entity_id/$field_name",
+            'attributes' => array(
+              'class' => array_merge(array('paragraphs-add'), $classes),
+              'data-dialog' => TRUE,
+              'data-dialog-options' => json_encode(array(
+                'dialogClass' => 'paragraphs-admin-links-dialog',
+                'width' => 700,
+                'draggable' => TRUE,
+              )),
+            ),
+          );
+        }
+      }
+    }
+
+    $admin_links['#attached']['js'][] = array(
+      'data' => backdrop_get_path('module', 'paragraphs') . '/js/paragraphs_modal_admin.js',
+      'type' => 'file',
+      'scope' => 'footer',
+    );
+    $admin_links['#attached']['library'][] = array('system', 'backdrop.ajax');
+  }
+  return $admin_links;
+}
+
+/**
+ * Retrieves contextual links for a path based on registered local tasks.
+ *
+ * @see menu_contextual_links()
+ */
+function paragraphs_contextual_links($args) {
+  $links = array();
+
+  $data = &backdrop_static(__FUNCTION__);
+  if (!isset($data)) {
+    $data = paragraphs_get_router_items('paragraphs/%');
+  }
+
+  array_unshift($args, 'paragraphs');
+  foreach ($data as $item) {
+    // Extract the actual "task" string from the path argument.
+    $key = backdrop_substr($item['path'], 13);
+
+    // Denormalize and translate the contextual link.
+    _menu_translate($item, $args, TRUE);
+    if (!$item['access']) {
+      continue;
+    }
+
+    // All contextual links are keyed by the actual "task" path argument,
+    // prefixed with the name of the implementing module.
+    $links['paragraphs-' . $key] = $item;
+  }
+
+  return $links;
+}
+
+/**
+ * Implements hook_contextual_links_view_alter().
+ *
+ * Since there is no root path for the separate form for editing a paragraph,
+ * contextual links need building in a custom fashion.
+ *
+ * @see contextual_pre_render_links()
+ */
+function paragraphs_contextual_links_view_alter(&$element, $items) {
+  if (isset($element['#contextual_links']['paragraphs'])) {
+    // Retrieve contextual menu links.
+    $items += paragraphs_contextual_links($element['#contextual_links']['paragraphs'][1]);
+
+    // Transform contextual links into parameters suitable for theme_link().
+    $links = array();
+    foreach ($items as $class => $item) {
+      $class = backdrop_html_class($class);
+      $links[$class] = array(
+        'title' => $item['title'],
+        'href' => $item['href'],
+      );
+      // @todo theme_links() should *really* use the same parameters as l().
+      $item['localized_options'] += array('query' => array());
+      $item['localized_options']['query'] += backdrop_get_destination();
+      $links[$class] += $item['localized_options'];
+    }
+    $element['#links'] = $links;
+  }
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function paragraphs_admin_paths() {
+  $paths = array(
+    'paragraphs/*' => FALSE,
+  );
+
+  return $paths;
+}
+
+/**
+ * Get Paragraphs' router items.
+ *
+ * @param string $base
+ *   The base URL of the menu router item.
+ *
+ * @return mixed
+ *   Returns the result of a db_query on the menu_router table.
+ */
+function paragraphs_get_router_items($base) {
+  // Performance: We only query available tasks once per request.
+  return db_select('menu_router', 'm')
+    ->fields('m')
+    ->condition('tab_root', db_like($base) . '%', 'LIKE')
+    ->condition('context', MENU_CONTEXT_NONE, '<>')
+    ->condition('context', MENU_CONTEXT_PAGE, '<>')
+    ->orderBy('weight')
+    ->orderBy('title')
+    ->execute()
+    ->fetchAllAssoc('path', PDO::FETCH_ASSOC);
+}
+
+/**
  * Implements hook_autoload_info().
  */
 function paragraphs_autoload_info() {
   return array(
     'ParagraphsItemEntity' => 'ParagraphsItemEntity.inc',
     'ParagraphsItemMetadataController' => 'ParagraphsItemMetadataController.inc',
+    'ParagraphsItemEntityController' => 'ParagraphsItemEntityController.inc',
     'MigrateDestinationParagraphsItem' => 'migrate/destinations/MigrateDestinationParagraphsItem.inc',
     'ParagraphsMigrateParagraphsFieldHandler' => 'migrate/fields/ParagraphsMigrateParagraphsFieldHandler.inc',
-    'PanelizerEntityParagraphsItem' => 'plugins/panelizer/entity/PanelizerEntityParagraphsItem.class.php',
     'paragraphs_handler_relationship' => 'views/paragraphs_handler_relationship.inc',
   );
 }

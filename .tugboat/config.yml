@@ -16,15 +16,15 @@ services:
         # Generate a unique hash_salt to secure the site.
         - echo "\$settings['hash_salt'] = '$(openssl rand -hex 32)';" >> $TUGBOAT_ROOT/www/settings.local.php
         # Download a copy of the latest files directory.
-        - wget --http-user=$SANITIZE_USER --http-password=$SANITIZE_PASS -c https://sanitize.backdropcms.org/api.backdropcms.org/files_backups/api_backdrop-files-latest.tar.gz
-        - tar -xzf api_backdrop-files-latest.tar.gz && rm api_backdrop-files-latest.tar.gz
+        - wget --http-user=$SANITIZE_USER --http-password=$SANITIZE_PASS -c https://sanitize.backdropcms.org/docs.backdropcms.org/files_backups/docs-files-latest.tar.gz
+        - tar -xzf docs-files-latest.tar.gz && rm docs-files-latest.tar.gz
       build:
         # Delete previous comments in the PR.
         - cd $TUGBOAT_ROOT/.tugboat && ./delete-comments.sh
         # Generate and store a random password for the admin user.
         - openssl rand -hex 6 > $TUGBOAT_ROOT/.tugboat/password
-        # Replace the files directory.
-        - rm -rf $TUGBOAT_ROOT/www/files && cp -r $TUGBOAT_ROOT/files $TUGBOAT_ROOT/www
+        # Link to the files directory.
+        - cd $TUGBOAT_ROOT/www && rm -rf files && ln -s $TUGBOAT_ROOT/files files
         # Update config.
         - rm -f $TUGBOAT_ROOT/config/live-active/*.json
         - cp $TUGBOAT_ROOT/config/staging/*.json $TUGBOAT_ROOT/config/live-active
@@ -40,13 +40,13 @@ services:
     image: tugboatqa/mariadb:latest
     commands:
       init:
-        # Configure database for UTF-8: https://api.backdropcms.org/database-configuration#utf8mb4
+        # Configure database for UTF-8: https://docs.backdropcms.org/database-configuration#utf8mb4
         - echo "[mysqld]\ninnodb_large_prefix=true\ninnodb_file_format=barracuda\ninnodb_file_per_table=true" >> /etc/mysql/conf.d/utf8mb.conf
         # Download a copy of the latest database.
-        - wget --http-user=$SANITIZE_USER --http-password=$SANITIZE_PASS -c https://sanitize.backdropcms.org/api.backdropcms.org/sanitized/api_backdrop-latest-sanitized.sql.gz
-        - gunzip api_backdrop-latest-sanitized.sql.gz
+        - wget --http-user=$SANITIZE_USER --http-password=$SANITIZE_PASS -c https://sanitize.backdropcms.org/docs.backdropcms.org/sanitized/docs-latest-sanitized.sql.gz
+        - gunzip docs-latest-sanitized.sql.gz
       build:
         # Drop and re-create the database.
         - mysqladmin -f drop tugboat && mysqladmin create tugboat
         # Import the sanitized database.
-        - mysql -u tugboat -ptugboat tugboat < api_backdrop-latest-sanitized.sql
+        - mysql -u tugboat -ptugboat tugboat < docs-latest-sanitized.sql

@@ -1,10 +1,10 @@
 [EntityPlusMetadataTestCase]
-name = Entity Plus functionality
-description = Tests Entity Plus.
+name = Entity Plus
+description = Tests for Entity Plus functionality.
 group = Entity Plus
 file = entity_plus.test
 
-; Added by Backdrop CMS packaging script on 2020-07-21
+; Added by Backdrop CMS packaging script on 2022-02-20
 project = entity_plus
-version = 1.x-1.0.7
-timestamp = 1595363502
+version = 1.x-1.0.15
+timestamp = 1645404778

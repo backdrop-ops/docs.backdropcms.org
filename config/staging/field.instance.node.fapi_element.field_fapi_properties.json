@@ -32,7 +32,7 @@
     },
     "display": {
         "default": {
-            "label": "inline",
+            "label": "above",
             "type": "paragraphs_view",
             "weight": "1",
             "settings": {

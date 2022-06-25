@@ -1,0 +1,8 @@
+name = Menu Pager
+description = Adds a block to navigate to the current page's previous and next menu links.
+backdrop = 1.x
+type = module
+dependencies[] = menu
+tags[] = Blocks
+tags[] = Menus
+tags[] = Site Navigation

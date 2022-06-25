@@ -52,6 +52,7 @@ function paragraphs_field_widget_form(&$form, &$form_state, $field, $instance, $
  * - drag-n-drop value reordering.
  */
 function paragraphs_field_multiple_value_form($field, $instance, $langcode, $items, &$form, &$form_state, $delta, $original_element) {
+
   $field_name = $field['field_name'];
   $parents = $form['#parents'];
 
@@ -149,169 +150,7 @@ function paragraphs_field_multiple_value_form($field, $instance, $langcode, $ite
       '#element_validate' => array('_paragraphs_multiple_field_validate'),
     );
 
-    // Add 'add more' button, if not working with a programmed form.
-    if (empty($form_state['programmed'])) {
-      $available_bundles = paragraphs_bundle_load();
-      $select_bundles = array();
-      $select_bundles_weighted = array();
-
-      // By default, consider that no bundle has been explicitly picked.
-      $explicitly_enabled = FALSE;
-      foreach ($instance['settings']['allowed_bundles'] as $allowed_bundle_key => $allowed_bundle_value) {
-        if ($allowed_bundle_key === $allowed_bundle_value && isset($available_bundles[$allowed_bundle_key])) {
-          $select_bundles[$available_bundles[$allowed_bundle_key]->bundle] = $available_bundles[$allowed_bundle_key]->label;
-
-          // If an item has been explicitly selected, raise our flag.
-          $explicitly_enabled = TRUE;
-        }
-        elseif (isset($available_bundles[$allowed_bundle_key]->bundle)) {
-          $select_bundles_weighted[$available_bundles[$allowed_bundle_key]->bundle] = $available_bundles[$allowed_bundle_key]->label;
-        }
-      }
-
-      // If no bundle has been explicitly selected, give access to all of them.
-      if (!$explicitly_enabled) {
-        $select_bundles = $select_bundles_weighted;
-        foreach ($available_bundles as $bundle) {
-          if (!isset($select_bundles[$bundle->bundle])) {
-            $select_bundles[$bundle->bundle] = $bundle->label;
-          }
-        }
-      }
-
-      $removed_a_bundle = FALSE;
-
-      $weight = 0;
-
-      foreach ($select_bundles as $machine_name => $bundle) {
-        $select_bundles[$machine_name] = array(
-          'name' => $bundle,
-          'weight' => $weight,
-        );
-
-        /* @var $entity_shell ParagraphsItemEntity */
-        $entity_shell = entity_create('paragraphs_item', array('bundle' => $machine_name, 'field_name' => $field_name));
-        $entity_shell->setHostEntity($original_element['#entity_type'], $original_element['#entity'], $langcode, FALSE);
-
-        if (!entity_access('create', 'paragraphs_item', $entity_shell)) {
-          unset($select_bundles[$machine_name]);
-          $removed_a_bundle = TRUE;
-        }
-        elseif (isset($instance['settings']['bundle_weights'][$machine_name])) {
-          $select_bundles[$machine_name]['weight'] = $instance['settings']['bundle_weights'][$machine_name];
-        }
-        $weight++;
-      }
-
-      $field_elements['#select_bundles'] = $select_bundles;
-      if ($removed_a_bundle && count($select_bundles) === 0) {
-        $field_elements['add_more'] = array(
-          '#type' => 'container',
-          '#tree' => TRUE,
-        );
-        $field_elements['add_more']['add_more'] = array(
-          '#type' => 'markup',
-          '#markup' => '<em>' . t('You are not allowed to add any of the bundles.') . '</em>',
-        );
-      }
-      elseif (count($select_bundles)) {
-        // uasort($select_bundles, 'backdrop_sort_weight');
-        backdrop_sort($select_bundles, array('weight' => SORT_NUMERIC));
-        $field = $field_state['field'];
-
-        if ($field['cardinality'] == FIELD_CARDINALITY_UNLIMITED || $field_state['real_items_count'] < $field['cardinality']) {
-          if (!isset($instance['settings']['title'])) {
-            $instance['settings']['title'] = PARAGRAPHS_DEFAULT_TITLE;
-          }
-          $instance_title = t($instance['settings']['title']);
-
-          $field_elements['add_more'] = array(
-            '#type' => 'container',
-            '#tree' => TRUE,
-          );
-
-          $add_mode = (isset($instance['settings']['add_mode']) ? $instance['settings']['add_mode'] : PARAGRAPHS_DEFAULT_ADD_MODE);
-
-          if ($add_mode == 'button') {
-            foreach ($select_bundles as $machine_name => $bundle) {
-
-              /* @var $entity_shell ParagraphsItemEntity */
-              $entity_shell = entity_create('paragraphs_item', array('bundle' => $machine_name, 'field_name' => $field_name));
-              $entity_shell->setHostEntity($original_element['#entity_type'], $original_element['#entity'], $langcode, FALSE);
-
-              $field_elements['add_more']['add_more_bundle_' . $machine_name] = array(
-                '#type' => 'submit',
-                '#name' => strtr($id_prefix, '-', '_') . '_add_more_add_more_bundle_' . $machine_name,
-                '#value' => t('Add !title', array('!title' => $bundle['name'])),
-                '#access' => entity_access('create', 'paragraphs_item', $entity_shell),
-                '#attributes' => array('class' => array('field-add-more-submit', 'paragraphs-add-more-submit')),
-                '#limit_validation_errors' => array(),
-                '#submit' => array('paragraphs_add_more_submit'),
-                '#ajax' => array(
-                  'callback' => 'paragraphs_add_more_js',
-                  'wrapper' => $wrapper_id,
-                  'effect' => 'fade',
-                ),
-              );
-            }
-          }
-          else {
-            // uasort($select_bundles, 'backdrop_sort_weight');
-            backdrop_sort($select_bundles, array('weight' => SORT_NUMERIC));
-
-            $select_list = array();
-            foreach ($select_bundles as $machine_name => $bundle) {
-              $select_list[$machine_name] = $bundle['name'];
-            }
-
-            $field_elements['add_more']['type'] = array(
-              '#type' => 'select',
-              '#name' => strtr($id_prefix, '-', '_') . '_add_more_type',
-              '#title' => t('!title type', array('!title' => $instance_title)),
-              '#options' => $select_list,
-              '#attributes' => array('class' => array('field-add-more-type')),
-              '#limit_validation_errors' => array(array_merge($parents, array($field_name, $langcode))),
-            );
-
-            // Hide the bundle selection if only one bundle is allowed.
-            if (count($select_list) == 1) {
-              $field_elements['add_more']['type']['#type'] = 'hidden';
-              $keys = array_keys($select_list);
-              $field_elements['add_more']['type']['#value'] = $keys[0];
-            }
-
-            if (isset($form_state['input'][strtr($id_prefix, '-', '_') . '_add_more_type'])) {
-              $field_elements['add_more']['type']['#default_value'] = $form_state['input'][strtr($id_prefix, '-', '_') . '_add_more_type'];
-            }
-
-            $text = t('Add new !title', array('!title' => $instance_title));
-            if ($max >= 0) {
-              $text = t('Add another !title', array('!title' => $instance_title));
-            }
-
-            $field_elements['add_more']['add_more'] = array(
-              '#type' => 'submit',
-              '#name' => strtr($id_prefix, '-', '_') . '_add_more_add_more',
-              '#value' => $text,
-              '#attributes' => array('class' => array('field-add-more-submit', 'paragraphs-add-more-submit')),
-              '#limit_validation_errors' => array(),
-              '#submit' => array('paragraphs_add_more_submit'),
-              '#ajax' => array(
-                'callback' => 'paragraphs_add_more_js',
-                'wrapper' => $wrapper_id,
-                'effect' => 'fade',
-              ),
-            );
-          }
-        }
-      }
-      else {
-        $field_elements['add_more']['add_more'] = array(
-          '#type' => 'markup',
-          '#markup' => '<em>' . t('No Paragraph types available, edit field settings') . '</em>',
-        );
-      }
-    }
+    $field_elements += _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_state, $original_element, $id_prefix, $wrapper_id);
   }
 
   if (module_exists('file')) {
@@ -327,6 +166,184 @@ function paragraphs_field_multiple_value_form($field, $instance, $langcode, $ite
     $form_state['has_file_element'] = TRUE;
   }
 
+  return $field_elements;
+}
+
+/**
+ * Helper function to generate "Add more" buttons for a form.
+ *
+ * @return array
+ *   Array of field elements to add to your form.
+ */
+function _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_state, $original_element, $id_prefix, $wrapper_id) {
+  $field = $field_state['field'];
+  $field_name = $field['field_name'];
+  $field_elements = array();
+  $parents = (!empty($form_state['field']['#parents'])) ? $form_state['field']['#parents'] : array();
+  // Add 'add more' button, if not working with a programmed form.
+  if (empty($form_state['programmed'])) {
+    $available_bundles = paragraphs_bundle_load();
+    $select_bundles = array();
+    $select_bundles_weighted = array();
+
+    // By default, consider that no bundle has been explicitly picked.
+    $explicitly_enabled = FALSE;
+    foreach ($instance['settings']['allowed_bundles'] as $allowed_bundle_key => $allowed_bundle_value) {
+      if ($allowed_bundle_key === $allowed_bundle_value && isset($available_bundles[$allowed_bundle_key])) {
+        $select_bundles[$available_bundles[$allowed_bundle_key]->bundle] = $available_bundles[$allowed_bundle_key]->label;
+
+        // If an item has been explicitly selected, raise our flag.
+        $explicitly_enabled = TRUE;
+      }
+      elseif (isset($available_bundles[$allowed_bundle_key]->bundle)) {
+        $select_bundles_weighted[$available_bundles[$allowed_bundle_key]->bundle] = $available_bundles[$allowed_bundle_key]->label;
+      }
+    }
+
+    // If no bundle has been explicitly selected, give access to all of them.
+    if (!$explicitly_enabled) {
+      $select_bundles = $select_bundles_weighted;
+      foreach ($available_bundles as $bundle) {
+        if (!isset($select_bundles[$bundle->bundle])) {
+          $select_bundles[$bundle->bundle] = $bundle->label;
+        }
+      }
+    }
+
+    $removed_a_bundle = FALSE;
+
+    $weight = 0;
+
+    foreach ($select_bundles as $machine_name => $bundle) {
+      $select_bundles[$machine_name] = array(
+        'name' => $bundle,
+        'weight' => $weight,
+      );
+
+      /* @var $entity_shell ParagraphsItemEntity */
+      $entity_shell = entity_create('paragraphs_item', array('bundle' => $machine_name, 'field_name' => $field_name));
+      $entity_shell->setHostEntity($original_element['#entity_type'], $original_element['#entity'], $langcode, FALSE);
+
+      if (!entity_access('create', 'paragraphs_item', $entity_shell)) {
+        unset($select_bundles[$machine_name]);
+        $removed_a_bundle = TRUE;
+      }
+      elseif (isset($instance['settings']['bundle_weights'][$machine_name])) {
+        $select_bundles[$machine_name]['weight'] = $instance['settings']['bundle_weights'][$machine_name];
+      }
+      $weight++;
+    }
+
+    $field_elements['#select_bundles'] = $select_bundles;
+    if ($removed_a_bundle && count($select_bundles) === 0) {
+      $field_elements['add_more'] = array(
+        '#type' => 'container',
+        '#tree' => TRUE,
+      );
+      $field_elements['add_more']['add_more'] = array(
+        '#type' => 'markup',
+        '#markup' => '<em>' . t('You are not allowed to add any of the bundles.') . '</em>',
+      );
+    }
+    elseif (count($select_bundles)) {
+      // uasort($select_bundles, 'backdrop_sort_weight');
+      backdrop_sort($select_bundles, array('weight' => SORT_NUMERIC));
+
+      if ($field['cardinality'] == FIELD_CARDINALITY_UNLIMITED || $field_state['real_items_count'] < $field['cardinality']) {
+        if (!isset($instance['settings']['title'])) {
+          $instance['settings']['title'] = PARAGRAPHS_DEFAULT_TITLE;
+        }
+        $instance_title = t($instance['settings']['title']);
+
+        $field_elements['add_more'] = array(
+          '#type' => 'container',
+          '#tree' => TRUE,
+        );
+
+        $add_mode = (isset($instance['settings']['add_mode']) ? $instance['settings']['add_mode'] : PARAGRAPHS_DEFAULT_ADD_MODE);
+
+        if ($add_mode == 'button') {
+          foreach ($select_bundles as $machine_name => $bundle) {
+
+            /* @var $entity_shell ParagraphsItemEntity */
+            $entity_shell = entity_create('paragraphs_item', array('bundle' => $machine_name, 'field_name' => $field_name));
+            $entity_shell->setHostEntity($original_element['#entity_type'], $original_element['#entity'], $langcode, FALSE);
+            $field_elements['add_more']['add_more_bundle_' . $machine_name] = array(
+              '#type' => 'submit',
+              '#name' => strtr($id_prefix, '-', '_') . '_add_more_add_more_bundle_' . $machine_name,
+              '#value' => t('Add !title', array('!title' => $bundle['name'])),
+              '#access' => entity_access('create', 'paragraphs_item', $entity_shell),
+              '#attributes' => array('class' => array('field-add-more-submit', 'paragraphs-add-more-submit')),
+              '#limit_validation_errors' => array(),
+              '#submit' => array('paragraphs_add_more_submit'),
+              '#ajax' => array(
+                'callback' => 'paragraphs_add_more_js',
+                'wrapper' => $wrapper_id,
+                'effect' => 'fade',
+              ),
+            );
+          }
+        }
+        else {
+          // uasort($select_bundles, 'backdrop_sort_weight');
+          backdrop_sort($select_bundles, array('weight' => SORT_NUMERIC));
+
+          $select_list = array();
+          foreach ($select_bundles as $machine_name => $bundle) {
+            $select_list[$machine_name] = $bundle['name'];
+          }
+
+          $field_elements['add_more']['type'] = array(
+            '#type' => 'select',
+            '#name' => strtr($id_prefix, '-', '_') . '_add_more_type',
+            '#title' => t('!title type', array('!title' => $instance_title)),
+            '#options' => $select_list,
+            '#attributes' => array('class' => array('field-add-more-type')),
+            '#limit_validation_errors' => array(
+              array_merge($parents, array($field_name, $langcode)),
+            ),
+          );
+
+          // Hide the bundle selection if only one bundle is allowed.
+          if (count($select_list) == 1) {
+            $field_elements['add_more']['type']['#type'] = 'hidden';
+            $keys = array_keys($select_list);
+            $field_elements['add_more']['type']['#value'] = $keys[0];
+          }
+
+          if (isset($form_state['input'][strtr($id_prefix, '-', '_') . '_add_more_type'])) {
+            $field_elements['add_more']['type']['#default_value'] = $form_state['input'][strtr($id_prefix, '-', '_') . '_add_more_type'];
+          }
+
+          $text = t('Add new !title', array('!title' => $instance_title));
+          $max = $field_state['items_count'] - 1;
+          if ($max >= 0) {
+            $text = t('Add another !title', array('!title' => $instance_title));
+          }
+
+          $field_elements['add_more']['add_more'] = array(
+            '#type' => 'submit',
+            '#name' => strtr($id_prefix, '-', '_') . '_add_more_add_more',
+            '#value' => $text,
+            '#attributes' => array('class' => array('field-add-more-submit', 'paragraphs-add-more-submit')),
+            '#limit_validation_errors' => array(),
+            '#submit' => array('paragraphs_add_more_submit'),
+            '#ajax' => array(
+              'callback' => 'paragraphs_add_more_js',
+              'wrapper' => $wrapper_id,
+              'effect' => 'fade',
+            ),
+          );
+        }
+      }
+    }
+    else {
+      $field_elements['add_more']['add_more'] = array(
+        '#type' => 'markup',
+        '#markup' => '<em>' . t('No Paragraph types available, edit field settings') . '</em>',
+      );
+    }
+  }
   return $field_elements;
 }
 
@@ -410,6 +427,7 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
   $deleted_paragraph = FALSE;
   $confirmed_deleted_paragraph = FALSE;
   $is_new_paragraph = FALSE;
+  $unpublished_paragraph = FALSE;
 
   $default_edit_mode = isset($instance['settings']['default_edit_mode']) ? $instance['settings']['default_edit_mode'] : PARAGRAPHS_DEFAULT_EDIT_MODE;
   $default_edit_mode_override = isset($instance['settings']['default_edit_mode_override']) ? $instance['settings']['default_edit_mode_override'] : PARAGRAPHS_DEFAULT_EDIT_MODE_OVERRIDE;
@@ -431,42 +449,42 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
       $being_edited_paragraph = FALSE;
     }
 
-    /* @var $paragraph_item ParagraphsItemEntity */
-    $paragraph_item = $field_state['entity'][$delta];
-    $paragraph_item->setHostEntity($element['#host_entity_type'], $element['#host_entity'], $langcode, FALSE);
+    /* @var $paragraphs_item ParagraphsItemEntity */
+    $paragraphs_item = $field_state['entity'][$delta];
+    $paragraphs_item->setHostEntity($element['#host_entity_type'], $element['#host_entity'], $langcode, FALSE);
   }
   else {
     if (isset($items[$delta])) {
-      $paragraph_item = paragraphs_field_get_entity($items[$delta]);
+      $paragraphs_item = paragraphs_field_get_entity($items[$delta]);
     }
 
     // Show an empty collection if we have no existing one or it does not
     // load.
-    if (empty($paragraph_item) && $bundle) {
-      /* @var $paragraph_item ParagraphsItemEntity */
-      $paragraph_item = entity_create('paragraphs_item', array('bundle' => $bundle, 'field_name' => $field_name));
-      $paragraph_item->being_edited = TRUE;
+    if (empty($paragraphs_item) && $bundle) {
+      /* @var $paragraphs_item ParagraphsItemEntity */
+      $paragraphs_item = entity_create('paragraphs_item', array('bundle' => $bundle, 'field_name' => $field_name));
+      $paragraphs_item->being_edited = TRUE;
       $being_edited_paragraph = TRUE;
       $is_new_paragraph = TRUE;
     }
 
-    if (!empty($paragraph_item)) {
-      /* @var $paragraph_item ParagraphsItemEntity */
-      $paragraph_item->setHostEntity($element['#host_entity_type'], $element['#host_entity'], $langcode, FALSE);
+    if (!empty($paragraphs_item)) {
+      /* @var $paragraphs_item ParagraphsItemEntity */
+      $paragraphs_item->setHostEntity($element['#host_entity_type'], $element['#host_entity'], $langcode, FALSE);
 
       if ($force_open) {
-        $paragraph_item->being_edited = TRUE;
+        $paragraphs_item->being_edited = TRUE;
         $being_edited_paragraph = TRUE;
       }
 
       // Put our entity in the form state, so FAPI callbacks can access it.
-      $field_state['entity'][$delta] = $paragraph_item;
+      $field_state['entity'][$delta] = $paragraphs_item;
     }
   }
   field_form_set_state($field_parents, $field_name, $language, $form_state, $field_state);
-  if (!empty($paragraph_item)) {
+  if (!empty($paragraphs_item)) {
 
-    $bundle_info = paragraphs_bundle_load($paragraph_item->bundle);
+    $bundle_info = paragraphs_bundle_load($paragraphs_item->bundle);
 
     if ($bundle_info) {
       $element['paragraph_bundle_title'] = array(
@@ -484,9 +502,9 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
         '#weight' => 9999,
       );
 
-      field_attach_form('paragraphs_item', $paragraph_item, $element, $form_state, $language);
+      field_attach_form('paragraphs_item', $paragraphs_item, $element, $form_state, $language);
       if ($being_edited_paragraph) {
-        if (!$is_new_paragraph && !entity_access('update', 'paragraphs_item', $paragraph_item)) {
+        if (!$is_new_paragraph && !entity_access('update', 'paragraphs_item', $paragraphs_item)) {
           foreach (element_children($element) as $key) {
             if ($key != 'paragraph_bundle_title' && $key != 'actions' && $key != 'paragraph_bundle_preview' && $key != 'access_info') {
               $element[$key]['#access'] = FALSE;
@@ -522,17 +540,17 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
               'effect' => 'fade',
               'wrapper' => $element['#wrapper_id'],
             ),
-            '#access' => entity_access('update', 'paragraphs_item', $paragraph_item),
+            '#access' => entity_access('update', 'paragraphs_item', $paragraphs_item),
             '#weight' => 999,
           );
         }
       }
       else {
-        if ($default_edit_mode === 'preview' && entity_access('view', 'paragraphs_item', $paragraph_item)) {
+        if ($default_edit_mode === 'preview' && entity_access('view', 'paragraphs_item', $paragraphs_item)) {
           $element['paragraph_bundle_preview'] = array(
             '#type' => 'container',
           );
-          $preview = $paragraph_item->view('paragraphs_editor_preview', $langcode);
+          $preview = $paragraphs_item->view('paragraphs_editor_preview', $langcode);
           $element['paragraph_bundle_preview']['preview'] = $preview;
         }
 
@@ -541,14 +559,23 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
             $element[$key]['#access'] = FALSE;
           }
         }
+        // Make as dropbutton?
         $element['actions'] = array(
           '#type' => 'actions',
           '#weight' => 9999,
         );
 
         if (isset($field_state['entity'][$delta]->must_be_saved) && $field_state['entity'][$delta]->must_be_saved) {
+          $markup = '<div class="messages warning">';
+          if (config_get('system.core', 'messages_dismissible')) {
+            // Add the 'Dismiss' library and place a 'Dismiss' link on messages.
+            backdrop_add_library('system', 'backdrop.dismiss');
+            $markup .= '<a href="#" class="dismiss" title="' . t('Dismiss') . '"><span class="element-invisible">' . t('Dismiss') . '</span></a>' . "\n";
+          }
+          $markup .= t('This content must be saved to record recent changes.');
+          $markup .= '</div>';
           $element['actions']['must_be_saved'] = array(
-            '#markup' => '<p><em>' . t('Warning: this content must be saved to reflect changes on this paragraphs item.') . '</em></p>',
+            '#markup' => $markup,
             '#weight' => 998,
           );
         }
@@ -566,12 +593,39 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
             'effect' => 'fade',
             'wrapper' => $element['#wrapper_id'],
           ),
-          '#access' => entity_access('update', 'paragraphs_item', $paragraph_item),
+          '#access' => entity_access('update', 'paragraphs_item', $paragraphs_item),
           '#weight' => 999,
         );
       }
 
-      if (isset($paragraph_item)) {
+      if (isset($paragraphs_item)) {
+        if (isset($bundle_info->allow_unpublish)) {
+          if ($paragraphs_item->status) {
+            $button_value = t('Unpublish');
+          }
+          else {
+            $button_value = t('Publish');
+            $unpublished_paragraph = TRUE;
+          }
+          $element['actions']['togglepublish_button'] = array(
+            '#delta' => $delta,
+            '#name' => implode('_', $parents) . '_togglepublish_button',
+            '#type' => 'submit',
+            '#value' => $button_value,
+            '#validate' => array(),
+            '#submit' => array(
+              'paragraphs_togglepublish_submit',
+            ),
+            '#limit_validation_errors' => array($parents),
+            '#ajax' => array(
+              'callback' => '_paragraphs_ajax_update_callback',
+              'effect' => 'fade',
+              'wrapper' => $element['#wrapper_id'],
+            ),
+            '#access' => entity_access('update', 'paragraphs_item', $paragraphs_item),
+            '#weight' => 1000,
+          );
+        }
         $element['actions']['remove_button'] = array(
           '#delta' => $delta,
           '#name' => implode('_', $parents) . '_remove_button',
@@ -585,8 +639,8 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
             'effect' => 'fade',
             'wrapper' => $element['#wrapper_id'],
           ),
-          '#access' => entity_access('delete', 'paragraphs_item', $paragraph_item),
-          '#weight' => 1000,
+          '#access' => entity_access('delete', 'paragraphs_item', $paragraphs_item),
+          '#weight' => 1001,
           '#attributes' => array(
             'class' => array('button-danger'),
           ),
@@ -630,8 +684,21 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
         '#type' => 'actions',
         '#weight' => 9999,
       );
+      $remove_button = '<p>' . t('This @title has been removed.', array('@title' => $instance_title)) . ' </p>';
+      $remove_button .= '<div class="messages warning">';
+      if (config_get('system.core', 'messages_dismissible')) {
+        // Add the 'Dismiss' library and place a 'Dismiss' link on messages.
+        backdrop_add_library('system', 'backdrop.dismiss');
+        $remove_button .= '<a href="#" class="dismiss" title="' . t('Dismiss') . '"><span class="element-invisible">' . t('Dismiss') . '</span></a>' . "\n";
+      }
+      $remove_button .= t('This @title will be permanently deleted when you press %confirm or save this page. (You can restore it with the %restore button or by closing this screen without saving.)', array(
+        '@title' => $instance_title,
+        '%confirm' => t('Confirm Deletion'),
+        '%restore' => t('Restore'),
+        ));
+      $remove_button .= '</div>';
       $element['actions']['remove_button'] = array(
-        '#markup' => '<p>' . t('This @title has been removed, press the button below to restore.', array('@title' => $instance_title)) . ' </p><p><em>' . t('Warning: this @title will actually be deleted when you press "!confirm" or "!save"!', array('@title' => $instance_title, '!confirm' => t('Confirm Deletion'), '!save' => t('Save'))) . '</em></p>',
+        '#markup' => $remove_button,
       );
       $element['actions']['restore_button'] = array(
         '#delta' => $delta,
@@ -674,6 +741,21 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
     $element['#access'] = FALSE;
   }
 
+  // Add class if this is unpublished or deleted.
+  $class = '';
+  if ($deleted_paragraph) {
+    $class = 'removed';
+  }
+  elseif ($unpublished_paragraph) {
+    $class = 'unpublished';
+  }
+  if (!empty($class)) {
+    $element['paragraph_bundle_title']['#attributes'] = array(
+      'class' => array(
+        $class,
+      ),
+    );
+  }
   $recursion--;
   return $element;
 }
@@ -754,16 +836,15 @@ function paragraphs_field_widget_embed_validate(array $element, array &$form_sta
   $field_parents = $element['#field_parents'];
   $field_name = $element['#field_name'];
   $language = $element['#language'];
-
   $field_state = field_form_get_state($field_parents, $field_name, $language, $form_state);
   if (isset($field_state['entity'][$element['#delta']])) {
-    $paragraph_item = $field_state['entity'][$element['#delta']];
+    $paragraphs_item = $field_state['entity'][$element['#delta']];
 
     // Now validate elements if the entity is not empty.
-    if (((!isset($paragraph_item->removed) || !$paragraph_item->removed) && (!isset($paragraph_item->confirmed_removed) || !$paragraph_item->confirmed_removed))) {
+    if (((!isset($paragraphs_item->removed) || !$paragraphs_item->removed) && (!isset($paragraphs_item->confirmed_removed) || !$paragraphs_item->confirmed_removed))) {
 
       // Attach field API validation of the embedded form.
-      field_attach_form_validate('paragraphs_item', $paragraph_item, $element, $form_state);
+      field_attach_form_validate('paragraphs_item', $paragraphs_item, $element, $form_state);
 
       if (!empty($element['#paragraphs_required_elements'])) {
         foreach ($element['#paragraphs_required_elements'] as &$elements) {
@@ -776,7 +857,7 @@ function paragraphs_field_widget_embed_validate(array $element, array &$form_sta
             $is_empty_value = ($elements['#value'] === 0);
             if ($is_empty_multiple || $is_empty_string || $is_empty_value) {
               if (isset($elements['#title'])) {
-                $error_text = t('!name field is required.', array('!name' => $elements['#title']));
+                $error_text = t('The !name field is required.', array('!name' => $elements['#title']));
                 form_error($elements, filter_xss_admin($error_text));
               }
               else {
@@ -805,7 +886,7 @@ function paragraphs_field_widget_embed_validate(array $element, array &$form_sta
       }
 
       if (!$errors) {
-        field_attach_submit('paragraphs_item', $paragraph_item, $element, $form_state);
+        field_attach_submit('paragraphs_item', $paragraphs_item, $element, $form_state);
 
         // Load initial form values into $item, so any other form values below
         // the same parents are kept.
@@ -819,7 +900,7 @@ function paragraphs_field_widget_embed_validate(array $element, array &$form_sta
         // Put the paragraphs item in $item['entity'], so it is saved with
         // the host entity via hook_field_presave() if it is not empty.
         // @see paragraph_field_presave()
-        $item['entity'] = $paragraph_item;
+        $item['entity'] = $paragraphs_item;
         form_set_value($element, $item, $form_state);
       }
 
@@ -905,7 +986,7 @@ function _paragraphs_multiple_field_validate($elements, &$form_state) {
     }
 
     if (count($field_values) < 1) {
-      form_error($elements, t('The "!name" field is required', array(
+      form_error($elements, t('The "!name" field is required.', array(
         '!name' => $elements['#title'],
       )));
     }
@@ -927,10 +1008,8 @@ function _paragraphs_multiple_field_validate($elements, &$form_state) {
  */
 function paragraphs_add_more_js(array $form, array $form_state) {
   $button = $form_state['triggering_element'];
-
   // Go one level up in the form, to the widgets container.
   $element = backdrop_array_get_nested_value($form, array_slice($button['#array_parents'], 0, -2));
-
   // Add a DIV around the delta receiving the Ajax effect.
   $delta = $element['#max_delta'];
   $element[$delta]['#prefix'] = '<div class="ajax-new-content">' . (isset($element[$delta]['#prefix']) ? $element[$delta]['#prefix'] : '');
@@ -971,6 +1050,70 @@ function paragraphs_remove_submit(array $form, array &$form_state) {
 
   if (isset($field_state['entity'][$delta])) {
     $field_state['entity'][$delta]->removed = 1;
+  }
+
+  // Fix the weights. Field UI lets the weights be in a range of
+  // (-1 * item_count) to (item_count). This means that when we remove one,
+  // the range shrinks; weights outside of that range then get set to
+  // the first item in the select by the browser, floating them to the top.
+  // We use a brute force method because we lost weights on both ends
+  // and if the user has moved things around, we have to cascade because
+  // if I have items weight weights 3 and 4, and I change 4 to 3 but leave
+  // the 3, the order of the two 3s now is undefined and may not match what
+  // the user had selected.
+  $input = backdrop_array_get_nested_value($form_state['input'], $address);
+  // Sort by weight,
+  // but first remove garbage values to ensure proper '_weight' sorting.
+  unset($input['add_more']);
+  uasort($input, '_field_sort_items_helper');
+
+  // Reweight everything in the correct order.
+  $weight = -1 * $field_state['items_count'] + 1;
+  foreach ($input as $key => $item) {
+    if ($item) {
+      $input[$key]['_weight'] = $weight++;
+    }
+  }
+
+  backdrop_array_set_nested_value($form_state['input'], $address, $input);
+  field_form_set_state($parents, $field_name, $langcode, $form_state, $field_state);
+
+  $form_state['rebuild'] = TRUE;
+}
+
+
+/**
+ * Submit callback to un/publish an item in the field UI multiple wrapper.
+ *
+ * When an un/publish button is submitted, we need to find the item that it
+ * referenced and delete it. Since field UI has the deltas as a straight
+ * unbroken array key, we have to renumber everything down. Since we do this
+ * we *also* need to move all the deltas around in the $form_state['values']
+ * and $form_state['input'] so that user changed values follow. This is a bit
+ * of a complicated process.
+ *
+ * @param array $form
+ *   The form structure array.
+ * @param array $form_state
+ *   An associative array containing the current state of the form.
+ */
+function paragraphs_togglepublish_submit(array $form, array &$form_state) {
+  $button = $form_state['triggering_element'];
+  $delta = $button['#delta'];
+
+  // Where in the form we'll find the parent element.
+  $address = array_slice($button['#array_parents'], 0, -3);
+
+  // Go one level up in the form, to the widgets container.
+  $parent_element = backdrop_array_get_nested_value($form, $address);
+  $field_name = $parent_element['#field_name'];
+  $langcode = $parent_element['#language'];
+  $parents = $parent_element['#field_parents'];
+
+  $field_state = field_form_get_state($parents, $field_name, $langcode, $form_state);
+  if (isset($field_state['entity'][$delta])) {
+    $field_state['entity'][$delta]->status = !($field_state['entity'][$delta]->status);
+    $field_state['entity'][$delta]->must_be_saved = TRUE;
   }
 
   // Fix the weights. Field UI lets the weights be in a range of

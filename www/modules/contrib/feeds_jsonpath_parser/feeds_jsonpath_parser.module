@@ -1,0 +1,46 @@
+<?php
+/**
+ * @file
+ * Parse a JSON document using JSONPath.
+ */
+
+/**
+ * Implements hook_autoload_info().
+ */
+function feeds_jsonpath_parser_autoload_info() {
+  return array(
+    'JSONPath' => 'libraries/JSONPath/src/Flow/JSONPath/JSONPath.php',
+    'JSONPathException' => 'libraries/JSONPath/src/Flow/JSONPath/JSONPathException.php',
+    'JSONPathLexer' => 'libraries/JSONPath/src/Flow/JSONPath/JSONPathLexer.php',
+    'JSONPathToken' => 'libraries/JSONPath/src/Flow/JSONPath/JSONPathToken.php',
+    'AccessHelper' => 'libraries/JSONPath/src/Flow/JSONPath/AccessHelper.php',
+    'AbstractFilter' => 'libraries/JSONPath/src/Flow/JSONPath/Filters/AbstractFilter.php',
+    'IndexesFilter' => 'libraries/JSONPath/src/Flow/JSONPath/Filters/IndexesFilter.php',
+    'IndexFilter' => 'libraries/JSONPath/src/Flow/JSONPath/Filters/IndexFilter.php',
+    'QueryMatchFilter' => 'libraries/JSONPath/src/Flow/JSONPath/Filters/QueryMatchFilter.php',
+    'QueryResultFilter' => 'libraries/JSONPath/src/Flow/JSONPath/Filters/QueryResultFilter.php',
+    'RecursiveFilter' => 'libraries/JSONPath/src/Flow/JSONPath/Filters/RecursiveFilter.php',
+    'SliceFilter' => 'libraries/JSONPath/src/Flow/JSONPath/Filters/SliceFilter.php',
+    'FeedsJSONPathParser' => 'FeedsJSONPathParser.inc',
+  );
+}
+
+/**
+ * Implements hook_feeds_plugins().
+ */
+function feeds_jsonpath_parser_feeds_plugins() {
+  return array(
+    'FeedsJSONPathParser' => array(
+      'module' => 'feeds_jsonpath_parser',
+      'name' => t('JSONPath parser'),
+      'description' => t('Parse JSON files using JSONPath.'),
+      'handler' => array(
+        'parent' => 'FeedsParser',
+        'class' => 'FeedsJSONPathParser',
+        'file' => 'FeedsJSONPathParser.inc',
+        'path' => backdrop_get_path('module', 'feeds_jsonpath_parser'),
+      ),
+    ),
+  );
+}
+

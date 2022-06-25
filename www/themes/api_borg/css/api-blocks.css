@@ -92,6 +92,18 @@ article {
 }
 
 /*******************************************************************************
+ * Menu Pager blocks.
+ ******************************************************************************/
+.block-menu-pager-main-menu {
+  margin-top: 30px;
+}
+.block-menu-pager-main-menu .item-list {
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  padding: 10px;
+}
+
+/*******************************************************************************
  * Change Records exposed filters.
  ******************************************************************************/
 .view-change-record .views-exposed-form .views-widget-filter-combine input.form-text {
