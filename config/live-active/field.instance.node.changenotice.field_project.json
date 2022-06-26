@@ -14,7 +14,7 @@
         "default": {
             "label": "above",
             "type": "hidden",
-            "weight": "6",
+            "weight": "7",
             "settings": []
         },
         "teaser": {
@@ -38,5 +38,6 @@
         "settings": {
             "size": "60"
         }
-    }
+    },
+    "default_value_function": null
 }
