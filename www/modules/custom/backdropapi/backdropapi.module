@@ -330,18 +330,3 @@ function _backdropapi_format_default_property_value($raw_property_value) {
   $property_value = preg_replace('!\s+!', ' ', $property_value);
 return $property_value;
 }
-
-/**
- * Implements hook_node_presave().
- *
- * Copy GitHub links from the old field to the new field.
- */
-function backdropapi_node_presave(Node $node) {
-  $langcode = $node->langcode;
-  unset($node->field_github_issues[$langcode]);
-  foreach ($node->field_github_issue[$langcode] as $link) {
-    $node->field_github_issues[$langcode][] = array(
-      'url' => $link['value'],
-    );
-  }
-}
