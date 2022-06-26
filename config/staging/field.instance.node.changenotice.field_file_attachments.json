@@ -9,7 +9,7 @@
         "default": {
             "label": "above",
             "type": "file_default",
-            "weight": "5",
+            "weight": "6",
             "settings": [],
             "module": "file"
         },
@@ -36,6 +36,8 @@
             "progress_indicator": "bar"
         },
         "type": "file_generic",
-        "weight": "7"
-    }
+        "weight": "8"
+    },
+    "default_value": null,
+    "default_value_function": null
 }
