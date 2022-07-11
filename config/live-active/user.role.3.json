@@ -144,6 +144,7 @@
         "view any unpublished content",
         "administer feeds_tamper",
         "tamper documentation",
-        "use text format markdown"
+        "use text format markdown",
+        "administer google analytics"
     ]
 }
