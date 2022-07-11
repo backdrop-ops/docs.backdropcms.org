@@ -32,7 +32,7 @@
         "user_register_form": false
     },
     "widget": {
-        "weight": "6",
+        "weight": "7",
         "type": "text_textarea_with_summary",
         "module": "text",
         "active": 1,
@@ -40,5 +40,6 @@
             "rows": "20",
             "summary_rows": 5
         }
-    }
+    },
+    "default_value_function": null
 }

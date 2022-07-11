@@ -39,5 +39,6 @@
         "settings": {
             "size": "60"
         }
-    }
+    },
+    "default_value_function": null
 }
