@@ -498,6 +498,8 @@ function paragraphs_field_info() {
     'default_widget' => 'paragraphs_hidden',
     'default_formatter' => 'paragraphs_view',
     'settings' => array(),
+    'property_type' => 'paragraphs_item',
+    'property_callbacks' => array('paragraphs_entity_metadata_property_callback'),
   );
   return $info;
 }
@@ -1221,7 +1223,7 @@ function paragraphs_field_property_get($entity, array $options, $name, $entity_t
 function paragraphs_field_property_set($entity, $name, $value, $langcode, $entity_type) {
   $field = field_info_field($name);
   $columns = array_keys($field['columns']);
-  $langcode = entity_metadata_field_get_language($entity_type, $entity, $field, $langcode);
+  $langcode = entity_plus_metadata_field_get_language($entity_type, $entity, $field, $langcode);
   $values = $field['cardinality'] == 1 ? array($value) : (array) $value;
 
   $items = array();
@@ -1591,8 +1593,7 @@ function paragraphs_bundle_copy_info() {
  * Helper to ensure entitycache table.
  */
 function paragraphs_ensure_entitycache_table() {
-  if (module_exists('entitycache') && !db_table_exists('cache_entity_paragraphs_item')) {
-    backdrop_load('module', 'entitycache');
+  if (!db_table_exists('cache_entity_paragraphs_item')) {
     $cache_schema = backdrop_get_schema_unprocessed('system', 'cache');
     $cache_schema['description'] = 'Cache table used to store paragraphs_item entity records.';
     db_create_table('cache_entity_paragraphs_item', $cache_schema);

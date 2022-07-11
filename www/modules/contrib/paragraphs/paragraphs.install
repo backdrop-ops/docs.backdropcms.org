@@ -28,7 +28,7 @@ function paragraphs_schema() {
         'translatable' => TRUE,
       ),
       'label' => array(
-        'description' => 'A user-facing label for this bundle.',
+        'description' => 'A user-facing label for this Paragraph type.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
@@ -36,7 +36,7 @@ function paragraphs_schema() {
         'translatable' => TRUE,
       ),
       'description' => array(
-        'description' => 'A brief description of this bundle.',
+        'description' => 'A brief description of this Paragraph type.',
         'type' => 'text',
         'not null' => FALSE,
         'size' => 'medium',
@@ -193,19 +193,26 @@ function paragraphs_uninstall() {
 }
 
 /**
+ * Implements hook_update_last_removed().
+ */
+function paragraphs_update_last_removed() {
+  return 7101;
+}
+
+/**
  * Update {paragraphs_bundle} schema to include label and description fields.
  */
 function paragraphs_update_1000() {
   $fields = array(
     'label' => array(
-      'description' => 'A user-facing label for this bundle.',
+      'description' => 'A user-facing label for this Paragraph type.',
       'type' => 'varchar',
       'length' => 255,
       'not null' => TRUE,
       'default' => '',
     ),
     'description' => array(
-      'description' => 'A brief description of this bundle.',
+      'description' => 'A brief description of this Paragraph type.',
       'type' => 'text',
       'not null' => FALSE,
       'size' => 'medium',
@@ -223,13 +230,6 @@ function paragraphs_update_1000() {
   db_update('paragraphs_bundle')
     ->expression('label', 'name')
     ->execute();
-}
-
-/**
- * Implements hook_update_last_removed().
- */
-function paragraphs_update_last_removed() {
-  return 7103;
 }
 
 /**
@@ -253,11 +253,8 @@ function paragraphs_update_1001() {
  * Ensure entity cache table is created for Paragraphs items.
  */
 function paragraphs_update_1002() {
-  if (!db_table_exists('cache_entity_paragraphs_item')) {
-    $cache_schema = backdrop_get_schema_unprocessed('system', 'cache');
-    $cache_schema['description'] = 'Cache table used to store paragraphs_item entity records.';
-    db_create_table('cache_entity_paragraphs_item', $cache_schema);
-  }
+  module_load_include('module', 'paragraphs');
+  paragraphs_ensure_entitycache_table();
 }
 
 /**
