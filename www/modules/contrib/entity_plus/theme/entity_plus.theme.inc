@@ -72,11 +72,15 @@ function template_preprocess_entity_plus_property(&$variables, $hook) {
     'attributes_array' => array(),
   );
   // Generate variables from element properties.
-  foreach (array('label', 'property_name') as $name) {
-    $variables[$name] = check_plain($element['#' . $name]);
+  foreach (array('label_hidden', 'label', 'property_name') as $name) {
+    if (isset($element['#' . $name])) {
+      $variables[$name] = check_plain($element['#' . $name]);
+    }
   }
 
-  $variables['label_hidden'] = ($element['#label_display'] == 'hidden');
+  if (isset($element['#label_display'])) {
+    $variables['label_hidden'] = ($element['#label_display'] == 'hidden');
+  }
 
   $variables['title_attributes_array']['class'][] = 'entity-property-label';
   $variables['content_attributes_array']['class'][] = 'entity-property-item';
@@ -84,9 +88,10 @@ function template_preprocess_entity_plus_property(&$variables, $hook) {
 
   $variables['property_name_css'] = strtr($element['#property_name'], '_', '-');
   $variables['attributes_array']['class'][] = 'entity-property';
-  $variables['attributes_array']['class'][] = 'entity-property-' . $element['#label_display'];
   $variables['attributes_array']['class'][] = 'entity-property-' . $variables['property_name_css'];
-  if ($element['#label_display'] == 'inline') {
+
+  if (isset($element['#label_display']) && $element['#label_display'] == 'inline') {
+    $variables['attributes_array']['class'][] = 'entity-property-' . $element['#label_display'];
     $variables['attributes_array']['class'][]  = 'clearfix';
   }
 

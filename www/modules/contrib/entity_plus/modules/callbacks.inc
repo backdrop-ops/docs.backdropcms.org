@@ -401,7 +401,7 @@ function entity_plus_metadata_user_get_properties($account, array $options, $nam
 function entity_plus_metadata_user_set_properties($account, $name, $value) {
   switch ($name) {
     case 'roles':
-      $account->roles = array_intersect_key(user_roles(), array_flip($value));
+      $account->roles = array_intersect(array_keys(user_roles()), $value);
       break;
   }
 }

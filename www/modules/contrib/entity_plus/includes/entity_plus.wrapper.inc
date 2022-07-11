@@ -546,6 +546,7 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
   /**
    * Retrieve an external iterator.
    */
+  #[\ReturnTypeWillChange]
   public function getIterator() {
     $this->spotInfo();
     return new EntityMetadataWrapperIterator($this, array_keys($this->propertyInfo['properties']));
@@ -1117,6 +1118,7 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
   /**
    * If we wrap a list, we return an iterator over the data list.
    */
+  #[\ReturnTypeWillChange]
   public function getIterator() {
     // In case there is no data available, just iterate over the first item.
     return new EntityMetadataWrapperIterator($this, $this->dataAvailable() ? array_keys(parent::value()) : array(0));
@@ -1125,6 +1127,7 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
   /**
    * Implements the ArrayAccess interface.
    */
+  #[\ReturnTypeWillChange]
   public function offsetGet($delta) {
     return $this->get($delta);
   }
@@ -1132,6 +1135,7 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
   /**
    * Implements the ArrayAccess interface.
    */
+  #[\ReturnTypeWillChange]
   public function offsetExists($delta) {
     return $this->dataAvailable() && ($data = $this->value()) && array_key_exists($delta, $data);
   }
@@ -1139,6 +1143,7 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
   /**
    * Implements the ArrayAccess interface.
    */
+  #[\ReturnTypeWillChange]
   public function offsetSet($delta, $value) {
     $this->get($delta)->set($value);
   }
@@ -1146,6 +1151,7 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
   /**
    * Implements the ArrayAccess interface.
    */
+  #[\ReturnTypeWillChange]
   public function offsetUnset($delta) {
     if ($this->offsetExists($delta)) {
       unset($this->data[$delta]);
@@ -1156,6 +1162,7 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
   /**
    * Implements the Countable interface.
    */
+  #[\ReturnTypeWillChange]
   public function count() {
     return $this->dataAvailable() ? count($this->value()) : 0;
   }
@@ -1401,6 +1408,7 @@ class EntityMetadataWrapperIterator implements RecursiveIterator {
   /**
    * Implements RecursiveIterator.
    */
+  #[\ReturnTypeWillChange]
   public function rewind() {
     $this->position = 0;
   }
@@ -1408,6 +1416,7 @@ class EntityMetadataWrapperIterator implements RecursiveIterator {
   /**
    * Implements RecursiveIterator.
    */
+  #[\ReturnTypeWillChange]
   public function current() {
     return $this->wrapper->get($this->keys[$this->position]);
   }
@@ -1415,6 +1424,7 @@ class EntityMetadataWrapperIterator implements RecursiveIterator {
   /**
    * Implements RecursiveIterator.
    */
+  #[\ReturnTypeWillChange]
   public function key() {
     return $this->keys[$this->position];
   }
@@ -1422,6 +1432,7 @@ class EntityMetadataWrapperIterator implements RecursiveIterator {
   /**
    * Implements RecursiveIterator.
    */
+  #[\ReturnTypeWillChange]
   public function next() {
     $this->position++;
   }
@@ -1429,6 +1440,7 @@ class EntityMetadataWrapperIterator implements RecursiveIterator {
   /**
    * Implements RecursiveIterator.
    */
+  #[\ReturnTypeWillChange]
   public function valid() {
     return isset($this->keys[$this->position]);
   }
@@ -1436,6 +1448,7 @@ class EntityMetadataWrapperIterator implements RecursiveIterator {
   /**
    * Implements RecursiveIterator.
    */
+  #[\ReturnTypeWillChange]
   public function hasChildren() {
     return $this->current() instanceof IteratorAggregate;
   }
@@ -1443,6 +1456,7 @@ class EntityMetadataWrapperIterator implements RecursiveIterator {
   /**
    * Implements RecursiveIterator.
    */
+  #[\ReturnTypeWillChange]
   public function getChildren() {
     return $this->current()->getIterator();
   }
@@ -1473,6 +1487,7 @@ class EntityMetadataArrayObject implements ArrayAccess, Countable, IteratorAggre
   /**
    * Implements the ArrayAccess interface.
    */
+  #[\ReturnTypeWillChange]
   public function offsetGet($delta) {
     return $this->data[$delta];
   }
@@ -1480,6 +1495,7 @@ class EntityMetadataArrayObject implements ArrayAccess, Countable, IteratorAggre
   /**
    * Implements the ArrayAccess interface.
    */
+  #[\ReturnTypeWillChange]
   public function offsetExists($delta) {
     return array_key_exists($delta, $this->data);
   }
@@ -1487,6 +1503,7 @@ class EntityMetadataArrayObject implements ArrayAccess, Countable, IteratorAggre
   /**
    * Implements the ArrayAccess interface.
    */
+  #[\ReturnTypeWillChange]
   public function offsetSet($delta, $value) {
     $this->data[$delta] = $value;
   }
@@ -1494,6 +1511,7 @@ class EntityMetadataArrayObject implements ArrayAccess, Countable, IteratorAggre
   /**
    * Implements the ArrayAccess interface.
    */
+  #[\ReturnTypeWillChange]
   public function offsetUnset($delta) {
     unset($this->data[$delta]);
   }
@@ -1501,6 +1519,7 @@ class EntityMetadataArrayObject implements ArrayAccess, Countable, IteratorAggre
   /**
    * Implements the Coutable interface.
    */
+  #[\ReturnTypeWillChange]
   public function count() {
     return count($this->data);
   }
@@ -1508,6 +1527,7 @@ class EntityMetadataArrayObject implements ArrayAccess, Countable, IteratorAggre
   /**
    * Implements IteratorAggregate interface.
    */
+  #[\ReturnTypeWillChange]
   public function getIterator() {
     return new ArrayIterator($this->data);
   }

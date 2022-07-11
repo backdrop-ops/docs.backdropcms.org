@@ -4,7 +4,6 @@
  * Documents hook_entity_info() expansions by Entity Plus module.
  */
 
-
 /**
  * This is a placeholder for describing further keys for hook_entity_info(),
  * which are introduced by Entity Plus for providing a new entity type with the
@@ -296,6 +295,218 @@ function entity_plus_hook_entity_info() {
   );
 
   return $return;
+}
+
+
+/**
+ * Allow modules to define metadata about entity properties.
+ *
+ * Modules providing properties for any entities defined in hook_entity_info()
+ * can implement this hook to provide metadata about this properties.
+ * For making use of the metadata have a look at the provided wrappers returned
+ * by entity_metadata_wrapper().
+ * For providing property information for fields see entity_hook_field_info().
+ *
+ * @return array
+ *   An array whose keys are entity type names and whose values are arrays
+ *   containing the keys:
+ *   - properties: The array describing all properties for this entity. Entries
+ *     are keyed by the property name and contain an array of metadata for each
+ *     property. The name may only contain alphanumeric lowercase characters
+ *     and underscores. Known keys are:
+ *     - label: A human readable, translated label for the property.
+ *     - description: (optional) A human readable, translated description for
+ *       the property.
+ *     - type: The data type of the property. To make the property actually
+ *       useful it is important to map your properties to one of the known data
+ *       types, which currently are:
+ *        - text: Any text.
+ *        - token: A string containing only lowercase letters, numbers, and
+ *          underscores starting with a letter; e.g. this type is useful for
+ *          machine readable names.
+ *        - integer: A usual PHP integer value.
+ *        - decimal: A PHP float or integer.
+ *        - date: A full date and time, as timestamp.
+ *        - duration: A duration as number of seconds.
+ *        - boolean: A usual PHP boolean value.
+ *        - uri: An absolute URI or URL.
+ *        - entities - You may use the type of each entity known by
+ *          hook_entity_info(), e.g. 'node' or 'user'. Internally entities are
+ *          represented by their identifieres. In case of single-valued
+ *          properties getter callbacks may return full entity objects as well,
+ *          while a value of FALSE is interpreted like a NULL value as "property
+ *          is not set".
+ *        - entity: A special type to be used generically for entities where the
+ *          entity type is not known beforehand. The entity has to be
+ *          represented using an EntityMetadataWrapper.
+ *        - struct: This as well as any else not known type may be used for
+ *          supporting arbitrary data structures. For that additional metadata
+ *          has to be specified with the 'property info' key. New type names
+ *          have to be properly prefixed with the module name.
+ *        - list: A list of values, represented as numerically indexed array.
+ *          The list<TYPE> notation may be used to specify the type of the
+ *          contained items, where TYPE may be any valid type expression.
+ *     - bundle: (optional) If the property is an entity, you may specify the
+ *       bundle of the referenced entity.
+ *     - options list: (optional) A callback that returns a list of possible
+ *       values for the property. The callback has to return an array as
+ *       used by hook_options_list().
+ *       Note that it is possible to return a different set of options depending
+ *       whether they are used in read or in write context. See
+ *       EntityMetadataWrapper::optionsList() for more details on that.
+ *     - getter callback: (optional) A callback used to retrieve the value of
+ *       the property. Defaults to entity_property_verbatim_get().
+ *       It is important that your data is represented, as documented for your
+ *       data type, e.g. a date has to be a timestamp. Thus if necessary, the
+ *       getter callback has to do the necessary conversion. In case of an empty
+ *       or not set value, the callback has to return NULL.
+ *     - setter callback: (optional) A callback used to set the value of the
+ *       property. In many cases entity_property_verbatim_set() can be used.
+ *     - validation callback: (optional) A callback that returns whether the
+ *       passed data value is valid for the property. May be used to implement
+ *       additional validation checks, such as to ensure the value is a valid
+ *       mail address.
+ *     - access callback: (optional) An access callback to allow for checking
+ *       'view' and 'edit' access for the described property. If no callback
+ *       is specified, a 'setter permission' may be specified instead.
+ *     - setter permission: (optional) A permission that describes whether
+ *       a user has permission to set ('edit') this property. This permission
+ *       is only be taken into account, if no 'access callback' is given.
+ *     - schema field: (optional) In case the property is directly based upon
+ *       a field specified in the entity's hook_schema(), the name of the field.
+ *     - queryable: (optional) Whether a property is queryable with
+ *       EntityFieldQuery. Defaults to TRUE if a 'schema field' is specified, or
+ *       if the deprecated 'query callback' is set to
+ *       'entity_metadata_field_query'. Otherwise it defaults to FALSE.
+ *     - query callback: (deprecated) A callback for querying for entities
+ *       having the given property value. See entity_property_query().
+ *       Generally, properties should be queryable via EntityFieldQuery. If
+ *       that is the case, just set 'queryable' to TRUE.
+ *     - required: (optional) Whether this property is required for the creation
+ *       of a new instance of its entity. See
+ *       entity_property_values_create_entity().
+ *     - field: (optional) A boolean indicating whether a property is stemming
+ *       from a field.
+ *     - computed: (optional) A boolean indicating whether a property is
+ *       computed, i.e. the property value is not stored or loaded by the
+ *       entity's controller but determined on the fly by the getter callback.
+ *       Defaults to FALSE.
+ *     - entity views field: (optional) If enabled, the property is
+ *       automatically exposed as views field available to all views query
+ *       backends listing this entity-type. As the property value will always be
+ *       generated from a loaded entity object, this is particularly useful for
+ *       'computed' properties. Defaults to FALSE.
+ *     - sanitized: (optional) For textual properties only, whether the text is
+ *       already sanitized. In this case you might want to also specify a raw
+ *       getter callback. Defaults to FALSE.
+ *     - sanitize: (optional) For textual properties, that are not sanitized
+ *       yet, specify a function for sanitizing the value. Defaults to
+ *       check_plain().
+ *     - raw getter callback: (optional) For sanitized textual properties, a
+ *       separate callback which can be used to retrieve the raw, unprocessed
+ *       value.
+ *     - clear: (optional) An array of property names, of which the cache should
+ *       be cleared too once this property is updated. As a rule of thumb any
+ *       duplicated properties should be avoided though.
+ *     - property info: (optional) An array of info for an arbitrary data
+ *       structure together with any else not defined type, see data type
+ *       'struct'. Specify metadata in the same way as defined for this hook.
+ *     - property info alter: (optional) A callback for altering the property
+ *       info before it is used by the metadata wrappers.
+ *     - property defaults: (optional) An array of property info defaults for
+ *       each property derived of the wrapped data item (e.g. an entity).
+ *       Applied by the metadata wrappers.
+ *     - auto creation: (optional) Properties of type 'struct' may specify
+ *       this callback which is used to automatically create the data structure
+ *       (e.g. an array) if necessary. This is necessary in order to support
+ *       setting a property of a not yet initialized data structure.
+ *       See entity_metadata_field_file_callback() for an example.
+ *     - translatable: (optional) Whether the property is translatable, defaults
+ *       to FALSE.
+ *     - entity token: (optional) If Entity tokens module is enabled, the
+ *       module provides a token for the property if one does not exist yet.
+ *       Specify FALSE to disable this functionality for the property.
+ *   - bundles: An array keyed by bundle name containing further metadata
+ *     related to the bundles only. This array may contain the key 'properties'
+ *     with an array of info about the bundle specific properties, structured in
+ *     the same way as the entity properties array.
+ *
+ * @see hook_entity_property_info_alter()
+ * @see entity_get_property_info()
+ * @see entity_metadata_wrapper()
+ */
+function hook_entity_property_info() {
+  $info = array();
+  $properties = &$info['node']['properties'];
+
+  $properties['nid'] = array(
+    'label' => t("Content ID"),
+    'type' => 'integer',
+    'description' => t("The unique content ID."),
+  );
+  return $info;
+}
+
+/**
+ * Allow modules to alter metadata about entity properties.
+ *
+ * @see hook_entity_property_info()
+ */
+function hook_entity_property_info_alter(&$info) {
+  $properties = &$info['node']['bundles']['poll']['properties'];
+
+  $properties['poll-votes'] = array(
+    'label' => t("Poll votes"),
+    'description' => t("The number of votes that have been cast on a poll node."),
+    'type' => 'integer',
+    'getter callback' => 'entity_property_poll_node_get_properties',
+  );
+}
+
+/**
+ * Provide entity property information for fields.
+ *
+ * This is a placeholder for describing further keys for hook_field_info(),
+ * which are introduced by the entity API.
+ *
+ * For providing entity property info for fields each field type may specify a
+ * property type to map to using the key 'property_type'. With that info in
+ * place useful defaults are generated, which suffice for a lot of field
+ * types.
+ * However it is possible to specify further callbacks that may alter the
+ * generated property info. To do so use the key 'property_callbacks' and set
+ * it to an array of function names. Apart from that any property info provided
+ * for a field instance using the key 'property info' is added in too.
+ *
+ * @see entity_field_info_alter()
+ * @see entity_metadata_field_text_property_callback()
+ */
+function entity_plus_hook_field_info() {
+  return array(
+    'text' => array(
+      'label' => t('Text'),
+      'property_type' => 'text',
+      // ...
+    ),
+  );
+}
+
+/**
+ * Act after default entities have been rebuilt.
+ *
+ * This hook is invoked after default entities have been fully saved to the
+ * database, but with the lock still active.
+ *
+ * @param array $entities
+ *   An array of the entities that have been saved, keyed by name.
+ * @param array $originals
+ *   An array of the original copies of the entities that have been saved,
+ *   keyed by name.
+ *
+ * @see _entity_defaults_rebuild()
+ */
+function hook_ENTITY_TYPE_defaults_rebuild($entities, $originals) {
+
 }
 
 /**
