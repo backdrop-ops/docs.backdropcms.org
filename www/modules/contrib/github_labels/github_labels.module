@@ -52,19 +52,20 @@ function github_labels_config_info() {
  * Implements hook_token_info().
  */
 function github_labels_token_info() {
-  $info['types']['gh-label'] = array(
-    'name' => t('GitHub labels'),
-    'description' => t('Tokens for GitHub labels'),
-  );
-  $info['types']['gh-label-link'] = array(
-    'name' => t('GitHub label links'),
-    'description' => t('Tokens for GitHub label hyperlinks'),
-  );
-
-  $info['tokens']['gh-label'] = array();
-  $info['tokens']['gh-label-link'] = array();
   $token_info = state_get('github_labels_token_info');
   if (!empty($token_info)) {
+    $info['types']['gh-label'] = array(
+      'name' => t('GitHub labels'),
+      'description' => t('Tokens for GitHub labels'),
+    );
+    $info['types']['gh-label-link'] = array(
+      'name' => t('GitHub label links'),
+      'description' => t('Tokens for GitHub label hyperlinks'),
+    );
+
+    $info['tokens']['gh-label'] = array();
+    $info['tokens']['gh-label-link'] = array();
+
     foreach ($token_info as $clean_name => $data) {
       $info['tokens']['gh-label'][$clean_name] = array(
         'name' => $data['name'],
@@ -75,9 +76,9 @@ function github_labels_token_info() {
         'description' => t('GitHub label hyperlink for %name', array('%name' => $data['name'])),
       );
     }
+    
+    return $info;
   }
-
-  return $info;
 }
 
 /**
