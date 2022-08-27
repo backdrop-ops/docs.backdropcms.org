@@ -148,7 +148,7 @@ function backdropapi_fapi_check_view() {
   );
   $build_items = array();
 
-  // Get all elements and default properties.
+  // Get all elements and default properties from the standard hooks.
   $elements_info = module_invoke_all('element_info');
   backdrop_alter('element_info', $elements_info);
 
@@ -186,28 +186,31 @@ function backdropapi_fapi_check_view() {
   // some of them are only used internally.
   // @see form_builder()
   $all_element_properties = array(
-    'process',
+    'access',
     'after_build',
+    'attributes',
+    'id',
+    'input',
+    'post_render',
     'pre_render',
+    'process',
+    'required',
     'theme',
     'theme_wrappers',
-    'post_render',
-    'required',
-    'attributes',
     'title_display',
     'weight',
 
-    // Currently commenting out properties that are only used internally.
+    // Don't include properties that are only used internally.
 
-//    'processed',
+//    'after_build_done',
+//    'array_parents',
+//    'button_type',
+//    'children',
 //    'defaults_loaded',
+//    'parents',
+//    'processed',
 //    'sorted',
 //    'tree',
-//    'access',
-//    'parents',
-//    'array_parents',
-//    'children',
-//    'after_build_done',
   );
 
   // These properties are supported only in input elements.
@@ -224,16 +227,23 @@ function backdropapi_fapi_check_view() {
   $form_element_properties = array(
     'title',
     'description',
+    'field_prefix',
+    'field_suffix',
     'id',
     'name',
     'wrapper_attributes',
-    'field_prefix',
-    'field_suffix',
   );
 
   // Go through all form elements and compare their stored default properties
   // with the values that are defined in code, which will be in $element_info.
   foreach ($elements_info as $element_type => $element_info) {
+    // Add the default properties that are set by form_builder().
+    $element_info += array(
+      '#required' => FALSE,
+      '#attributes' => array(),
+      '#title_display' => 'before',
+    );
+
     if (!isset($element_nodes[$element_type])) {
       $build_items[] = t('There is no FAPI Element for %element_type.', array('%element_type' => $element_type));
       continue;
