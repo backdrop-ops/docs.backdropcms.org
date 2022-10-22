@@ -185,16 +185,17 @@ function backdropapi_fapi_check_view() {
   // These properties are supported in all form elements. Note, though, that
   // some of them are only used internally.
   // @see form_builder()
+  // @see _form_validate()
   $all_element_properties = array(
     'access',
     'after_build',
     'attributes',
     'id',
-    'input',
     'post_render',
     'pre_render',
     'process',
     'required',
+    'required_message',
     'theme',
     'theme_wrappers',
     'title_display',
@@ -215,10 +216,11 @@ function backdropapi_fapi_check_view() {
 
   // These properties are supported only in input elements.
   $input_element_properties = array(
-   'value_callback',
-   'disabled',
-   'allow_focus',
-   'value',
+    'input',
+    'value_callback',
+    'disabled',
+    'allow_focus',
+    'value',
   );
 
   // These properties are supported in any element that has a theme wrapper of
