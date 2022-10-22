@@ -194,8 +194,6 @@ function backdropapi_fapi_check_view() {
     'post_render',
     'pre_render',
     'process',
-    'required',
-    'required_message',
     'theme',
     'theme_wrappers',
     'title_display',
@@ -214,13 +212,15 @@ function backdropapi_fapi_check_view() {
 //    'tree',
   );
 
-  // These properties are supported only in input elements.
+  // These properties are supported/meaningful only in input elements.
   $input_element_properties = array(
-    'input',
-    'value_callback',
-    'disabled',
     'allow_focus',
+    'disabled',
+    'input',
+    'required',
+    'required_message',
     'value',
+    'value_callback',
   );
 
   // These properties are supported in any element that has a theme wrapper of
