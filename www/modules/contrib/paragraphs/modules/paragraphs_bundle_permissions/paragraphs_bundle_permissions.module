@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Add view / create / update / delete permissions for all paragraph bundles.
+ * Add view / create / update / delete permissions for all Paragraphs types.
  */
 
 /**
@@ -12,18 +12,18 @@ function paragraphs_bundle_permissions_paragraphs_item_access($entity, $op, $acc
   $permissions = &backdrop_static(__FUNCTION__, array());
 
   if (!in_array($op, array('view', 'update', 'delete', 'create'), TRUE) || $entity === NULL) {
-    // If there is no bundle to check against, or the $op is not one of the
+    // If there is no type/bundle to check against, or the $op is not one of the
     // supported ones, we return access ignore.
     return PARAGRAPHS_ITEM_ACCESS_IGNORE;
   }
 
   $bundle = $entity->bundle;
 
-  // Set static cache id to use the bundle machine name.
+  // Set static cache id to use the type/bundle machine name.
   $cid = $bundle;
 
-  // If we've already checked access for this bundle, user and op, return from
-  // cache.
+  // If we've already checked access for this type/bundle, user and op, return
+  // from cache.
   if (isset($permissions[$account->uid][$cid][$op])) {
     return $permissions[$account->uid][$cid][$op];
   }
@@ -44,30 +44,30 @@ function paragraphs_bundle_permissions_paragraphs_item_access($entity, $op, $acc
 function paragraphs_bundle_permissions_permission() {
   $perms = array(
     'bypass paragraphs bundle content access' => array(
-      'title' => t('Bypass paragraphs bundle content access control'),
-      'description' => t('Is able to administer content for all paragraph bundles'),
+      'title' => t('Bypass Paragraphs type content access control'),
+      'description' => t('Is able to administer content for all Paragraphs types'),
     ),
   );
 
-  // Add permissions for each bundle.
+  // Add permissions for each type/bundle.
   $bundles = paragraphs_bundle_load();
   foreach ($bundles as $machine_name => $bundle) {
     $perms += array(
       'view paragraph content ' . $machine_name => array(
         'title' => t('%type_name: View content', array('%type_name' => $bundle->name)),
-        'description' => t('Is able to view paragraphs content of bundle %type_name', array('%type_name' => $bundle->name)),
+        'description' => t('Is able to view Paragraphs content of type %type_name', array('%type_name' => $bundle->name)),
       ),
       'create paragraph content ' . $machine_name => array(
         'title' => t('%type_name: Create content', array('%type_name' => $bundle->name)),
-        'description' => t('Is able to create paragraphs content of bundle %type_name', array('%type_name' => $bundle->name)),
+        'description' => t('Is able to create Paragraphs content of type %type_name', array('%type_name' => $bundle->name)),
       ),
       'update paragraph content ' . $machine_name => array(
         'title' => t('%type_name: Edit content', array('%type_name' => $bundle->name)),
-        'description' => t('Is able to update paragraphs content of bundle %type_name', array('%type_name' => $bundle->name)),
+        'description' => t('Is able to update Paragraphs content of type %type_name', array('%type_name' => $bundle->name)),
       ),
       'delete paragraph content ' . $machine_name => array(
         'title' => t('%type_name: Delete content', array('%type_name' => $bundle->name)),
-        'description' => t('Is able to delete paragraphs content of bundle %type_name', array('%type_name' => $bundle->name)),
+        'description' => t('Is able to delete Paragraphs content of type %type_name', array('%type_name' => $bundle->name)),
       ),
     );
   }

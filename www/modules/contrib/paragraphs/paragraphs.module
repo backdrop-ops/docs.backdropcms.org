@@ -717,10 +717,8 @@ function theme_paragraphs_bundle_settings_form($variables) {
   // Initialize the variable which will store our table rows.
   $rows = array();
 
-  uasort($form['instance']['settings']['allowed_bundles_table'], 'element_sort');
-
   // Iterate over each element in our $form['example_items'] array.
-  foreach (element_children($form['instance']['settings']['allowed_bundles_table']) as $id) {
+  foreach (element_children($form['instance']['settings']['allowed_bundles_table'], TRUE) as $id) {
 
     // Before we add our 'weight' column to the row, we need to give the
     // element a custom class so that it can be identified in the
@@ -1695,6 +1693,9 @@ function paragraphs_modal_admin_links($paragraphs_item) {
   if (module_exists('font_awesome')) {
     $classes[] = 'font-awesome';
   }
+  else {
+    $classes[] = 'svg-icons';
+  }
   if (is_numeric($paragraph_id) && $access) {
     $admin_links = array(
       '#type' => 'dropbutton',
@@ -1841,7 +1842,7 @@ function paragraphs_modal_admin_links($paragraphs_item) {
       'type' => 'file',
       'scope' => 'footer',
     );
-    $admin_links['#attached']['library'][] = array('system', 'backdrop.ajax');
+    $admin_links['#attached']['library'][] = array('system', 'backdrop.dialog.ajax');
   }
   return $admin_links;
 }

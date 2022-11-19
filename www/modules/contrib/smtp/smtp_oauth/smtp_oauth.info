@@ -1,8 +1,11 @@
-name = SMTP Authentication
-description = Allow for site emails to be sent through an SMTP server of your choice.
+name = SMTP OAuth Authentication
+description = "Allow for site emails to be sent via Google OAuth SMTP."
 backdrop = 1.x
-type = module
 package = Mail
+
+dependencies[] = smtp
+dependencies[] = gauth
+
 configure = admin/config/system/smtp
 
 ; Added by Backdrop CMS packaging script on 2022-10-31

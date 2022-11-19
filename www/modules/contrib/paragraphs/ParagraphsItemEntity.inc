@@ -444,22 +444,30 @@ class ParagraphsItemEntity extends Entity {
           entity_plus_revision_set_default($this->hostEntityType, $host_entity);
         }
       }
+      // Check the language code and provide a fallback.
+      // See https://github.com/backdrop-contrib/paragraphs/issues/129.
+      if (!empty($host_entity->{$this->field_name}[$this->langcode])) {
+        $langcode = $this->langcode;
+      }
+      else {
+        $langcode = LANGUAGE_NONE;
+      }
       // Set the host entity reference, so the item will be saved with the host.
       // @see paragraphs_field_presave()
       $delta = $this->delta();
       if (isset($delta)) {
-        $host_entity->{$this->field_name}[$this->langcode][$delta] = array('entity' => $this);
+        $host_entity->{$this->field_name}[$langcode][$delta] = array('entity' => $this);
       }
       else {
         $found = 0;
-        foreach ($host_entity->{$this->field_name}[$this->langcode] as $delta => $paragraph) {
+        foreach ($host_entity->{$this->field_name}[$langcode] as $delta => $paragraph) {
           if ($paragraph['value'] == $this->item_id) {
-            $host_entity->{$this->field_name}[$this->langcode][$delta] = array('entity' => $this);
+            $host_entity->{$this->field_name}[$langcode][$delta] = array('entity' => $this);
             $found = 1;
           }
         }
         if (!$found) {
-          $host_entity->{$this->field_name}[$this->langcode][] = array('entity' => $this);
+          $host_entity->{$this->field_name}[$langcode][] = array('entity' => $this);
         }
       }
       return entity_plus_save($this->hostEntityType, $host_entity);

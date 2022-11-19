@@ -102,10 +102,6 @@ html.dialog-open {
   text-align: left;
 }
 
-.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton a {
-  padding: 0.1em 0.5em;
-}
-
 .paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton a.font-awesome {
   padding: 0.1em 0.5em 0.1em 1em;
 }
@@ -118,7 +114,7 @@ html.dialog-open {
   font-weight: 900;
 }
 
-.paragraphs-admin-edit a {
+.paragraphs-admin-dropbutton a {
   text-decoration: none;
 }
 
@@ -141,4 +137,29 @@ html.dialog-open {
 }
 .font-awesome.paragraphs-unpublish:before {
   content: '\f070';
+}
+
+.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons {
+  padding: 0.1em 0.5em 0.1em 32px;
+  vertical-align: middle;
+}
+.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons.paragraphs-add {
+  background: transparent url(../images/add.svg) 6px center no-repeat;
+  background-size: 14px;
+}
+.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons.paragraphs-edit {
+  background: transparent url(../images/edit.svg) 6px center no-repeat;
+  background-size: 14px;
+}
+.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons.paragraphs-sort {
+  background: transparent url(../images/sort.svg) 6px center no-repeat;
+  background-size: 14px;
+}
+.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons.paragraphs-remove {
+  background: transparent url(../images/remove.svg) 6px center no-repeat;
+  background-size: 14px;
+}
+.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons.paragraphs-unpublish {
+  background: transparent url(../images/unpublish.svg) 6px center no-repeat;
+  background-size: 14px;
 }
