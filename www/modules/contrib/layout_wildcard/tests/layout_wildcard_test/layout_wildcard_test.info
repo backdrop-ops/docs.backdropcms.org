@@ -1,0 +1,11 @@
+name = Layout Wildcard Test
+description = Helper module for Layout Wildcard automated tests.
+package = Layout
+type = module
+backdrop = 1.x
+hidden = TRUE
+
+; Added by Backdrop CMS packaging script on 2022-07-18
+project = layout_wildcard
+version = 1.x-2.0.2
+timestamp = 1658172082

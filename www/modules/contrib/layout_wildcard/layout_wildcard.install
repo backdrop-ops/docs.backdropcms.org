@@ -1,0 +1,49 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the Layout Wildcard module.
+ */
+
+/**
+ * Restore the original layout route handler instead of the custom handler.
+ */
+function layout_wildcard_update_1000() {
+  config_set('system.core', 'menu_route_handler', 'layout_route_handler');
+}
+
+/**
+ * Update config settings to add ancestor matching and rename a config variable.
+ */
+function layout_wildcard_update_1001() {
+  $configs = layout_get_all_configs('layout');
+  foreach ($configs as $layout_name => $config) {
+
+    // Rename the config variable so that it is less likely to be confused with
+    // the core layout setting of 'path'.
+    if (isset($config['settings']['paths'])) {
+      $config['settings']['alternative_paths'] = $config['settings']['paths'];
+      unset($config['settings']['paths']);
+    }
+    else {
+      $config['settings']['alternative_paths'] = '';
+    }
+
+    // Add setting for ancestor matching so it can be turned on/off. Default is
+    // TRUE since versions prior to 1.x-2.x always applied ancestor matching.
+    $config['settings']['ancestor_matching'] = TRUE;
+
+    config_set("layout.layout.{$layout_name}", 'settings', $config['settings']);
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function layout_wildcard_uninstall() {
+  $configs = layout_get_all_configs('layout');
+  foreach ($configs as $layout_name => $config) {
+    unset($config['settings']['alternative_paths']);
+    unset($config['settings']['ancestor_matching']);
+    config_set("layout.layout.{$layout_name}", 'settings', $config['settings']);
+  }
+}

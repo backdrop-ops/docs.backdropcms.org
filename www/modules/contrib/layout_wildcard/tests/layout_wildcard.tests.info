@@ -1,0 +1,11 @@
+[LayoutWildcardTestCase]
+name = Layout Wildcard tests
+description = Allow the use of Layouts on multiple paths.
+group = Layout Wildcard
+file = layout_wildcard.test
+
+
+; Added by Backdrop CMS packaging script on 2022-07-18
+project = layout_wildcard
+version = 1.x-2.0.2
+timestamp = 1658172082

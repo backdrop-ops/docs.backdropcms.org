@@ -1,0 +1,137 @@
+<?php
+/**
+ * @file
+ * Tests for Layout Wildcard module.
+ */
+
+class LayoutWildcardTestCase extends BackdropWebTestCase {
+  protected $adminUser;
+
+  /**
+   * Sets up test environment.
+   */
+  protected function setUp() {
+    parent::setUp(array('layout_wildcard', 'layout_wildcard_test'));
+
+    // Create and log in an administrative user.
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access administration pages',
+      'administer site configuration',
+      'administer modules',
+      'administer layouts',
+      'administer nodes',
+    ));
+    $this->backdropLogin($this->adminUser);
+
+    // Create a content type for testing.
+    $this->backdropCreateContentType(array('type' => 'post', 'name' => 'Post'));
+
+    // Create a node with some body content.
+    $this->testNodeBody = $this->randomName(32);
+    $this->testNode = $this->backdropCreateNode(array(
+      'type' => 'post',
+      'title' => $this->randomString(),
+      'uid' => $this->adminUser->uid,
+      'body' => array(LANGUAGE_NONE => array(array('value' => $this->testNodeBody))),
+    ));
+    $this->testNodeID = $this->testNode->nid;
+  }
+
+  /**
+   * Test Layout UI.
+   */
+  public function testLayoutWildcardUI() {
+
+    // Make sure our added fields are displayed on the new layout page.
+    $this->backdropGet('admin/structure/layouts/add');
+    $this->assertRaw('Alternative paths');
+    $this->assertRaw('Ancestor matching');
+  }
+
+  /**
+   * Test Alternative paths.
+   */
+  public function testAlternativePaths() {
+
+    // Enable the layout for testing alternative paths.
+    $layout = layout_load('alternative_paths');
+    $layout->enable();
+
+    // Check the primary path of the layout, that it is using the proper layout
+    // and the View is being displayed as the main content of the Layout.
+    $this->backdropGet('layout-test-view/1');
+    $this->assertRaw('Display: layout-test-view/1');
+    $this->assertRaw('Layout: Test alternative paths');
+
+    // Check the alternative paths of the layout.
+    $this->backdropGet('layout-test-view/2');
+    $this->assertRaw('Display: layout-test-view/2');
+    $this->assertRaw('Layout: Test alternative paths');
+
+    $this->backdropGet('layout-test-view/3');
+    $this->assertRaw('Display: layout-test-view/3');
+    $this->assertRaw('Layout: Test alternative paths');
+
+    // Verify that the layout is not being applied to the display that isn't an
+    // alternative path.
+    $this->backdropGet('layout-test-view');
+    $this->assertRaw('Display: layout-test-view');
+    $this->assertNoRaw('Layout: Test alternative paths');
+  }
+
+  /**
+   * Test Ancestor matching.
+   */
+  public function testAncestorMatching() {
+
+    // Enable the layout for testing ancestor matching.
+    $layout = layout_load('ancestor_matching');
+    $layout->enable();
+
+    // Check the primary path of the layout, that it is using the proper layout
+    // and the View is being displayed as the main content of the Layout.
+    $this->backdropGet('layout-test-view');
+    $this->assertRaw('Display: layout-test-view');
+    $this->assertRaw('Layout: Test ancestor matching');
+
+    // Check that this layout is also used for each of the other displays via
+    // ancestor matching.
+    $this->backdropGet('layout-test-view/1');
+    $this->assertRaw('Display: layout-test-view/1');
+    $this->assertRaw('Layout: Test ancestor matching');
+
+    $this->backdropGet('layout-test-view/2');
+    $this->assertRaw('Display: layout-test-view/2');
+    $this->assertRaw('Layout: Test ancestor matching');
+
+    $this->backdropGet('layout-test-view/3');
+    $this->assertRaw('Display: layout-test-view/3');
+    $this->assertRaw('Layout: Test ancestor matching');
+  }
+
+  /**
+   * Test Contexts and positions.
+   */
+  public function testContexts() {
+
+    // Enable the layout for testing contexts and their positions.
+    $layout = layout_load('context_positions');
+    $layout->enable();
+
+    // Check that the primary path displays the node we created using our layout
+    // and that the block that uses the context displays the node we created in
+    // setup.
+    $nid = $this->testNodeID;
+    $this->backdropGet("override/node/{$nid}");
+    $this->assertRaw('Layout: Test context positions');
+    $this->assertRaw($this->testNodeBody);
+
+    // Check that we've overridden the node/% path and that the context picks up
+    // the node ID from the right position.
+    $nid = $this->testNodeID;
+    $this->backdropGet("node/{$nid}");
+    $this->assertRaw('Layout: Test context positions');
+    $this->assertRaw($this->testNodeBody);
+  }
+
+}

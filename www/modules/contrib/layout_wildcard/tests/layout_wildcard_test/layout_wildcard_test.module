@@ -1,0 +1,56 @@
+<?php
+/**
+ * @file
+ * The Layout Wildcard Test module provides support for Layout Wildcard
+ * automated tests by putting some of the setup configuration into the module's
+ * config so that we can test and debug test scenarios on a live site.
+ *
+*/
+
+/**
+ * Implements hook_config_info().
+ */
+function layout_wildcard_test_config_info() {
+
+  // This view has four displays with paths layout-test-view,
+  // layout-test-view/1, layout-test-view/2, layout-test-view/3. We use it to
+  // test both ancestor matching and alternative paths.
+  $prefixes['views.view.layout_test_view'] = array(
+    'label' => t('Layout Wildcard Test View'),
+    'group' => t('Views'),
+  );
+
+  // This layout has the path layout-test-view/1 and alternative paths
+  // layout-test-view/2 and layout-test-view/3. It also contains a custom block
+  // with text that we can sue to identify the layout and a Main Content block
+  // so that the View will be displayed.
+  $prefixes['layout.layout.alternative_paths'] = array(
+    'label' => t('Layout Wildcard Test Layout (alternative paths)'),
+    'group' => t('Layouts'),
+  );
+
+  // This layout has the path layout-test-view and ancestor matching turned on.
+  // It also contains a custom block with text that we can use to identify the
+  // layout and a Main Content block so that the View will be displayed.
+  $prefixes['layout.layout.ancestor_matching'] = array(
+    'label' => t('Layout Wildcard Test Layout (ancestor matching)'),
+    'group' => t('Layouts'),
+  );
+
+  // This layout has the path override/node/% and alternative path node/%. It
+  // also contains a custom block with text that we can use to identify the
+  // layout. It contains no Main Content block (because it is creating a
+  // layout-provide page) but the alternative path lets it override the system
+  // path node/%. It's used to test that contexts get set properly when their
+  // position in the path varies.
+  $prefixes['layout.layout.context_positions'] = array(
+    'label' => t('Layout Wildcard Test Layout (context positions)'),
+    'group' => t('Layouts'),
+  );
+  $prefixes['layout.menu_item.context_positions'] = array(
+    'label' => t('Layout Wildcard Test Menu Item (context positions)'),
+    'group' => t('Layouts'),
+  );
+
+  return $prefixes;
+}

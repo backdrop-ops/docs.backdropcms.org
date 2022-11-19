@@ -1,0 +1,12 @@
+name = Layout Wildcard
+description = Provides the ability to use the same layout on multiple paths.
+package = Layout
+type = module
+backdrop = 1.x
+
+dependencies[] = system (>=1.20.0)
+
+; Added by Backdrop CMS packaging script on 2022-07-18
+project = layout_wildcard
+version = 1.x-2.0.2
+timestamp = 1658172082

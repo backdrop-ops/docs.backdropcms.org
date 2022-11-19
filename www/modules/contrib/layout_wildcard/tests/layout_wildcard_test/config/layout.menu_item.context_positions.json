@@ -1,0 +1,26 @@
+{
+    "_config_name": "layout.menu_item.context_positions",
+    "name": "context_positions",
+    "title": "",
+    "path": "override/node/%",
+    "menu": {
+        "title": null,
+        "weight": 0,
+        "type": "none",
+        "name": "main-menu",
+        "parent": {
+            "title": null,
+            "weight": 0,
+            "type": "none",
+            "name": "main-menu"
+        }
+    },
+    "conditions": [],
+    "arguments": {
+        "2": {
+            "plugin": "node",
+            "name": "node",
+            "position": 2
+        }
+    }
+}

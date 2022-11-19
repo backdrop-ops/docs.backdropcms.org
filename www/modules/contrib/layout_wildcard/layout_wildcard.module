@@ -1,0 +1,202 @@
+<?php
+/**
+ * @file
+ * The Layout Wildcard module provides the ability to use a Layout on multiple
+ * paths.
+ *
+*/
+
+/**
+ * Implements hook_layout_load_by_router_item_alter().
+ */
+function layout_wildcard_layout_load_by_router_item_alter(&$layouts, $router_item) {
+  $path = $router_item['path'];
+  $placeholder_positions = _layout_wildcard_placeholder_positions($path);
+  $num_placeholders = count($placeholder_positions);
+  $configs = layout_get_all_configs('layout');
+  $added_layout_names = $added_layout_placeholder_positions = array();
+
+  // Check for alternative paths.
+  // We'll use any layout whose alternative path matches the requested path AND
+  // that has the same number of placeholders so that contexts can be
+  // appropriately set. (We check for this during form validation, but check
+  // again here in case the user edited the config file directly or something
+  // like that).
+  foreach ($configs as $config) {
+    if ($config['disabled'] || empty($config['settings']['alternative_paths'])) {
+      continue;
+    }
+    $name = $config['name'];
+    foreach ($config['settings']['alternative_paths'] as $alternative_path) {
+      if ($alternative_path == $path && !isset($layouts[$name]) && !isset($added_layout_names[$name])) {
+        $alt_placeholder_positions = _layout_wildcard_placeholder_positions($config['path']);
+        if ($num_placeholders == count($alt_placeholder_positions)) {
+          $added_layout_names[$name] = $name;
+          $added_layout_placeholder_positions[$name] = $alt_placeholder_positions;
+          break;
+        }
+      }
+    }
+  }
+
+  // Check for ancestor matching.
+  // Use any layout for which any ancestor of the request path matches the
+  // primary path of the layout. But again, the number of placeholders in the
+  // matching layout must be the same as the number of placeholders in the
+  // request path so that contexts can be appropriately set.
+  foreach ($configs as $config) {
+    if ($config['disabled'] || !isset($config['settings']['ancestor_matching'])) {
+      continue;
+    }
+    $name = $config['name'];
+    if ($config['settings']['ancestor_matching']) {
+      $ancestors = &backdrop_static(__FUNCTION__ . $path);
+      if (!isset($ancestors)) {
+        $ancestors = menu_get_ancestors($router_item['original_map']);
+      }
+      foreach ($ancestors as $ancestor) {
+        if ($config['path'] == $ancestor) {
+          if (!isset($layouts[$name]) && !isset($added_layout_names[$name])) {
+            $alt_placeholder_positions = _layout_wildcard_placeholder_positions($config['path']);
+            if ($num_placeholders == count($alt_placeholder_positions)) {
+              $added_layout_names[$name] = $name;
+              $added_layout_placeholder_positions[$name] = $alt_placeholder_positions;
+            }
+          }
+        }
+      }
+    }
+  }
+  $added_layouts = layout_load_multiple($added_layout_names);
+
+  // Check contexts on the added layouts. If the positions don't line up between
+  // the request path and the added layout's primary path, alter the positions
+  // of the contexts so that positional contexts will fetch the right variable
+  // from the path.
+  foreach ($added_layouts as $layout) {
+    // Create a map from layout path positions to request path positions.
+    $alt_placeholder_positions = $added_layout_placeholder_positions[$layout->name];
+    $placeholder_map = array();
+    for ($i = 0; $i < $num_placeholders; $i++) {
+      $placeholder_map[$alt_placeholder_positions[$i]] = $placeholder_positions[$i];
+    }
+    $contexts = $layout->getContexts();
+    $altered_contexts = array();
+    foreach ($contexts as $context) {
+      if (isset($context->position)) {
+        // The added layout has a positioned context that may need to be repositioned.
+        $position = $context->position;
+        $new_position = $placeholder_map[$position];
+        if ($position != $new_position) {
+          $context->position = $new_position;
+          $altered_contexts[$new_position] = $context;
+          $layout->clearContexts($position);
+        }
+      }
+    }
+    foreach ($altered_contexts as $position => $context) {
+      $layout->setContexts($position, $context);
+    }
+  }
+
+  // Note that either default or admin default layouts should come last, so
+  // we'll check for those in the original list, pull them out if present, and
+  // add them at the end.
+  $default_layouts = array();
+  if (isset($layouts['default'])) {
+    $default_layouts['default'] = $layouts['default'];
+    unset($layouts['default']);
+  }
+  if (isset($layouts['admin_default'])) {
+    $default_layouts['admin_default'] = $layouts['admin_default'];
+    unset($layouts['admin_default']);
+  }
+
+  $layouts = array_merge($layouts, $added_layouts, $default_layouts);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function layout_wildcard_form_layout_settings_form_alter(&$form, &$form_state) {
+  if (isset($form_state['build_info']['args'][0]->settings['alternative_paths'])) {
+    $default_value = implode("\n", $form_state['build_info']['args'][0]->settings['alternative_paths']);
+  }
+  else {
+    $default_value = '';
+  }
+  $form['alternative_paths'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Alternative paths'),
+    '#description' => t('Optionally specify one or more alternative paths to be handled by this layout (in addition to the primary path above). These paths must already be provided by the system or another module. Use the percent symbol ("%") to indicate a placeholder in the path. e.g. "node/%" or "node/%/edit". The number of placeholders must be the same as in the primary path.'),
+    '#default_value' => $default_value,
+  );
+
+  if (isset($form_state['build_info']['args'][0]->settings['ancestor_matching'])) {
+    $default_value = $form_state['build_info']['args'][0]->settings['ancestor_matching'];
+  }
+  else {
+    $default_value = FALSE;
+  }
+  $form['ancestor_matching'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Ancestor matching'),
+    '#description' => t('Use this layout if its path matches any ancestor of the requested path.'),
+    '#default_value' => $default_value,
+  );
+
+  $form['actions']['submit']['#validate'][] = 'layout_wildcard_settings_form_validate';
+}
+
+/**
+ * Validate handler for layout_settings_form() that saves in-progress values
+ * into global variables so that they can be picked up during presave.
+ */
+function layout_wildcard_settings_form_validate($form, &$form_state) {
+  global $_layout_wildcard_alternative_paths, $_layout_wildcard_ancestor_matching;
+  $_layout_wildcard_alternative_paths = array();
+  if (isset($form_state['values']['alternative_paths'])) {
+    $primary_path = $form_state['values']['path'];
+    $num_placeholders = count(_layout_wildcard_placeholder_positions($primary_path));
+    $paths = explode("\n", $form_state['values']['alternative_paths']);
+    foreach($paths as $path){
+      $path = trim($path);
+      if(!empty($path)) {
+        if ($num_placeholders != count(_layout_wildcard_placeholder_positions($path))) {
+          form_set_error('alternative_paths', t('Alternative path %path should have the same number of placeholders as primary path %primary_path.', array('%path' => $path, '%primary_path' => $primary_path)));
+        }
+        else {
+          $_layout_wildcard_alternative_paths[] = $path;
+        }
+      }
+    }
+  }
+  $_layout_wildcard_ancestor_matching = $form_state['values']['ancestor_matching'];
+}
+
+/**
+ * Implements hook_layout_presave().
+ */
+function layout_wildcard_layout_presave($layout) {
+  global $_layout_wildcard_alternative_paths, $_layout_wildcard_ancestor_matching;
+  if (isset($_layout_wildcard_alternative_paths)) {
+    $layout->settings['alternative_paths'] = $_layout_wildcard_alternative_paths;
+  }
+  if (isset($_layout_wildcard_ancestor_matching)) {
+    $layout->settings['ancestor_matching'] = $_layout_wildcard_ancestor_matching;
+  }
+}
+
+/**
+ * Returns an array of placeholder positions in a path.
+ */
+function _layout_wildcard_placeholder_positions($path) {
+  $path_parts = explode('/', $path);
+  $placeholder_positions = array();
+  for ($i = 0; $i < count($path_parts); $i++) {
+    if ($path_parts[$i] == '%') {
+      $placeholder_positions[] = $i;
+    }
+  }
+  return $placeholder_positions;
+}
