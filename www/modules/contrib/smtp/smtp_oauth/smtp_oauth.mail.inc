@@ -6,51 +6,44 @@
  */
 
 /**
-* Modify the Backdrop mail system to use smtp when sending emails.
-* Include the option to choose between plain text or HTML
-*/
-class SmtpMailSystem implements MailSystemInterface {
+ * Modify the Backdrop mail system to use SMTP when sending emails.
+ * Include the option to choose between plain text or HTML.
+ */
+class SmtpOAuthMailSystem extends SmtpMailSystem {
 
-  protected $AllowHtml;
   /**
-   * Concatenate and wrap the e-mail body for either
-   * plain-text or HTML emails.
+   * Google Client.
    *
-   * @param $message
-   *   A message array, as described in hook_mail_alter().
-   *
-   * @return
-   *   The formatted $message.
+   * @var \Google_Client
    */
-  public function format(array $message) {
-    $this->AllowHtml = config_get('smtp.settings', 'smtp_allowhtml');
-    // Join the body array into one string.
-    $message['body'] = implode("\n\n", $message['body']);
-    if ($this->AllowHtml == 0) {
-      // Convert any HTML to plain-text.
-      $message['body'] = backdrop_html_to_text($message['body']);
-      // Wrap the mail body for sending.
-      $message['body'] = backdrop_wrap_mail($message['body']);
-    }
-    return $message;
+  protected $googleClient;
+
+  /**
+   * Constructs a SmtpOAuthMailSystem object.
+   */
+  public function __construct() {
+    $gauth_account_id =config_get('smtp_oauth.settings', 'smtp_oauth_google_api_client_id');
+    $this->googleClient = gauth_client_get($gauth_account_id, FALSE);
   }
 
   /**
    * Send the e-mail message.
    *
-   * @see backdrop_mail()
-   *
-   * @param $message
+   * @param array $message
    *   A message array, as described in hook_mail_alter().
-   * @return
+   *
+   * @return mixed
    *   TRUE if the mail was successfully accepted, otherwise FALSE.
+   *
+   * @throws phpmailerException.
+   *
+   * @see backdrop_mail()
    */
   public function mail(array $message) {
-    $config = config('smtp.settings');
-    if ($config->get('smtp_queue')
+    if (config_get('smtp.settings', 'smtp_queue', FALSE)
        && (!isset($message['params']['skip_queue']) || !$message['params']['skip_queue'])) {
       smtp_send_queue($message);
-      if ($config->get('smtp_debugging') == SMTP_LOGGING_ALL) {
+      if (config_get('smtp.settings', 'smtp_debugging', SMTP_LOGGING_ERRORS) == SMTP_LOGGING_ALL) {
         watchdog('smtp', 'Queue sending mail to: @to', array('@to' => $message['to']));
       }
       return TRUE;
@@ -63,13 +56,13 @@ class SmtpMailSystem implements MailSystemInterface {
   public function mailWithoutQueue(array $message) {
     $to = $message['to'];
     $from = $message['from'];
+    $from_name = isset($message['from_name']) ? $message['from_name'] : FALSE;
     $body = $message['body'];
     $headers = $message['headers'];
     $subject = $message['subject'];
-    $config = config('smtp.settings');
 
     // Optionally reroute all emails to a single address.
-    $reroute_address = $config->get('smtp_reroute_address');
+    $reroute_address = config_get('smtp.settings', 'smtp_reroute_address');
     if (!empty($reroute_address)) {
       $to = $reroute_address;
       // Remove any CC and BCC headers that might have been set.
@@ -77,10 +70,11 @@ class SmtpMailSystem implements MailSystemInterface {
       unset($headers['bcc']);
     }
 
+    $email = config_get('smtp_oauth.settings', 'smtp_oauth_email_address');
     // Create a new PHPMailer object - autoloaded from registry.
-    $mailer = new PHPMailer();
-
-    $logging = $config->get('smtp_debugging');
+    $mailer = new PHPMailerOAuth($email, $this->googleClient);
+    //$mailer->Timeout = $this->smtpConfig->get('smtp_timeout');
+    $logging = config_get('smtp.settings', 'smtp_debugging');
 
     // Turn on debugging, if requested.
     if ($logging == SMTP_LOGGING_ALL && user_access('administer smtp module')) {
@@ -90,39 +84,40 @@ class SmtpMailSystem implements MailSystemInterface {
     // Set the from name. First we try to get the name from i18n, in the case
     // that it has been translated. The name is set according to the language
     // of the email being sent.
-    $from_name = FALSE;
-    if (function_exists('i18n_variable_get')) {
-      // The 'language' value may be stored as an object.
-      $langcode = $message['language'];
-      if (is_object($langcode)) {
-        $langcode = $langcode->language;
-      }
-      if (i18n_variable_get('smtp_fromname', $langcode, '') != '') {
-        $from_name = i18n_variable_get('smtp_fromname', $langcode, '');
-      }
-      else {
+    if (empty($from_name)) {
+      if (function_exists('i18n_variable_get')) {
+        // The 'language' value may be stored as an object.
+        $langcode = $message['language'];
+        if (is_object($langcode)) {
+          $langcode = $langcode->language;
+        }
+        if (i18n_variable_get('smtp_fromname', $langcode, '') != '') {
+          $from_name = i18n_variable_get('smtp_fromname', $langcode, '');
+        }
         // If value is not defined in settings, use site_name.
-        $from_name = i18n_variable_get('site_name', $langcode, '');
+        else {
+          $from_name = i18n_variable_get('site_name', $langcode, '');
+        }
       }
-    }
-
-    if ($config->get('smtp_client_hostname') != '') {
-      $mailer->Hostname = $config->get('smtp_client_hostname');
-    }
-
-    if ($config->get('smtp_client_helo') != '') {
-      $mailer->Helo = $config->get('smtp_client_helo');
-    }
-
-    // If i18n is not enabled, we get the From Name through normal variables
-    if (!$from_name) {
-      if ($config->get('smtp_fromname') != '') {
-        $from_name = $config->get('smtp_fromname');
-      }
+      // If the i18n module is not enabled, get the From name as a
+      // normal variable.
       else {
+        if (config_get('smtp.settings', 'smtp_fromname') != '') {
+          $from_name = config_get('smtp.settings', 'smtp_fromname');
+        }
         // If value is not defined in settings, use site_name.
-        $from_name = config_get('system.core', 'site_name');
+        else {
+          $from_name = config_get('smtp.settings', 'site_name');
+        }
       }
+    }
+
+    if (config_get('smtp.settings', 'smtp_client_hostname') != '') {
+      $mailer->Hostname = config_get('smtp.settings', 'smtp_client_hostname');
+    }
+
+    if (config_get('smtp.settings', 'smtp_client_helo') != '') {
+      $mailer->Helo = config_get('smtp.settings', 'smtp_client_helo');
     }
 
     //Hack to fix reply-to issue.
@@ -135,19 +130,17 @@ class SmtpMailSystem implements MailSystemInterface {
       }
       $headers['Reply-To'] = $reply;
     }
-    $properfrom = $config->get('smtp_from');
+    $properfrom = config_get('smtp.settings', 'smtp_from');
     if (!empty($properfrom)) {
       $headers['From'] = $properfrom;
       $from = $properfrom;
     }
 
-    // Blank value will let the e-mail address appear.
-
     if ($from == NULL || $from == '') {
       // If from e-mail address is blank, use smtp_from config option.
-      if (($from = $config->get('smtp_from')) == '') {
+      if (($from = config_get('smtp.settings', 'smtp_from')) == '') {
         // If smtp_from config option is blank, use site_email.
-        if (($from = config_get('system.core', 'site_mail')) == '') {
+        if (($from = config_get('smtp.settings', 'site_mail')) == '') {
           backdrop_set_message(t('There is no submitted from address.'), 'error');
           if ($logging) {
             watchdog('smtp', 'There is no submitted from address.', array(), WATCHDOG_ERROR);
@@ -171,14 +164,12 @@ class SmtpMailSystem implements MailSystemInterface {
     $mailer->FromName = empty($from_comp['name']) ? $from_name : $from_comp['name'];
     $mailer->Sender   = $from_comp['email'];
 
-
     // Create the list of 'To:' recipients.
     $torecipients = explode(',', $to);
     foreach ($torecipients as $torecipient) {
       $to_comp = $this->_get_components($torecipient);
       $mailer->AddAddress($to_comp['email'], $to_comp['name']);
     }
-
 
     // Parse the headers of the message and set the PHPMailer object's settings
     // accordingly.
@@ -209,7 +200,7 @@ class SmtpMailSystem implements MailSystemInterface {
               $vars[$new_key] = $new_var;
             }
           }
-          // Set the charset based on the provided value, otherwise set it to UTF-8 (which is Backdrops internal default).
+          // Set the charset based on the provided value, otherwise set it to UTF-8 (which is Backdrop's internal default).
           $mailer->CharSet = isset($vars['charset']) ? $vars['charset'] : 'UTF-8';
           // If $vars is empty then set an empty value at index 0 to avoid a PHP warning in the next statement
           $vars[0] = isset($vars[0])?$vars[0]:'';
@@ -259,11 +250,8 @@ class SmtpMailSystem implements MailSystemInterface {
           break;
 
         case 'reply-to':
-          // Only add a "reply-to" if it's not the same as "return-path".
-          if ($value != $headers['Return-Path']) {
-            $replyto_comp = $this->_get_components($value);
-            $mailer->AddReplyTo($replyto_comp['email'], $replyto_comp['name']);
-          }
+          $replyto_comp = $this->_get_components($value);
+          $mailer->AddReplyTo($replyto_comp['email'], $replyto_comp['name']);
           break;
 
         case 'content-transfer-encoding':
@@ -488,6 +476,9 @@ class SmtpMailSystem implements MailSystemInterface {
         if (isset($attachment['filecontent'])) {
           $mailer->AddStringAttachment($attachment['filecontent'], $attachment['filename'], 'base64', $attachment['filemime']);
         }
+        if (!isset($attachment['filepath']) && isset($attachment['uri'])) {
+          $attachment['filepath'] = $attachment['uri'];
+        }
         if (isset($attachment['filepath'])) {
           $filename = isset($attachment['filename']) ? $attachment['filename'] : basename($attachment['filepath']);
           $filemime = isset($attachment['filemime']) ? $attachment['filemime'] : file_get_mimetype($attachment['filepath']);
@@ -496,20 +487,39 @@ class SmtpMailSystem implements MailSystemInterface {
       }
     }
 
-    // Set the authentication settings.
-    $username = $config->get('smtp_username');
-    $password = $config->get('smtp_password');
-
-    // If username and password are given, use SMTP authentication.
-    if ($username != '' && $password != '') {
-      $mailer->SMTPAuth = TRUE;
-      $mailer->Username = $username;
-      $mailer->Password = $password;
+    // Process inline images.
+    if (!empty($message['params']['images'])) {
+      foreach ($message['params']['images'] as $image) {
+        if (!empty($image['filepath']) && !empty($image['cid'])) {
+          if (file_exists($image['filepath'])) {
+            $image_extension = pathinfo($image['filepath'], PATHINFO_EXTENSION);
+            $image_mime_type = PHPMailer::_mime_types($image_extension);
+            if (empty($image['name'])) {
+              $image_name = pathinfo($image['filepath'], PATHINFO_FILENAME);
+            }
+            else {
+              $image_name = $image['name'];
+            }
+            $mailer->AddEmbeddedImage($image['filepath'], $image['cid'], $image_name, 'base64', $image_mime_type);
+          }
+        }
+      }
     }
 
+    // Set the authentication settings.
+    $email = config_get('smtp_oauth.settings', 'smtp_oauth_email_address');
+
+    //Pass the OAuth provider instance to PHPMailer
+    $mailer->setOAuth(
+      new GmailXOAuth2($email, $this->googleClient)
+    );
+
+    $mailer->SMTPAuth = TRUE;
+    //Set AuthType to use XOAUTH2
+    $mailer->AuthType = 'XOAUTH2';
 
     // Set the protocol prefix for the smtp host.
-    switch ($config->get('smtp_protocol')) {
+    switch (config_get('smtp.settings', 'smtp_protocol')) {
       case 'ssl':
         $mailer->SMTPSecure = 'ssl';
         break;
@@ -522,10 +532,28 @@ class SmtpMailSystem implements MailSystemInterface {
         $mailer->SMTPSecure = '';
     }
 
+    // Set SSL stream context options
+    if (config_get('smtp.settings', 'smtp_protocol') != 'standard') {
+      $smtp_allow_self_signed = array('allow_self_signed' => config_get('smtp.settings', 'smtp_allow_self_signed'));
+
+      if (version_compare(phpversion(), '5.6.0', '>=')) {
+        $smtp_verify_peer = array('verify_peer' => config_get('smtp.settings', 'smtp_verify_peer'));
+        $smtp_verify_peer_name = array('verify_peer_name' => config_get('smtp.settings', 'smtp_verify_peer_name'));
+        $mailer->SMTPOptions = array(
+          'ssl' => array_merge($smtp_verify_peer, $smtp_verify_peer_name, $smtp_allow_self_signed),
+        );
+      }
+      else {
+        $smtp_verify_peer = array('verify_peer' => config_get('smtp.settings', 'smtp_verify_peer'));
+        $mailer->SMTPOptions = array(
+          'ssl' => array_merge($smtp_verify_peer, $smtp_allow_self_signed),
+        );
+      }
+    }
 
     // Set other connection settings.
-    $mailer->Host = $config->get('smtp_host') . ';' . $config->get('smtp_hostbackup');
-    $mailer->Port = $config->get('smtp_port');
+    $mailer->Host = config_get('smtp.settings', 'smtp_host') . ';' . config_get('smtp.settings', 'smtp_hostbackup');
+    $mailer->Port = config_get('smtp.settings', 'smtp_port');
     $mailer->Mailer = 'smtp';
 
     // Integration with the Maillog module.
@@ -611,7 +639,7 @@ class SmtpMailSystem implements MailSystemInterface {
     $error = FALSE;
 
     // Email delivery was disabled.
-    if (!$config->get('smtp_deliver')) {
+    if (!config_get('smtp.settings', 'smtp_deliver')) {
       if ($logging) {
         $params = array(
           '@from' => $from,
@@ -628,7 +656,7 @@ class SmtpMailSystem implements MailSystemInterface {
           '!error_message' => $mailer->ErrorInfo
         );
 
-        if ($config->get('smtp_queue_fail')) {
+        if (config_get('smtp.settings', 'smtp_queue_fail')) {
           if ($logging) {
             watchdog('smtp', 'Error sending e-mail from @from to @to, will retry on cron run : !error_message.', $params, WATCHDOG_ERROR);
           }
@@ -639,7 +667,7 @@ class SmtpMailSystem implements MailSystemInterface {
           watchdog('smtp', 'Error sending e-mail from @from to @to : !error_message', $params, WATCHDOG_ERROR);
         }
       }
-      elseif ($config->get('smtp_debugging') == SMTP_LOGGING_ALL) {
+      elseif (config_get('smtp.settings', 'smtp_debugging') == SMTP_LOGGING_ALL) {
         watchdog('smtp', 'Sent mail to: @to', array('@to' => $to));
       }
     }
@@ -782,7 +810,7 @@ class SmtpMailSystem implements MailSystemInterface {
     //  some name <address@example.com>
     //  "another name" <address@example.com>
     //  <address@example.com>
-    if (preg_match('/^"?([^"\t]*)"?\s*<([^>\t\n]*)>$/', $input, $matches)) {
+    if (preg_match('/^"?([^"\t\n]*)"?\s*<([^>\t\n]*)>$/', $input, $matches)) {
       $components['name'] = trim($matches[1]);
       $components['email'] = trim($matches[2]);
     }

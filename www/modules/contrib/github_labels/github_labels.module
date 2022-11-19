@@ -53,6 +53,7 @@ function github_labels_config_info() {
  */
 function github_labels_token_info() {
   $token_info = state_get('github_labels_token_info');
+
   if (!empty($token_info)) {
     $info['types']['gh-label'] = array(
       'name' => t('GitHub labels'),
@@ -65,7 +66,6 @@ function github_labels_token_info() {
 
     $info['tokens']['gh-label'] = array();
     $info['tokens']['gh-label-link'] = array();
-
     foreach ($token_info as $clean_name => $data) {
       $info['tokens']['gh-label'][$clean_name] = array(
         'name' => $data['name'],
