@@ -11,7 +11,6 @@
     "smtp_from": "no-reply@backdropcms.org",
     "smtp_fromname": "BackdropCMS.org",
     "smtp_allowhtml": 0,
-    "smtp_test_address": "",
     "smtp_debugging": 0,
     "smtp_previous_mail_system": "DefaultMailSystem"
 }

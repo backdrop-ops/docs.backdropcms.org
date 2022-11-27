@@ -2,7 +2,7 @@
     "_config_name": "layout.layout.api_backdrop_classes",
     "path": "api/backdrop/classes",
     "name": "api_backdrop_classes",
-    "title": "api/backdrop/classes",
+    "title": "api/backdrop/<various>",
     "description": null,
     "renderer_name": "standard",
     "module": null,
@@ -11,9 +11,15 @@
     "layout_template": "boxton",
     "disabled": false,
     "settings": {
-        "title": "Form API Reference",
-        "title_display": "custom",
-        "title_block": "78e357c6-499c-4f0c-ba19-25c5af1415f5"
+        "title": "",
+        "title_display": "default",
+        "title_block": "12c3fad1-0ec4-4625-9500-fa9eb3b9a436",
+        "alternative_paths": [
+            "api/backdrop/functions",
+            "api/backdrop/deprecated",
+            "api/backdrop/files"
+        ],
+        "ancestor_matching": 0
     },
     "positions": {
         "header": [
