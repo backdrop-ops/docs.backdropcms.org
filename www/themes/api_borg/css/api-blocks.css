@@ -109,3 +109,56 @@ article {
 .view-change-record .views-exposed-form .views-widget-filter-combine input.form-text {
   width: 220px;
 }
+
+/*******************************************************************************
+ * Flyout menu — only appears on large-screen on pages that use the
+ * api/backdrop/classes layout. To apply this to other layouts:
+ * - Put the flyout menu blocks in their own region of the layout (e.g., bottom)
+ * - Configure the region with a DIV wrapper with class "api-flyout-menu"
+ * - Add a block to the top of the region with content "Contents", styled with
+ *   the additional CSS class "flyout-menu-title".
+ ******************************************************************************/
+@media (min-width: 768px) {
+  .api-flyout-menu {
+    background: #efefef;
+    top: 95px;
+    right: -310px;
+    width: 330px;
+    padding-left: 15px;
+    padding-right: 15px;
+    position: absolute;
+    z-index: 100;
+    -webkit-box-shadow: -3px 0px 5px 0px rgba(0, 0, 0, 0.2);
+    box-shadow: -3px 0px 5px 0px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s;
+    -webkit-transition: all 0.3s;
+    color: #222;
+  }
+  .admin-bar .api-flyout-menu {
+    top: 130px;
+  }
+  .api-flyout-menu:hover, .api-flyout-menu:focus {
+    transform: translate3d(-310px, 0, 0);
+    animation-timing-function: 1s ease-in;
+  }
+  .api-flyout-menu .block-search-form {
+    padding-left: 2em;
+  }
+  .api-flyout-menu .flyout-menu-title {
+    top: 50%;
+    position: absolute;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    transform: rotate(270deg);
+    left: -10px;
+    font-weight: 800;
+    font-size: 18px;
+  }
+  .api-flyout-menu .menu-tree ul {
+    padding-left: 1em;
+  }
+  .api-flyout-menu .menu-tree li {
+    list-style-type: none;
+  }
+}
