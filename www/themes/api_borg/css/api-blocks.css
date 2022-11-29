@@ -122,10 +122,10 @@ article {
   .api-flyout-menu {
     background: #efefef;
     top: 95px;
-    right: -310px;
+    left: -310px;
     width: 330px;
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 10px;
+    padding-right: 10px;
     position: absolute;
     z-index: 100;
     -webkit-box-shadow: -3px 0px 5px 0px rgba(0, 0, 0, 0.2);
@@ -138,11 +138,11 @@ article {
     top: 130px;
   }
   .api-flyout-menu:hover, .api-flyout-menu:focus {
-    transform: translate3d(-310px, 0, 0);
+    transform: translate3d(310px, 0, 0);
     animation-timing-function: 1s ease-in;
   }
   .api-flyout-menu .block-search-form {
-    padding-left: 2em;
+    padding-right: 1.5em;
   }
   .api-flyout-menu .flyout-menu-title {
     top: 50%;
@@ -151,12 +151,12 @@ article {
     -ms-transform: translateY(-50%);
     transform: translateY(-50%);
     transform: rotate(270deg);
-    left: -10px;
+    right: -13px;
     font-weight: 800;
     font-size: 18px;
   }
   .api-flyout-menu .menu-tree ul {
-    padding-left: 1em;
+    padding-right: 1em;
   }
   .api-flyout-menu .menu-tree li {
     list-style-type: none;
