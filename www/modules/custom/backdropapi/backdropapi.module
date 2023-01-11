@@ -189,13 +189,17 @@ function backdropapi_fapi_check_view() {
   $all_element_properties = array(
     'access',
     'after_build',
+    'ajax',
     'attributes',
     'id',
     'post_render',
     'pre_render',
+    'prefix',
     'process',
+    'suffix',
     'theme',
     'theme_wrappers',
+    'type',
     'title_display',
     'weight',
 
@@ -206,19 +210,21 @@ function backdropapi_fapi_check_view() {
 //    'button_type',
 //    'children',
 //    'defaults_loaded',
-//    'parents',
 //    'processed',
 //    'sorted',
-//    'tree',
   );
 
   // These properties are supported/meaningful only in input elements.
   $input_element_properties = array(
     'allow_focus',
+    'default_value',
     'disabled',
+    'element_validate',
     'input',
+    'parents',
     'required',
     'required_message',
+    'tree',
     'value',
     'value_callback',
   );
@@ -239,18 +245,28 @@ function backdropapi_fapi_check_view() {
   // Go through all form elements and compare their stored default properties
   // with the values that are defined in code, which will be in $element_info.
   foreach ($elements_info as $element_type => $element_info) {
-    // Add the default properties that are set by form_builder().
-    $element_info += array(
-      '#required' => FALSE,
-      '#attributes' => array(),
-      '#title_display' => 'before',
-    );
-
     if (!isset($element_nodes[$element_type])) {
       $build_items[] = t('There is no FAPI Element for %element_type.', array('%element_type' => $element_type));
       continue;
     }
     $element_node = $element_nodes[$element_type];
+    $element_is_input = !(isset($element_node->field_special['und'][0]['value']) ? $element_node->field_special['und'][0]['value'] : 0);
+
+    // Add the default properties that are set by form_builder().
+    $element_info += array(
+      '#attributes' => array(),
+      '#title_display' => 'before',
+    );
+
+    // #required is set by form_builder() but is only meaningful for input elements, so add its default value only for input elements.
+    if ($element_is_input) {
+      $element_info += array(
+        '#required' => FALSE,
+      );
+    }
+
+    // Note whether element has a theme wrapper of 'form_element'.
+    $element_has_form_element_wrapper =  isset($element_info['#theme_wrappers']) && in_array('form_element', $element_info['#theme_wrappers']);
 
     // Make a list of all the properties that are in the node, which are stored
     // as ParagraphsItemEntity. We need the fields to determine whether there is
@@ -270,9 +286,14 @@ function backdropapi_fapi_check_view() {
     }
 
     // Go through the element_info defaults and check whether the node has the
-    // property and its default value.
+    // property and its default value. Also collect the property names as we go.
+    // $element_all_properties will be a list of all properties supported by
+    // this element.
+    $element_all_properties = array();
     foreach ($element_info as $raw_property_name => $raw_property_value) {
       $property_name = substr($raw_property_name, 1);
+      $element_all_properties[$property_name] = $property_name;
+
       $property_default_value = _backdropapi_format_default_property_value($raw_property_value);
       $property_modifier = isset($property_nodes_by_property[$property_name]) ? '' : t('[CREATE]');
       // If the property value is a string, strip the quotes from it for
@@ -283,6 +304,7 @@ function backdropapi_fapi_check_view() {
       }
       $element_node_has_property = isset($element_node_properties[$property_name]);
       $element_node_has_default = $element_node_has_property && !empty($element_node_properties[$property_name]->field_default_value);
+
       if ($element_node_has_default) {
         $element_node_default_value = $element_node_properties[$property_name]->field_default_value['und'][0]['value'];
       }
@@ -307,19 +329,33 @@ function backdropapi_fapi_check_view() {
         $build_items[] = t('FAPI Element %element is missing property %property.', array('%element' => $element_type, '%property' => $property));
       }
     }
+    $element_all_properties = array_merge($element_all_properties, backdrop_map_assoc($all_element_properties));
+
+    if ($element_is_input) {
+      $element_all_properties = array_merge($element_all_properties, backdrop_map_assoc($input_element_properties));
+    }
 
     // If the element is processed by theme_form_element(), check whether the
     // element node has all the properties that theme_form_element() handles.
-    if (isset($element_info['#theme_wrappers']) && in_array('form_element', $element_info['#theme_wrappers'])) {
+    if ($element_has_form_element_wrapper) {
       foreach ($form_element_properties as $property) {
         if (!isset($element_node_properties[$property])) {
           $build_items[] = t('FAPI Element %element has theme wrapper %wrapper but is missing property %property.', array('%element' => $element_type, '%wrapper' => 'form_element', '%property' => $property));
         }
       }
+      $element_all_properties = array_merge($element_all_properties, backdrop_map_assoc($form_element_properties));
     }
 
-    // TODO: go through the FAPI Element properties and check whether any
-    // defaults in the node are NOT in $element_info.
+    // Go through the element node properties and flag any properties that are
+    // in the node but shouldn't be.
+//     foreach ($element_node_properties as $property => $item) {
+//       if (!isset($element_all_properties[$property])) {
+//         $build_items[] = t('FAPI Element %element should not have property %property.', array('%element' => $element_type, '%property' => $property));
+//       }
+//     }
+
+//break;  // TBD WHILE DEBUGGING
+
   }
 
   $build[] = array(
