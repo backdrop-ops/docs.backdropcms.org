@@ -5,7 +5,7 @@
     "path": "form_api",
     "menu": {
         "type": "normal",
-        "title": "Form API Reference",
+        "title": "menu_on_bottom",
         "name": "main-menu",
         "weight": "0",
         "parent": {

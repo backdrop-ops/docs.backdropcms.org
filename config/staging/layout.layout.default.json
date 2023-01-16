@@ -8,12 +8,14 @@
     "module": "layout",
     "weight": 0,
     "storage": 2,
-    "layout_template": "moscone_flipped",
+    "layout_template": "moscone",
     "disabled": false,
     "settings": {
         "title": "",
         "title_display": "default",
-        "title_block": null
+        "title_block": null,
+        "alternative_paths": [],
+        "ancestor_matching": 0
     },
     "positions": {
         "header": [
@@ -40,14 +42,15 @@
             "c49b957b-4d0f-482f-b300-e6f5514338b9",
             "cb1c88c0-80f1-4664-a302-2e21c8cd79f0",
             "1ae1fb1b-a6c3-4d1c-8658-8813388894b5"
-        ],
-        "title": []
+        ]
     },
     "contexts": [],
+    "relationships": [],
     "content": {
         "84c43df4-1165-4faf-8700-c362a7153c0b": {
             "plugin": "system:header",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "header",
                 "settings": {
@@ -76,6 +79,7 @@
         "d7292c1e-c8e0-4a9f-a200-a19a1a226835": {
             "plugin": "system:user-menu",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "user-menu",
                 "settings": {
@@ -106,6 +110,7 @@
         "09f11b4e-877e-45ab-9000-a4c6254faa04": {
             "plugin": "system:breadcrumb",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "breadcrumb",
                 "settings": {
@@ -129,6 +134,7 @@
         "2885b5da-3df1-49e9-a005-5dda5be7dfec": {
             "plugin": "backdropapi:form_api_table",
             "data": {
+                "status": 1,
                 "module": "backdropapi",
                 "delta": "form_api_table",
                 "settings": {
@@ -164,6 +170,7 @@
         "default": {
             "plugin": "system:main",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "main",
                 "settings": {
@@ -187,6 +194,7 @@
         "62750c0f-a9c3-4346-803b-591ded599912": {
             "plugin": "system:main-menu",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "main-menu",
                 "settings": {
@@ -231,6 +239,7 @@
         "e56b9770-c9bc-4cc3-a22d-45abc1d3fd22": {
             "plugin": "menu_pager:main-menu-children",
             "data": {
+                "status": 1,
                 "module": "menu_pager",
                 "delta": "main-menu-children",
                 "settings": {
@@ -256,6 +265,7 @@
         "f8dd8908-d722-450d-8807-7de88c0ad93f": {
             "plugin": "menu_pager:main-menu",
             "data": {
+                "status": 1,
                 "module": "menu_pager",
                 "delta": "main-menu",
                 "settings": {
@@ -283,6 +293,7 @@
         "93d3082e-7750-495e-8b21-33dc02c1eb55": {
             "plugin": "search:form",
             "data": {
+                "status": 1,
                 "module": "search",
                 "delta": "form",
                 "settings": {
@@ -306,6 +317,7 @@
         "8c98048d-abc2-48dc-b700-af6ce8c2ebeb": {
             "plugin": "system:main-menu",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "main-menu",
                 "settings": {
@@ -348,6 +360,7 @@
         "2632c627-05f7-4280-9000-cdcc76bd7a68": {
             "plugin": "on_the_web:social_links",
             "data": {
+                "status": 1,
                 "module": "on_the_web",
                 "delta": "social_links",
                 "settings": {
@@ -384,6 +397,7 @@
         "c49b957b-4d0f-482f-b300-e6f5514338b9": {
             "plugin": "block:newsletter",
             "data": {
+                "status": 1,
                 "module": "block",
                 "delta": "newsletter",
                 "settings": {
@@ -411,6 +425,7 @@
         "cb1c88c0-80f1-4664-a302-2e21c8cd79f0": {
             "plugin": "system:powered-by",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "powered-by",
                 "settings": {
@@ -434,6 +449,7 @@
         "1ae1fb1b-a6c3-4d1c-8658-8813388894b5": {
             "plugin": "menu:menu-footer-menu",
             "data": {
+                "status": 1,
                 "module": "menu",
                 "delta": "menu-footer-menu",
                 "settings": {
