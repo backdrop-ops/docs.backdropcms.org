@@ -8,7 +8,7 @@
     "module": "layout",
     "weight": 0,
     "storage": 2,
-    "layout_template": "moscone",
+    "layout_template": "moscone_flipped",
     "disabled": false,
     "settings": {
         "title": "",
@@ -42,7 +42,8 @@
             "c49b957b-4d0f-482f-b300-e6f5514338b9",
             "cb1c88c0-80f1-4664-a302-2e21c8cd79f0",
             "1ae1fb1b-a6c3-4d1c-8658-8813388894b5"
-        ]
+        ],
+        "title": []
     },
     "contexts": [],
     "relationships": [],
