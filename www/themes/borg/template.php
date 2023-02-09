@@ -214,8 +214,8 @@ function borg_preprocess_header(&$variables) {
   $path = backdrop_get_path('theme', 'borg');
   $variables['logo'] = theme('image', array('uri' => $path . '/logo-inverse.png'));
 
-  dpm($variables);
-  dpm('hai');
+//   dpm($variables);
+//   dpm('hai');
 }
 
 /**
