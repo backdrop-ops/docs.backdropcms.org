@@ -361,7 +361,7 @@ function entity_plus_hook_entity_info() {
  *       getter callback has to do the necessary conversion. In case of an empty
  *       or not set value, the callback has to return NULL.
  *     - setter callback: (optional) A callback used to set the value of the
- *       property. In many cases entity_property_verbatim_set() can be used.
+ *       property. In many cases entity_plus_property_verbatim_set() can be used.
  *     - validation callback: (optional) A callback that returns whether the
  *       passed data value is valid for the property. May be used to implement
  *       additional validation checks, such as to ensure the value is a valid

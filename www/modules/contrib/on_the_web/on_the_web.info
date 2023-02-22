@@ -4,7 +4,7 @@ description = Provides a block with social media icons linked to your other sour
 backdrop = 1.x
 configure = admin/config/services/on_the_web
 
-; Added by Backdrop CMS packaging script on 2021-08-28
+; Added by Backdrop CMS packaging script on 2022-11-21
 project = on_the_web
-version = 1.x-1.7.2
-timestamp = 1630183781
+version = 1.x-2.0.0
+timestamp = 1669089511

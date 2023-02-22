@@ -16,8 +16,8 @@
  *   CSS. It can be manipulated through the variable $classes_array from
  *   preprocess functions. By default the following classes are available, where
  *   the parts enclosed by {} are replaced by the appropriate values:
- *   - entity-{ENTITY_PLUS_TYPE}
- *   - {ENTITY_PLUS_TYPE}-{BUNDLE}
+ *   - entity-{ENTITY_TYPE}
+ *   - {ENTITY_TYPE}-{BUNDLE}
  *
  * Other variables:
  * - $classes_array: Array of html class attribute values. It is flattened

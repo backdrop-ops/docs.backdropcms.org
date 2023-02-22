@@ -194,18 +194,49 @@ function on_the_web_display_block($delta, $settings = array(), $contexts = array
       $classes = array('on-the-web', 'otw-' . $size, 'otw-' . $service);
 
       $icon = FALSE;
-      if ($config->get('type') == 'font') {
-        if (isset($info['fa-icon'])) {
-          $icon = $info['fa-icon'];
-        }
-        // Only use a square icon if it exists.
-        if ($config->get('square') == TRUE && isset($info['fa-icon-square'])) {
-          $icon = $info['fa-icon-square'];
+      $icon_classes = array();
 
-          if ($config->get('version') == '5.x.x' && $service == 'linkedin') {
+      // Select the appropriate source data.
+      $type = $config->get('type');
+      switch ($type) {
+        case 'font':
+          if (isset($info['fa-icon'])) {
             $icon = $info['fa-icon'];
           }
-        }
+
+          // Only add the v5 styles if we are using v5 or above.
+          if ($config->get('version') == '5.x.x') {
+            if (isset($info['v5style'])) {
+              $icon_classes[] = $info['v5style'];
+            }
+          }
+
+          // Only use a square icon if it exists.
+          if ($config->get('square') == TRUE && isset($info['fa-icon-square'])) {
+            $icon = $info['fa-icon-square'];
+
+            if ($config->get('version') == '5.x.x' && $service == 'linkedin') {
+              // Exception for LinkedIn whicn uses a non-square icon in v5.
+              $icon = $info['fa-icon'];
+            }
+          }
+          break;
+        case 'image':
+          if (isset($info['image'])) {
+            $path = backdrop_get_path('module', 'on_the_web');
+            $icon = base_path() . $path . '/images/' . $size . '/' . $info['image'];
+          }
+          break;
+        case 'anchor':
+          if ($config->get('square') == TRUE && isset($info['svg-square'])) {
+            $img_path = $info['svg-square'];
+          }
+          else {
+            $img_path = $info['svg']; 
+          }
+          $path = backdrop_get_path('module', 'on_the_web');
+          $icon = base_path() . $path . '/images/svgs/' . $img_path;
+          break;
       }
 
       $links[] = array(
@@ -216,6 +247,7 @@ function on_the_web_display_block($delta, $settings = array(), $contexts = array
         '#size' => $size,
         '#title' => $title,
         '#classes' => $classes,
+        '#icon_classes' => $icon_classes,
         '#weight' => $config->get($service . '_weight'),
       );
     }
@@ -225,6 +257,7 @@ function on_the_web_display_block($delta, $settings = array(), $contexts = array
   if ($type == 'anchor') {
     $links['#attached']['css'][] = backdrop_get_path('module', 'on_the_web') . '/css/on_the_web.css';
   }
+
   elseif ($type == 'font') {
     if (!module_exists('font_awesome')) {
 
@@ -237,9 +270,6 @@ function on_the_web_display_block($delta, $settings = array(), $contexts = array
           $font_url = 'https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css';
           break;
         case '5.x.x':
-          //$font_url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css';
-          // Add V4 shims?
-          //$links['#attached']['css']['https://use.fontawesome.com/releases/v5.15.4/css/v4-shims.css'] = array('type' => 'external');
           $hash = $config->get('kit_hash');
           if (!empty($hash)) {
             $font_js_url = 'https://kit.fontawesome.com/' . $hash . '.js';
@@ -273,6 +303,7 @@ function on_the_web_theme($existing, $type, $theme, $path) {
         'size' => 'sm',
         'title' => NULL,
         'classes' => array(),
+        'icon_classes' => array(),
       ),
       'file' => 'on_the_web.theme.inc',
     ),
@@ -297,70 +328,135 @@ function on_the_web_theme($existing, $type, $theme, $path) {
  */
 function on_the_web_get_services() {
   $services = array(
+    /* Icons that are the FontAwesome "Brand" style. */
     'twitter' => array(
       'name' => 'Twitter',
       'fa-icon' => 'fa-twitter',
       'fa-icon-square' => 'fa-twitter-square',
+      'v5style' => 'fab', // Brand
+      'image' => 'twitter.png',
+      'svg' => 'twitter.svg',
+      'svg-square' => 'twitter-square.svg',
+    ),
+    'mastodon' => array(
+      'name' => 'Mastodon',
+      'fa-icon' => 'fa-mastodon',
+      'fa-icon-square' => 'fa-mastodon-square',
+      'v5style' => 'fab', // Brand
+      'svg' => 'mastodon.svg',
     ),
     'facebook' => array(
       'name' => 'Facebook',
-      'fa-icon' => 'fa-facebook',
+      'fa-icon' => 'fa-facebook-f',
       'fa-icon-square' => 'fa-facebook-square',
+      'v5style' => 'fab', // Brand
+      'image' => 'facebook.png',
+      'svg' => 'facebook-f.svg',
+      'svg-square' => 'facebook-square.svg',
     ),
     'pinterest' => array(
       'name' => 'Pinterest',
       'fa-icon' => 'fa-pinterest',
       'fa-icon-square' => 'fa-pinterest-square',
+      'v5style' => 'fab', // Brand
+      'image' => 'pinterest.png',
+      'svg' => 'pinterest.svg',
+      'svg-square' => 'pinterest-square.svg',
     ),
     'instagram' => array(
       'name' => 'Instagram',
       'fa-icon' => 'fa-instagram',
+      'v5style' => 'fab', // Brand
+      'image' => 'instagram.png',
+      'svg' => 'instagram.svg',
+      'svg-square' => 'instagram-square.svg',
     ),
     'github' => array(
       'name' => 'GitHub',
       'fa-icon' => 'fa-github',
       'fa-icon-square' => 'fa-github-square',
+      'v5style' => 'fab', // Brand
+      'svg' => 'github.svg',
+      'svg-square' => 'github-square.svg',
     ),
-    'google' => array(
-      'name' => 'Google+',
-      'fa-icon' => 'fa-google-plus',
-      'fa-icon-square' => 'fa-google-plus-square',
+    'tiktok' => array(
+      'name' => 'TikTok',
+      'fa-icon' => 'fa-tiktok',
+      'v5style' => 'fab', // Brand
+      'svg' => 'tiktok.svg',
     ),
     'youtube' => array(
       'name' => 'YouTube',
       'fa-icon' => 'fa-youtube',
       'fa-icon-square' => 'fa-youtube-square',
+      'v5style' => 'fab', // Brand
+      'image' => 'youtube.png',
+      'svg' => 'youtube.svg',
+      'svg-square' => 'youtube-square.svg',
     ),
     'flickr' => array(
       'name' => 'Flickr',
       'fa-icon' => 'fa-flickr',
+      'v5style' => 'fab', // Brand
+      'image' => 'flickr.png',
+      'svg' => 'flickr.svg',
     ),
     'linkedin' => array(
       'name' => 'LinkedIn',
       'fa-icon' => 'fa-linkedin',
       'fa-icon-square' => 'fa-linkedin-square',
-    ),
-    'itunes' => array(
-      'name' => 'Podcast',
-      'fa-icon' => 'fa-apple',
+      'v5style' => 'fab', // Brand
+      'image' => 'linkedin.png',
+      'svg' => 'linkedin-in.svg',
+      'svg-square' => 'linkedin-square.svg',
     ),
     'delicious' => array(
       'name' => 'Delicious',
       'fa-icon' => 'fa-delicious',
+      'v5style' => 'fab', // Brand
+      'image' => 'delicious.png',
+      'svg' => 'delicious.svg',
     ),
     'lastfm' => array(
       'name' => 'LastFM',
       'fa-icon' => 'fa-lastfm',
       'fa-icon-square' => 'fa-lastfm-square',
+      'svg' => 'lastfm.svg',
+      'svg-square' => 'lastfm-square.svg',
+      'v5style' => 'fab', // Brand
     ),
     'soundcloud' => array(
       'name' => 'Soundcloud',
       'fa-icon' => 'fa-soundcloud',
+      'v5style' => 'fab', // Brand
+      'image' => 'soundcloud.png',
+      'svg' => 'soundcloud.svg',
     ),
+
+    /* Icons that are the FontAwesome "Solid" style. */
     'rss' => array(
-      'name' => 'RSS',
+      'name' => 'RSS Feed',
       'fa-icon' => 'fa-rss',
       'fa-icon-square' => 'fa-rss-square',
+      'v5style' => 'fas', // Solid
+      'image' => 'rss.png',
+      'svg' => 'rss.svg',
+      'svg-square' => 'rss-square.svg',
+    ),
+    'envelope' => array(
+      'name' => 'Newsletter (or Contact)',
+      'fa-icon' => 'fa-envelope',
+      'fa-icon-square' => 'fa-envelope-square',
+      'v5style' => 'fas', // Solid
+      'svg' => 'envelope.svg',
+      'svg-square' => 'envelope-square.svg',
+    ),
+    'itunes' => array(
+      'name' => 'Podcast',
+      'fa-icon' => 'fa-podcast',
+      'v5style' => 'fas', // Solid
+      'image' => 'itunes.png',
+      'svg' => 'podcast.svg',
     ),
   );
 

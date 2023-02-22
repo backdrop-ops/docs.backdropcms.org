@@ -50,15 +50,23 @@ function entity_plus_metadata_node_entity_property_info() {
     'schema field' => 'title',
     'required' => TRUE,
   );
-  $properties['language'] = array(
-    'label' => t("Language"),
+
+  // For backward compatibility this property name is kept.
+  $properties['langcode'] = array(
+    'label' => t("Language code"),
     'type' => 'token',
-    'description' => t("The language the node is written in."),
+    'description' => t("The code of the language the node is written in."),
     'setter callback' => 'entity_plus_property_verbatim_set',
     'options list' => 'entity_plus_metadata_language_list',
-    'schema field' => 'language',
+    'schema field' => 'langcode',
     'setter permission' => 'administer nodes',
   );
+
+  // Provide a langcode property that matches the actual node field.
+  $properties['language'] = array(
+    'label' => t('Language (deprecated - use "Language code")'),
+  ) + $properties['langcode'];
+  
   $properties['url'] = array(
     'label' => t("URL"),
     'description' => t("The URL of the node."),
@@ -144,6 +152,15 @@ function entity_plus_metadata_node_entity_property_info() {
     'setter callback' => 'entity_plus_property_verbatim_set',
     'access callback' => 'entity_plus_metadata_node_revision_access',
   );
+  $properties['comment'] = array(
+    'label' => t('Comment settings'),
+    'description' => t("Whether the comments are allowed on this node."),
+    'type' => 'integer',
+    'setter callback' => 'entity_plus_property_verbatim_set',
+    'setter permission' => 'administer comment settings',
+    'schema field' => 'comment',
+    'options list' => 'entity_plus_metadata_node_comment_settings_options_list',
+  );
   return $info;
 }
 
@@ -163,4 +180,10 @@ function entity_plus_metadata_node_entity_property_info_alter(&$info) {
     'auto creation' => 'entity_plus_property_create_array',
     'field' => TRUE,
   );
+
+  // Make it a list if cardinality is not 1.
+  $field_body = field_info_field('body');
+  if (isset($field_body) && $field_body['cardinality'] != 1) {
+    $info['node']['properties']['body']['type'] = 'list<text_formatted>';
+  }
 }

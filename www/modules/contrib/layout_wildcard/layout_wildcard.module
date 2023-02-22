@@ -23,7 +23,8 @@ function layout_wildcard_layout_load_by_router_item_alter(&$layouts, $router_ite
   // again here in case the user edited the config file directly or something
   // like that).
   foreach ($configs as $config) {
-    if ($config['disabled'] || empty($config['settings']['alternative_paths'])) {
+    $disabled = isset($config['disabled']) ? $config['disabled'] : FALSE;
+    if ($disabled || empty($config['settings']['alternative_paths'])) {
       continue;
     }
     $name = $config['name'];
@@ -45,7 +46,8 @@ function layout_wildcard_layout_load_by_router_item_alter(&$layouts, $router_ite
   // matching layout must be the same as the number of placeholders in the
   // request path so that contexts can be appropriately set.
   foreach ($configs as $config) {
-    if ($config['disabled'] || !isset($config['settings']['ancestor_matching'])) {
+    $disabled = isset($config['disabled']) ? $config['disabled'] : FALSE;
+    if ($disabled || !isset($config['settings']['ancestor_matching'])) {
       continue;
     }
     $name = $config['name'];

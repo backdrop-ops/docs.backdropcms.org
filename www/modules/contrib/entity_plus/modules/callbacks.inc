@@ -8,9 +8,9 @@
 /**
  * Callback for getting properties of an entity.
  */
-function entity_plus_metadata_entity_plus_get_properties($entity, array $options, $name, $entity_plus_type) {
+function entity_plus_metadata_entity_plus_get_properties($entity, array $options, $name, $entity_type) {
   if ($name == 'url') {
-    $return = entity_uri($entity_plus_type, $entity);
+    $return = entity_uri($entity_type, $entity);
     $return += array(
       'path' => NULL,
       'options' => array()
@@ -23,7 +23,7 @@ function entity_plus_metadata_entity_plus_get_properties($entity, array $options
  * Callback for getting book node properties.
  * @see entity_plus_metadata_book_entity_plus_info_alter()
  */
-function entity_plus_metadata_book_get_properties($node, array $options, $name, $entity_plus_type) {
+function entity_plus_metadata_book_get_properties($node, array $options, $name, $entity_type) {
   switch ($name) {
     case 'book':
       if (isset($node->book['bid'])) {
@@ -89,7 +89,7 @@ function entity_plus_metadata_comment_setter($comment, $name, $value) {
  * Callback for getting comment related node properties.
  * @see entity_plus_metadata_comment_entity_plus_info_alter()
  */
-function entity_plus_metadata_comment_get_node_properties($node, array $options, $name, $entity_plus_type) {
+function entity_plus_metadata_comment_get_node_properties($node, array $options, $name, $entity_type) {
   switch ($name) {
     case 'comment_count':
       return isset($node->comment_count) ? $node->comment_count : 0;
@@ -130,11 +130,22 @@ function entity_plus_metadata_status_options_list() {
 }
 
 /**
+ * Return the options lists for the node and comment status property.
+ */
+function entity_plus_metadata_node_comment_settings_options_list() {
+  return array(
+    COMMENT_NODE_OPEN => t('Open'),
+    COMMENT_NODE_CLOSED => t('Closed'),
+    COMMENT_NODE_HIDDEN => t('Closed and hidden'),
+  );
+}
+
+/**
  * Callback for getting node properties.
  *
  * @see entity_plus_metadata_node_entity_plus_info_alter()
  */
-function entity_plus_metadata_node_get_properties($node, array $options, $name, $entity_plus_type) {
+function entity_plus_metadata_node_get_properties($node, array $options, $name, $entity_type) {
   switch ($name) {
     case 'is_new':
       return empty($node->nid) || !empty($node->is_new);
@@ -364,7 +375,7 @@ function entity_plus_metadata_taxonomy_vocabulary_get_properties($vocabulary, ar
  * Callback for getting user properties.
  * @see entity_plus_metadata_user_entity_plus_info_alter()
  */
-function entity_plus_metadata_user_get_properties($account, array $options, $name, $entity_plus_type) {
+function entity_plus_metadata_user_get_properties($account, array $options, $name, $entity_type) {
   switch ($name) {
     case 'last_access':
       // In case there was no access the value is 0, but we have to return NULL.
@@ -442,11 +453,11 @@ function entity_plus_metadata_language_list() {
 /**
  * Callback for getting field property values.
  */
-function entity_plus_metadata_field_property_get($entity, array $options, $name, $entity_plus_type, $info) {
+function entity_plus_metadata_field_property_get($entity, array $options, $name, $entity_type, $info) {
   $field = field_info_field($name);
   $columns = array_keys($field['columns']);
   $langcode = isset($options['language']) ? $options['language']->langcode : LANGUAGE_NONE;
-  $langcode = entity_plus_metadata_field_get_language($entity_plus_type, $entity, $field, $langcode, TRUE);
+  $langcode = entity_plus_metadata_field_get_language($entity_type, $entity, $field, $langcode, TRUE);
   $values = array();
   if (isset($entity->{$name}[$langcode])) {
     foreach ($entity->{$name}[$langcode] as $delta => $data) {
@@ -464,10 +475,10 @@ function entity_plus_metadata_field_property_get($entity, array $options, $name,
 /**
  * Callback for setting field property values.
  */
-function entity_plus_metadata_field_property_set($entity, $name, $value, $langcode, $entity_plus_type, $info) {
+function entity_plus_metadata_field_property_set($entity, $name, $value, $langcode, $entity_type, $info) {
   $field = field_info_field($name);
   $columns = array_keys($field['columns']);
-  $langcode = entity_plus_metadata_field_get_language($entity_plus_type, $entity, $field, $langcode);
+  $langcode = entity_plus_metadata_field_get_language($entity_type, $entity, $field, $langcode);
   $values = $field['cardinality'] == 1 ? array($value) : (array) $value;
 
   $items = array();
@@ -521,12 +532,12 @@ function entity_plus_metadata_field_options_list($name, $info) {
 /**
  * Callback to verbatim get the data structure of a field. Useful for fields that add metadata for their own data structure.
  */
-function entity_plus_metadata_field_verbatim_get($entity, array $options, $name, $entity_plus_type, &$context) {
+function entity_plus_metadata_field_verbatim_get($entity, array $options, $name, $entity_type, &$context) {
   // Set contextual info useful for getters of any child properties.
   $context['instance'] = field_info_instance($context['parent']->type(), $name, $context['parent']->getBundle());
   $context['field'] = field_info_field($name);
   $langcode = isset($options['language']) ? $options['language']->langcode : LANGUAGE_NONE;
-  $langcode = entity_plus_metadata_field_get_language($entity_plus_type, $entity, $context['field'], $langcode, TRUE);
+  $langcode = entity_plus_metadata_field_get_language($entity_type, $entity, $context['field'], $langcode, TRUE);
 
   if ($context['field']['cardinality'] == 1) {
     return isset($entity->{$name}[$langcode][0]) ? $entity->{$name}[$langcode][0] : NULL;
@@ -537,9 +548,9 @@ function entity_plus_metadata_field_verbatim_get($entity, array $options, $name,
 /**
  * Writes the passed field items in the object. Useful as field level setter to set the whole data structure at once.
  */
-function entity_plus_metadata_field_verbatim_set($entity, $name, $items, $langcode, $entity_plus_type) {
+function entity_plus_metadata_field_verbatim_set($entity, $name, $items, $langcode, $entity_type) {
   $field = field_info_field($name);
-  $langcode = entity_plus_metadata_field_get_language($entity_plus_type, $entity, $field, $langcode);
+  $langcode = entity_plus_metadata_field_get_language($entity_type, $entity, $field, $langcode);
   $value = $field['cardinality'] == 1 ? array($items) : (array) $items;
   // Filter out any items set to NULL.
   $entity->{$name}[$langcode] = array_filter($value);
@@ -554,7 +565,7 @@ function entity_plus_metadata_field_verbatim_set($entity, $name, $items, $langco
  *
  * Note that we cannot use field_language() as we are not about to display
  * values, but generally read/write values.
- * 
+ *
  * @param string $entity_type
  *   The entity type; e.g., 'node' or 'user'.
  * @param Entity $entity
@@ -566,7 +577,7 @@ function entity_plus_metadata_field_verbatim_set($entity, $name, $items, $langco
  * @param bool $fallback
  *   (optional) Whether to fall back to the entity default language, if no
  *   value is available for the given language code yet.
- * 
+ *
  * @return string
  *   The language code to use.
  */
@@ -716,7 +727,7 @@ function entity_plus_metadata_no_hook_node_access($op, $node = NULL, $account = 
 /**
  * Access callback for the user entity.
  */
-function entity_plus_metadata_user_access($op, $entity = NULL, $account = NULL, $entity_plus_type = NULL) {
+function entity_plus_metadata_user_access($op, $entity = NULL, $account = NULL, $entity_type = NULL) {
   $account = isset($account) ? $account : $GLOBALS['user'];
   // Grant access to the users own user account and to the anonymous one.
   if (isset($entity->uid) && $op != 'delete' && (($entity->uid == $account->uid && $entity->uid) || (!$entity->uid && $op == 'view'))) {
@@ -810,7 +821,7 @@ function entity_plus_metadata_comment_properties_access($op, $property, $entity 
 /**
  * Access callback for the taxonomy entities.
  */
-function entity_plus_metadata_taxonomy_access($op, $entity = NULL, $account = NULL, $entity_plus_type = NULL) {
+function entity_plus_metadata_taxonomy_access($op, $entity = NULL, $account = NULL, $entity_type = NULL) {
   if (isset($entity) && $op == 'update' && !isset($account) && user_access("edit terms in {$entity->vocabulary}")) {
     return TRUE;
   }
@@ -822,7 +833,7 @@ function entity_plus_metadata_taxonomy_access($op, $entity = NULL, $account = NU
 
 /**
  * Access callback for file entities.
- * 
+ *
  * @see entity_plus_access()
  *
  * @param string $op
@@ -859,16 +870,16 @@ function entity_plus_metadata_file_access($op, $file = NULL, $account = NULL) {
 /**
  * Callback to determine access for properties which are fields.
  */
-function entity_plus_metadata_field_access_callback($op, $name, $entity = NULL, $account = NULL, $entity_plus_type = NULL) {
+function entity_plus_metadata_field_access_callback($op, $name, $entity = NULL, $account = NULL, $entity_type = NULL) {
   $field = field_info_field($name);
-  return field_access($op, $field, $entity_plus_type, $entity, $account);
+  return field_access($op, $field, $entity_type, $entity, $account);
 }
 
 /**
  * Callback to create entity objects.
  */
-function entity_plus_metadata_create_object($values = array(), $entity_plus_type = NULL) {
-  $info = entity_get_info($entity_plus_type);
+function entity_plus_metadata_create_object($values = array(), $entity_type = NULL) {
+  $info = entity_get_info($entity_type);
   // Make sure at least the bundle and label properties are set.
   if (isset($info['entity keys']['bundle']) && $key = $info['entity keys']['bundle']) {
     $values += array($key => NULL);
@@ -962,11 +973,11 @@ function entity_plus_metadata_view_comment($entities, $view_mode = 'full', $lang
 /**
  * Callback to view an entity, for which just ENTITYTYPE_view() is available.
  */
-function entity_plus_metadata_view_single($entities, $view_mode = 'full', $langcode = NULL, $entity_plus_type = NULL) {
-  $function = $entity_plus_type . '_view';
+function entity_plus_metadata_view_single($entities, $view_mode = 'full', $langcode = NULL, $entity_type = NULL) {
+  $function = $entity_type . '_view';
   $build = array();
   foreach ($entities as $key => $entity) {
-    $build[$entity_plus_type][$key] = $function($entity, $view_mode, $langcode);
+    $build[$entity_type][$key] = $function($entity, $view_mode, $langcode);
   }
   return $build;
 }
@@ -1032,8 +1043,8 @@ function entity_plus_metadata_form_taxonomy_vocabulary($vocab) {
 /**
  * Callback to get the form for entities using the entity API admin ui.
  */
-function entity_plus_metadata_form_entity_plus_ui($entity, $entity_plus_type) {
-  $info = entity_get_info($entity_plus_type);
+function entity_plus_metadata_form_entity_plus_ui($entity, $entity_type) {
+  $info = entity_get_info($entity_type);
   $form_state = form_state_defaults();
   // Add in the include file as the form API does else with the include file
   // specified for the active menu item.
@@ -1045,39 +1056,39 @@ function entity_plus_metadata_form_entity_plus_ui($entity, $entity_plus_type) {
       require_once BACKDROP_ROOT . '/' . $form_state['build_info']['files']['entity_plus_ui'];
     }
   }
-  return entity_plus_ui_get_form($entity_plus_type, $entity, $op = 'edit', $form_state);
+  return entity_plus_ui_get_form($entity_type, $entity, $op = 'edit', $form_state);
 }
 
 /**
  * Callback for querying entity properties having their values stored in the entities main db table.
  */
-function entity_plus_metadata_table_query($entity_plus_type, $property, $value, $limit) {
-  $properties = entity_plus_get_all_property_info($entity_plus_type);
+function entity_plus_metadata_table_query($entity_type, $property, $value, $limit) {
+  $properties = entity_plus_get_all_property_info($entity_type);
   $info = $properties[$property] + array('schema field' => $property);
 
   $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', $entity_plus_type, '=')
+  $query->entityCondition('entity_type', $entity_type, '=')
         ->propertyCondition($info['schema field'], $value, is_array($value) ? 'IN' : '=')
         ->range(0, $limit);
 
   $result = $query->execute();
-  return !empty($result[$entity_plus_type]) ? array_keys($result[$entity_plus_type]) : array();
+  return !empty($result[$entity_type]) ? array_keys($result[$entity_type]) : array();
 }
 
 /**
  * Callback for querying entities by field values. This function just queries for the value of the first specified column. Also it is only suitable for fields that don't process the data, so it's stored the same way as returned.
  */
-function entity_plus_metadata_field_query($entity_plus_type, $property, $value, $limit) {
+function entity_plus_metadata_field_query($entity_type, $property, $value, $limit) {
   $query = new EntityFieldQuery();
   $field = field_info_field($property);
   $columns = array_keys($field['columns']);
 
-  $query->entityCondition('entity_type', $entity_plus_type, '=')
+  $query->entityCondition('entity_type', $entity_type, '=')
         ->fieldCondition($field, $columns[0], $value, is_array($value) ? 'IN' : '=')
         ->range(0, $limit);
 
   $result = $query->execute();
-  return !empty($result[$entity_plus_type]) ? array_keys($result[$entity_plus_type]) : array();
+  return !empty($result[$entity_type]) ? array_keys($result[$entity_type]) : array();
 }
 
 /**

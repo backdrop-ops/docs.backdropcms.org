@@ -21,17 +21,17 @@ function entity_plus_metadata_field_entity_property_info() {
       $field_type += array('property_callbacks' => array());
       array_unshift($field_type['property_callbacks'], 'entity_plus_metadata_field_default_property_callback');
 
-      foreach ($field['bundles'] as $entity_plus_type => $bundles) {
+      foreach ($field['bundles'] as $entity_type => $bundles) {
         foreach ($bundles as $bundle) {
-          $instance = field_info_instance($entity_plus_type, $field_name, $bundle);
+          $instance = field_info_instance($entity_type, $field_name, $bundle);
 
           if ($instance && empty($instance['deleted'])) {
             foreach ($field_type['property_callbacks'] as $callback) {
               if (function_exists($callback)) {
-                $callback($info, $entity_plus_type, $field, $instance, $field_type);
+                $callback($info, $entity_type, $field, $instance, $field_type);
               }
               else {
-                watchdog($entity_plus_type, 'Missing property callback %callback.', array('%callback' => $callback), WATCHDOG_ERROR);
+                watchdog($entity_type, 'Missing property callback %callback.', array('%callback' => $callback), WATCHDOG_ERROR);
               }
             }
           }
@@ -46,14 +46,14 @@ function entity_plus_metadata_field_entity_property_info() {
  * Callback to add in property info defaults per field instance.
  * @see entity_plus_metadata_field_entity_property_info()
  */
-function entity_plus_metadata_field_default_property_callback(&$info, $entity_plus_type, $field, $instance, $field_type) {
+function entity_plus_metadata_field_default_property_callback(&$info, $entity_type, $field, $instance, $field_type) {
   if (!empty($field_type['property_type'])) {
     if ($field['cardinality'] != 1) {
       $field_type['property_type'] = 'list<' . $field_type['property_type'] . '>';
     }
     // Add in instance specific property info, if given and apply defaults.
     $name = $field['field_name'];
-    $property = &$info[$entity_plus_type]['bundles'][$instance['bundle']]['properties'][$name];
+    $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$name];
     $instance += array('property info' => array());
     $property = $instance['property info'] + array(
       // Since the label will be exposed via hook_token_info() and it is not
@@ -85,11 +85,11 @@ function entity_plus_metadata_field_default_property_callback(&$info, $entity_pl
  * @see entity_plus_field_info_alter()
  * @see entity_plus_property_text_formatted_info()
  */
-function entity_plus_metadata_field_text_property_callback(&$info, $entity_plus_type, $field, $instance, $field_type) {
+function entity_plus_metadata_field_text_property_callback(&$info, $entity_type, $field, $instance, $field_type) {
   if (!empty($instance['settings']['text_processing']) || $field['type'] == 'text_with_summary') {
     // Define a data structure for dealing with text that is formatted or has
     // a summary.
-    $property = &$info[$entity_plus_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
+    $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
 
     $property['getter callback'] = 'entity_plus_metadata_field_verbatim_get';
     $property['setter callback'] = 'entity_plus_metadata_field_verbatim_set';
@@ -117,8 +117,8 @@ function entity_plus_metadata_field_text_property_callback(&$info, $entity_plus_
  * Additional callback to adapt the property info for term reference fields.
  * @see entity_plus_metadata_field_entity_property_info()
  */
-function entity_plus_metadata_field_term_reference_callback(&$info, $entity_plus_type, $field, $instance, $field_type) {
-  $property = &$info[$entity_plus_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
+function entity_plus_metadata_field_term_reference_callback(&$info, $entity_type, $field, $instance, $field_type) {
+  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
   if (count($field['settings']['allowed_values']) == 1) {
     $settings = reset($field['settings']['allowed_values']);
     $property['bundle'] = $settings['vocabulary'];
@@ -134,8 +134,8 @@ function entity_plus_metadata_field_term_reference_callback(&$info, $entity_plus
  * Additional callback to adapt the property info for file fields.
  * @see entity_plus_metadata_field_entity_property_info()
  */
-function entity_plus_metadata_field_file_callback(&$info, $entity_plus_type, $field, $instance, $field_type) {
-  $property = &$info[$entity_plus_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
+function entity_plus_metadata_field_file_callback(&$info, $entity_type, $field, $instance, $field_type) {
+  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
   // Define a data structure so it's possible to deal with files and their
   // descriptions.
   $property['getter callback'] = 'entity_plus_metadata_field_verbatim_get';
@@ -158,11 +158,11 @@ function entity_plus_metadata_field_file_callback(&$info, $entity_plus_type, $fi
 
 /**
  * Additional callback to adapt the property info for image fields. This callback gets invoked after entity_plus_metadata_field_file_callback().
- * 
+ *
  * @see entity_plus_metadata_field_entity_property_info()
  */
-function entity_plus_metadata_field_image_callback(&$info, $entity_plus_type, $field, $instance, $field_type) {
-  $property = &$info[$entity_plus_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
+function entity_plus_metadata_field_image_callback(&$info, $entity_type, $field, $instance, $field_type) {
+  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
   // Update the property info with the info for image fields.
   $property['property info'] = entity_plus_property_field_item_image_info();
 
@@ -176,7 +176,7 @@ function entity_plus_metadata_field_image_callback(&$info, $entity_plus_type, $f
 
 /**
  * Callback to alter the property info of date fields.
- * 
+ *
  * @see entity_plus_metadata_field_entity_property_info()
  */
 function entity_plus_metadata_field_date_callback(&$info, $entity_type, $field, $instance, $field_type) {
@@ -242,7 +242,7 @@ function entity_plus_metadata_field_date_callback(&$info, $entity_type, $field, 
 
 /**
  * Callback to alter the property info of link fields.
- * 
+ *
  * @see entity_plus_metadata_field_entity_property_info()
  */
 function entity_plus_metadata_field_link_callback(&$info, $entity_type, $field, $instance, $field_type) {

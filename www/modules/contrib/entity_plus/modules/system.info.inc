@@ -80,6 +80,22 @@ function entity_plus_metadata_system_entity_property_info() {
       ),
     ),
   );
+  if (module_exists('locale')) {
+    $properties['current_page']['property info']['language'] = array(
+      'label' => t("Interface language"),
+      'description' => t("The language code of the current user interface language."),
+      'type' => 'token',
+      'getter callback' => 'entity_plus_metadata_locale_get_languages',
+      'options list' => 'entity_plus_metadata_language_list',
+    );
+    $properties['current_page']['property info']['language_content'] = array(
+      'label' => t("Content language"),
+      'description' => t("The language code of the current content language."),
+      'type' => 'token',
+      'getter callback' => 'entity_plus_metadata_locale_get_languages',
+      'options list' => 'entity_plus_metadata_language_list',
+    );
+  }
 
   // Files.
   $properties = &$info['file']['properties'];
@@ -128,5 +144,16 @@ function entity_plus_metadata_system_entity_property_info() {
     'getter callback' => 'entity_plus_metadata_system_get_file_properties',
     'schema field' => 'uid',
   );
+  $properties['type'] = array(
+    'label' => t('File type'),
+    'type' => 'token',
+    'description' => t('The type of the file.'),
+    'setter callback' => 'entity_plus_property_verbatim_set',
+    'setter permission' => 'administer files',
+    'options list' => 'file_type_get_names',
+    'required' => TRUE,
+    'schema field' => 'type',
+  );
+
   return $info;
 }

@@ -4,7 +4,7 @@ description = Tests for Entity Plus functionality.
 group = Entity Plus
 file = entity_plus.test
 
-; Added by Backdrop CMS packaging script on 2022-05-09
+; Added by Backdrop CMS packaging script on 2023-01-28
 project = entity_plus
-version = 1.x-1.0.17
-timestamp = 1652111082
+version = 1.x-1.0.18
+timestamp = 1674951041
