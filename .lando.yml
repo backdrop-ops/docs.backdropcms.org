@@ -33,5 +33,6 @@ tooling:
     cmd:
       - php /app/scripts/pull-db-files.php --files
       - tar -xzf docs-files-latest.tar.gz
-      - rm -r www/files/ && mv files/ www/
+      - rm -r www/files/ || true
+      - mv files/ www/
       - rm -f docs-files-latest.tar.gz
