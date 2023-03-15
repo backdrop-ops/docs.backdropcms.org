@@ -163,3 +163,7 @@ html.dialog-open {
   background: transparent url(../images/unpublish.svg) 6px center no-repeat;
   background-size: 14px;
 }
+
+.paragraphs-admin-bundle-clone-create-form .paragraphs-type-clone-readonly-field {
+  background-color: #f1f1f1;
+}

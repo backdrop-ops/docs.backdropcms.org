@@ -74,3 +74,58 @@ function paragraphs_bundle_permissions_permission() {
 
   return $perms;
 }
+
+/**
+ * Generate conditional message.
+ *
+ * Generate the conditional part of the message to be displayed when
+ * permissions are added.
+ */
+function paragraphs_bundle_permissions_conditional_message($search) {
+  // Use get_t() instead of t() as the hook_install implementation could be
+  // called during the Backdrop installation phase.
+  $t = get_t();
+  // Define part of the message depending on whether the user has permission
+  // to administer permissions or not.
+  if (user_access("administer permissions")) {
+    // Compile the message with the link.
+    $conditional_message = $t('Review and make changes if needed on the <a href="@url">permissions</a> page.', array(
+      '@url' => paragraphs_bundle_permissions_url($search),
+    ));
+  }
+  else {
+    $conditional_message = $t("Contact an administrator with permission to modify these permissions if different permissions are needed.");
+  }
+  return $conditional_message;
+}
+
+/**
+ * Generate a link to the relevant section of the permissions screen.
+ */
+function paragraphs_bundle_permissions_url($search = '') {
+  // Define the base permission path.
+  $url_path = 'admin/config/people/permissions';
+
+  // If the Filter Permissions module is enabled then we should filter this
+  // module within the path so the filter can be applied server-side.
+  if (module_exists('filter_perms')) {
+    $url_module_filter = 'module-paragraphs_bundle_permissions';
+    $url_path .= '/' . $url_module_filter;
+    // If the search text is just for the module we can remove it as Filter
+    // Permissions will handle this.
+    $search = (($search == 'Paragraphs Type Permissions') ? '' : $search);
+  }
+  // Create a blank $options array so we can include in url function whether or
+  // not a search string is needed.
+  $options = array();
+  // Add the search query to $options if applicable.
+  if (!empty($search)) {
+    $options = array(
+      'query' => array(
+        'search' => $search,
+      ),
+    );
+  }
+  // Generate the url string.
+  return url($url_path, $options);
+}

@@ -381,6 +381,15 @@ function paragraphs_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 
+  $items['admin/structure/paragraphs/%paragraphs_bundle/clone'] = array(
+    'title' => 'Clone Paragraphs type',
+    'access arguments' => array('administer paragraphs bundles'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('paragraphs_admin_bundle_clone_create_form', 3),
+    'file' => 'paragraphs.type_clone.inc',
+    'type' => MENU_VISIBLE_IN_BREADCRUMB,
+  );
+
   $items['admin/structure/paragraphs/%paragraphs_bundle/delete'] = array(
     'title' => 'Delete Paragraphs type',
     'page callback' => 'backdrop_get_form',

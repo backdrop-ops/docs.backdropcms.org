@@ -7,7 +7,7 @@ package = Paragraphs
 dependencies[] = paragraphs
 
 
-; Added by Backdrop CMS packaging script on 2022-09-29
+; Added by Backdrop CMS packaging script on 2023-02-25
 project = paragraphs
-version = 1.x-1.2.2
-timestamp = 1664461486
+version = 1.x-1.2.3
+timestamp = 1677366667

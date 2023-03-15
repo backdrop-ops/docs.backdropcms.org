@@ -53,6 +53,22 @@ function paragraphs_admin_bundle_overview() {
       'title' => t('Configure'),
       'href' => 'admin/structure/paragraphs/' . $type_url_str . '/edit',
     );
+    // Clone bundle.
+    $operations['clone_type'] = array(
+      'title' => t('clone'),
+      'href' => 'admin/structure/paragraphs/' . $type_url_str . '/clone',
+    );
+
+    // Manage permissions if module enabled.
+    if (module_exists('paragraphs_bundle_permissions')) {
+      $operations['permissions'] = array(
+        'title' => t('Permissions'),
+        'href' => paragraphs_bundle_permissions_url(),
+        'query' => array('search' => $bundle->name . ': '),
+        'attributes' => array('title' => t('Configure permissions')),
+      );
+    }
+
     // Delete bundle.
     $operations['delete_type'] = array(
       'title' => t('Delete'),
@@ -243,6 +259,48 @@ function paragraphs_admin_bundle_form_submit(array $form, array &$form_state) {
   unset($variables['form_token'], $variables['op'], $variables['submit'], $variables['delete'], $variables['reset'], $variables['form_id'], $variables['form_build_id']);
 
   $status = paragraphs_bundle_save($bundle);
+
+  // Add permissions if paragraphs_bundle_permissions is enabled and paragraph
+  // is newly created.
+  if (module_exists('paragraphs_bundle_permissions') && $status == SAVED_NEW) {
+    // Define the permission name for viewing paragraph content.
+    $permission_name = 'view paragraph content ' . $bundle->bundle;
+    // Add the permission to the anonymous role.
+    user_role_change_permissions('anonymous', array($permission_name => TRUE));
+    // Add the permission to the authenticated role.
+    user_role_change_permissions('authenticated', array($permission_name => TRUE));
+
+    // Define all administrator permissions.
+    $admin_permissions = array('view', 'update', 'delete', 'create');
+    $permissions = array();
+    foreach ($admin_permissions as $permission) {
+      $permission_name = $permission . ' paragraph content ' . $bundle->bundle;
+      $permissions += array(
+        $permission_name => TRUE,
+      );
+    }
+    // Add the permissions to the administrator role.
+    $admin_role = config_get('system.core', 'user_admin_role');
+    user_role_change_permissions($admin_role, $permissions);
+
+    // Define a message informing the user who created the paragraph type that
+    // default permissions have been added.
+    $roles = user_roles();
+    $message = t("Default permissions have been added to the %anonymous and %authenticated roles ('View') and %admin role (all) for the %paragraph_type paragraph type. ",
+      array(
+        '%anonymous' => $roles['anonymous'],
+        '%authenticated' => $roles['authenticated'],
+        '%admin' => $roles[$admin_role],
+        '%paragraph_type' => $bundle->name,
+      )
+    );
+    // Define part of the message depending on whether the user has permission
+    // to administer permissions or not.
+    $conditional_message = paragraphs_bundle_permissions_conditional_message($bundle->name . ': ');
+
+    // Display the combined message.
+    backdrop_set_message($message . $conditional_message, 'info');
+  }
 
   $t_args = array('%name' => $bundle->name);
 

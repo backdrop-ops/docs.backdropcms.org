@@ -1,0 +1,99 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the paragraphs_bundle_permissions
+ * sub-module.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Add default permissions to anonymous and authenticated roles. Admin roles
+ * are added by default when the permissions are defined, so no need to add
+ * here.
+ */
+function paragraphs_bundle_permissions_install() {
+  // Load paragraph types/bundles.
+  $bundles = paragraphs_bundle_load();
+  // Create empty array for permissions.
+  $permissions = array();
+  // Define the view permissions for each type/bundle.
+  foreach ($bundles as $machine_name => $bundle) {
+    $permission_name = 'view paragraph content ' . $machine_name;
+    $permissions += array(
+      $permission_name => TRUE,
+    );
+  }
+  // Add the permissions to the anonymous role.
+  user_role_change_permissions('anonymous', $permissions);
+
+  // Add the permissions to the authenticated role.
+  user_role_change_permissions('authenticated', $permissions);
+
+  // Define a message informing the user default permissions have been added to
+  // each paragraph type.
+  // Get role names.
+  $roles = user_roles();
+  $admin_role = config_get('system.core', 'user_admin_role');
+  // Compile the message.
+  $t = get_t();
+  $message = $t('Default permissions have been added to the %anonymous and %authenticated roles (View) and %administrator role (All) for all existing paragraph types. ',
+    array(
+      '%anonymous' => $roles['anonymous'],
+      '%authenticated' => $roles['authenticated'],
+      '%administrator' => $roles[$admin_role],
+    )
+  );
+
+  // Define part of the message depending on whether the user has permission
+  // to administer permissions or not.
+  $conditional_message = paragraphs_bundle_permissions_conditional_message('Paragraphs Type Permissions');
+
+  // Display the combined message.
+  backdrop_set_message($message . $conditional_message, 'info');
+}
+
+/**
+ * Implements hook_update().
+ *
+ * Adds default permissions to the administrator role as these may be missing
+ * if new paragraph types have been added since the module was first enabled
+ * and they have not been added manually. Other roles will not be modified here
+ * as there is a strong possibility they have been defined.
+ */
+function paragraphs_bundle_permissions_update_1100() {
+  // Load paragraph types/bundles.
+  $bundles = paragraphs_bundle_load();
+  // Define all permissions for the administrator role.
+  $admin_permission_types = array('view', 'update', 'delete', 'create');
+  // Define array to add permissions to.
+  $permissions = array();
+  // Define the permissions for each type/bundle.
+  foreach ($bundles as $machine_name => $bundle) {
+    // Loop through each admin permission and add permission to array.
+    foreach ($admin_permission_types as $permission) {
+      $permission_name = $permission . ' paragraph content ' . $machine_name;
+      $permissions += array(
+        $permission_name => TRUE,
+      );
+    }
+  }
+  // Add the permissions to the administrator role.
+  $admin_role = config_get('system.core', 'user_admin_role');
+  user_role_change_permissions($admin_role, $permissions);
+
+  // Define a message informing the user that default permissions have been
+  // added to each paragraph type.
+  // Get role names.
+  $roles = user_roles();
+  // Compile the message.
+  $message = t('Default permissions (All) have been added to the %administrator role for all existing paragraph types if they did not already exist. No other roles have been modified. ',
+    array('%administrator' => $roles[$admin_role]));
+
+  // Define part of the message depending on whether the user has permission
+  // to administer permissions or not.
+  $conditional_message = paragraphs_bundle_permissions_conditional_message('Paragraphs Type Permissions');
+
+  // Display the combined message.
+  backdrop_set_message($message . $conditional_message, 'info');
+}

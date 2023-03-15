@@ -2,31 +2,31 @@
 
 Paragraphs is the new way of content creation!
 
-It allows you — Site Builders — to make things cleaner so that you can give more 
+It allows you — Site Builders — to make things cleaner so that you can give more
 editing power to your end users.
 
-Instead of putting all their content in one WYSIWYG body field including images 
-and videos, end-users can now choose on-the-fly between pre-defined Paragraph 
-Types independent from one another. Paragraph Types can be anything you want 
+Instead of putting all their content in one WYSIWYG body field including images
+and videos, end-users can now choose on-the-fly between pre-defined Paragraph
+Types independent from one another. Paragraph Types can be anything you want
 from a simple text block or image to a complex and configurable slideshow.
 
-Paragraphs module comes with a new "paragraphs" field type that works like 
-Entity References. Simply add a new paragraphs field on any Content Type you 
-want and choose which Paragraph Types should be available to end-users. They 
-can then add as many Paragraph items as you allowed them to and reorder them 
+Paragraphs module comes with a new "paragraphs" field type that works like
+Entity References. Simply add a new paragraphs field on any Content Type you
+want and choose which Paragraph Types should be available to end-users. They
+can then add as many Paragraph items as you allowed them to and reorder them
 at will.
 
-Paragraphs module does not come with any default Paragraph Types but you have 
-complete control over what fields they should be composed of and what they 
-should look like through the standard Backdrop **Manage Fields** and 
+Paragraphs module does not come with any default Paragraph Types but you have
+complete control over what fields they should be composed of and what they
+should look like through the standard Backdrop **Manage Fields** and
 **Manage Display** screens.
 
-You can also add custom option fields and do conditional coding in your CSS, 
-JS and preprocess functions so that end-users can have more control over the 
-look and feel of each item. This is way much cleaner and stable than adding 
+You can also add custom option fields and do conditional coding in your CSS,
+JS and preprocess functions so that end-users can have more control over the
+look and feel of each item. This is way much cleaner and stable than adding
 inline CSS or classes inside the body field's source.
 
-So... what's it gonna be? Accordions, Tabs, Slideshows, Masonry galleries, 
+So... what's it gonna be? Accordions, Tabs, Slideshows, Masonry galleries,
 Parallax backgrounds...? Think big!
 
 Some more examples:
@@ -54,16 +54,18 @@ Some more examples:
 
 ## Current Maintainers
 
- - [Laryn Kragt Bakker](https://github.com/laryn) - [CEDC.org](https://cedc.org)
+ - [Laryn Kragt Bakker](https://github.com/laryn).
  - Collaboration and co-maintainers welcome!
 
 ## Credits
 
- - Ported to BackdropCMS by [@docwilmot](https://github.com/docwilmot)
+ - Current development is supported by [Aten Design Group](https://aten.io).
+ - Ported to Backdrop CMS by [@docwilmot](https://github.com/docwilmot).
  - Maintainers on drupal.org include [berdir](https://www.drupal.org/u/berdir),
    [miro_dietiker](https://www.drupal.org/u/miro_dietiker),
    [primsi](https://www.drupal.org/u/primsi), and
    [jeroenb](https://www.drupal.org/u/jeroenb).
+ - Past Backdrop development was supported by [CEDC](https://cedc.org).
 
 ## License
 
