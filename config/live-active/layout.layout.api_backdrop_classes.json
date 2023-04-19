@@ -19,7 +19,8 @@
             "api/backdrop/files",
             "api/backdrop/functions",
             "api/backdrop/groups",
-            "api/backdrop/globals"
+            "api/backdrop/globals",
+            "api/backdrop/theme-functions"
         ],
         "ancestor_matching": 0,
         "bottom": {
