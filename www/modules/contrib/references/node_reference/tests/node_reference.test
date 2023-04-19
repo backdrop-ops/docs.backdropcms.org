@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Initial node_reference tests
+ * Initial node_reference tests.
  */
 
 /**
@@ -11,6 +11,10 @@
 require_once BACKDROP_ROOT . '/core/modules/field/tests/field.test';
 
 class NodeReferenceFormTest extends FieldTestCase {
+
+  /**
+   * Get Info.
+   */
   public static function getInfo() {
     return array(
       'name'        => 'Node reference',
@@ -19,7 +23,10 @@ class NodeReferenceFormTest extends FieldTestCase {
     );
   }
 
-  function setUp() {
+  /**
+   * Setup.
+   */
+  public function setUp() {
     parent::setUp(array('node_reference', 'field_test'));
 
     $this->langcode = LANGUAGE_NONE;
@@ -58,7 +65,10 @@ class NodeReferenceFormTest extends FieldTestCase {
     }
   }
 
-  function runReferenceableNodeTest($allowed, $group) {
+  /**
+   * Function to run Referenceable Node Test.
+   */
+  public function runReferenceableNodeTest($allowed, $group) {
     field_update_field(array(
       'field_name' => $this->field_name,
       'settings'   => array('referenceable_types' => array_keys($allowed)),
@@ -71,13 +81,13 @@ class NodeReferenceFormTest extends FieldTestCase {
     foreach ($this->nodes as $node) {
       if (isset($allowed[$node->type])) {
         $this->assertTrue(isset($options[$node->nid]),
-          t('Node of type @type is referenceable', array('@type' => $node->type)),
-          $group);
+        t('Node of type @type is referenceable', array('@type' => $node->type)),
+        $group);
       }
       else {
         $this->assertFalse(isset($options[$node->nid]),
-          t('Node of type @type is not referenceable', array('@type' => $node->type)),
-          $group);
+        t('Node of type @type is not referenceable', array('@type' => $node->type)),
+        $group);
       }
       unset($options[$node->nid]);
     }
@@ -85,26 +95,25 @@ class NodeReferenceFormTest extends FieldTestCase {
   }
 
   /**
-   * Test unlimited referencing
+   * Test unlimited referencing.
    */
-  function testReferenceableNodeTypesAll() {
+  public function testReferenceableNodeTypesAll() {
     $allowed = node_type_get_names();
     $this->runReferenceableNodeTest($allowed, t('Unimited referencing'));
   }
 
   /**
-   * Test referencing a limited list of node types
+   * Test referencing a limited list of node types.
    */
-  function testReferenceableNodeTypesOne() {
+  public function testReferenceableNodeTypesOne() {
     $allowed = array_slice(node_type_get_names(), 0, 1, TRUE);
     $this->runReferenceableNodeTest($allowed, t('Limited referencing'));
   }
 
-
   /**
    * Test autocomplete widget.
    */
-  function testLongNodeReferenceWidget() {
+  public function testLongNodeReferenceWidget() {
     // Create regular test user.
     $web_user = $this->backdropCreateUser(array('create post content', 'access content'));
     $this->backdropLogin($web_user);
@@ -154,4 +163,5 @@ class NodeReferenceFormTest extends FieldTestCase {
     $this->assertRaw(t('!post %title has been created.', array('!post' => 'Post', '%title' => $edit["title"])), t('Post created.'));
     $this->assertText($node_long_title->title, t('Referenced node title is displayed.'));
   }
+
 }

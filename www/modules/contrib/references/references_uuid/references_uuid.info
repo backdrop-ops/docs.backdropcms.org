@@ -1,4 +1,5 @@
 name = References UUID
+description = UUID for References project.
 core = 7.x
 backdrop = 1.x
 type = module
@@ -6,7 +7,7 @@ package = Fields
 dependencies[] = references
 dependencies[] = uuid
 
-; Added by Backdrop CMS packaging script on 2019-11-30
+; Added by Backdrop CMS packaging script on 2023-03-29
 project = references
-version = 1.x-1.0.2
-timestamp = 1575171954
+version = 1.x-1.0.3
+timestamp = 1680106179

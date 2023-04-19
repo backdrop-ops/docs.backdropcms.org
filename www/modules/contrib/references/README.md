@@ -30,7 +30,7 @@ This module is based on the Drupal module References-7.x-2.x
 
 Project page: http://drupal.org/project/references.
 
-Drupal Maintainers: 
+Drupal Maintainers:
 - Alex Andrascu (https://www.drupal.org/u/alex-andrascu)
 - Yves Chedemois (https://www.drupal.org/u/yched)
 - Karen Stevenson (https://www.drupal.org/u/karens)
