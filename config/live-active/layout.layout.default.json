@@ -398,7 +398,7 @@
         "c49b957b-4d0f-482f-b300-e6f5514338b9": {
             "plugin": "block:newsletter",
             "data": {
-                "status": 1,
+                "status": 0,
                 "module": "block",
                 "delta": "newsletter",
                 "settings": {
