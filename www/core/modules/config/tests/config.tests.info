@@ -22,7 +22,7 @@ description = Tests that hook_config_create() is run during configuration sync.
 group = Configuration
 file = config.test
 
-; Added by Backdrop CMS packaging script on 2023-05-15
+; Added by Backdrop CMS packaging script on 2023-06-07
 project = backdrop
-version = 1.25.0
-timestamp = 1684204044
+version = 1.25.1
+timestamp = 1686169096
