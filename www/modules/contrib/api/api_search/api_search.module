@@ -100,6 +100,7 @@ function api_search_api_updated($dids) {
  */
 function api_search_url_outbound_alter(&$path, &$options, $original_path) {
   $matches = array();
+  $path = is_null($path) ? '' : $path;
   if (preg_match('|^node/(\d+)$|', $path, $matches)) {
     $nid = (int) $matches[1];
     if ($nid > 0) {
