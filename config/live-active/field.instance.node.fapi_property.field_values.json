@@ -10,16 +10,22 @@
         "module": "text",
         "active": 1,
         "settings": {
-            "rows": "2"
+            "rows": "10"
         }
     },
     "description": "",
     "required": 0,
     "deleted": 0,
-    "default_value": null,
+    "default_value": [
+        {
+            "value": "",
+            "format": "documentation"
+        }
+    ],
     "default_value_function": null,
     "settings": {
         "text_processing": "1",
+        "allowed_formats": [],
         "user_register_form": false
     },
     "display": {

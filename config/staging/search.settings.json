@@ -28,5 +28,6 @@
     "search_and_or_limit": 7,
     "search_default_module": "node",
     "_config_static": true,
-    "search_logging": true
+    "search_logging": true,
+    "search_pager_type": "full"
 }
