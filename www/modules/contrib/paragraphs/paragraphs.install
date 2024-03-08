@@ -10,54 +10,6 @@
  */
 function paragraphs_schema() {
   $schema = array();
-  $schema['paragraphs_bundle'] = array(
-    'description' => 'Stores information about Paragraph types.',
-    'fields' => array(
-      'bundle' => array(
-        'description' => 'The machine-readable name of this Paragraph type.',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-      ),
-      'name' => array(
-        'description' => 'The human-readable label for this Paragraph type.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-        'translatable' => TRUE,
-      ),
-      'label' => array(
-        'description' => 'A user-facing label for this Paragraph type.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-        'translatable' => TRUE,
-      ),
-      'description' => array(
-        'description' => 'A brief description of this Paragraph type.',
-        'type' => 'text',
-        'not null' => FALSE,
-        'size' => 'medium',
-        'translatable' => TRUE,
-      ),
-      'locked' => array(
-        'description' => 'A boolean indicating whether the administrator can change the machine name of this Paragraph type.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-        'size' => 'tiny',
-      ),
-      'allow_unpublish' => array(
-        'description' => 'A boolean indicating whether the administrator can show/hide published status.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 1,
-      ),
-    ),
-    'primary key' => array('bundle'),
-  );
 
   $schema['paragraphs_item'] = array(
     'description' => 'Stores information about paragraph items.',
@@ -203,6 +155,10 @@ function paragraphs_update_last_removed() {
  * Update {paragraphs_bundle} schema to include label and description fields.
  */
 function paragraphs_update_1000() {
+  if (!db_table_exists('paragraphs_bundle')) {
+    return;
+  }
+
   $fields = array(
     'label' => array(
       'description' => 'A user-facing label for this Paragraph type.',
@@ -236,6 +192,10 @@ function paragraphs_update_1000() {
  * Updates paragraphs bundle to CMI.
  */
 function paragraphs_update_1001() {
+  if (!db_table_exists('paragraphs_bundle')) {
+    return;
+  }
+
   $bundles = array();
   $query = db_select('paragraphs_bundle', 'pb')
         ->fields('pb')
@@ -269,4 +229,17 @@ function paragraphs_update_1003() {
   );
 
   db_add_field('paragraphs_item', 'status', $status);
+}
+
+/**
+ * Drop paragraphs_bundle table.
+ */
+function paragraphs_update_1004() {
+  if (!db_table_exists('paragraphs_bundle')) {
+    return;
+  }
+  // New installs were creating the table from the schema, but the config is all
+  // in CMI now. The schema is now removed but need to ensure the table is
+  // dropped.
+  db_drop_table('paragraphs_bundle');
 }

@@ -1133,14 +1133,9 @@ function paragraphs_bundle_save($bundle) {
 function paragraphs_bundle_delete($bundle_machine_name) {
   $bundle = paragraphs_bundle_load($bundle_machine_name);
   if (is_object($bundle)) {
-    // Delete config files.
+    field_attach_delete_bundle('paragraphs_item', $bundle->bundle);
     $config = config('paragraphs.type.' . $bundle->bundle);
     $config->delete();
-    $sub_names = config_get_names_with_prefix('field.instance.paragraphs_item.' . $bundle->bundle . '.');
-    foreach ($sub_names as $sub_name) {
-      config($sub_name)->delete();
-    }
-    field_attach_delete_bundle('paragraphs_item', $bundle->bundle);
     paragraphs_bundle_load(NULL, TRUE);
     entity_info_cache_clear();
     state_set('menu_rebuild_needed', TRUE);
@@ -1692,6 +1687,7 @@ function paragraphs_modal_admin_links($paragraphs_item) {
   $field_name = $paragraphs_item->field_name;
   $langcode = $paragraphs_item->langcode;
   $field = field_info_field($field_name);
+  $field_count = count($host_entity->{$field_info['field_name']}[$langcode]);
   $instance = field_info_instance($host_entity_type, $field_name, $host_entity_bundle);
   $admin_links = array();
 
@@ -1755,7 +1751,7 @@ function paragraphs_modal_admin_links($paragraphs_item) {
         ),
       );
     }
-    if ($field_info['cardinality'] != '1' && count($host_entity->{$field_info['field_name']}[$langcode]) > 1) {
+    if ($field_info['cardinality'] != '1' && $field_count > 1) {
       $admin_links['#links']['paragraphs_admin_sort'] = array(
         'title' => t('Sort'),
         'href' => 'paragraphs/' . $paragraph_id . '/sort',
@@ -1827,7 +1823,7 @@ function paragraphs_modal_admin_links($paragraphs_item) {
     if (count($select_bundles)) {
       backdrop_sort($select_bundles, array('weight' => SORT_NUMERIC));
 
-      if ($field['cardinality'] == FIELD_CARDINALITY_UNLIMITED || $field_state['real_items_count'] < $field['cardinality']) {
+      if ($field['cardinality'] == FIELD_CARDINALITY_UNLIMITED || $field_count < $field['cardinality']) {
         foreach ($select_bundles as $key => $bundle) {
           $admin_links['#links']['paragraphs_admin_add_' . $key] = array(
             'title' => t('Add new') . ' ' . $bundle['name'],
