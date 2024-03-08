@@ -8,6 +8,7 @@
 /**
  * A common base class for all wrappers.
  */
+#[AllowDynamicProperties]
 abstract class EntityMetadataWrapper {
 
   protected $type;
