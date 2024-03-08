@@ -307,7 +307,7 @@
                         "label": "",
                         "empty": true,
                         "content": "<p>No files available.</p>\\n",
-                        "format": "filtered_html",
+                        "format": "plain_text",
                         "tokenize": 0
                     }
                 },

@@ -14,11 +14,9 @@
         "access site in maintenance mode",
         "access site reports",
         "access user profiles",
-        "add content to books",
         "administer account settings",
         "administer actions",
         "administer blocks",
-        "administer book outlines",
         "administer bueditor",
         "administer content types",
         "administer filters",
@@ -39,7 +37,6 @@
         "change own username",
         "create book content",
         "create changenotice content",
-        "create new books",
         "create url aliases",
         "delete any book content",
         "delete any changenotice content",
@@ -144,5 +141,6 @@
         "tamper documentation",
         "use text format markdown",
         "administer google analytics"
-    ]
+    ],
+    "description": ""
 }

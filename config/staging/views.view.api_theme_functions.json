@@ -383,7 +383,7 @@
                         "ui_name": "",
                         "label": "",
                         "empty": 0,
-                        "content": "Theme functions are used to render UI elements in a consistent way. There are theme functions defined for over 200 elements in Backdrop core, and while many of them are only used for special purposes, many others are used widely; all are available to developers.\r\n\r\nNote that you should never call a theme function directly; instead of \r\n\r\n```\r\n$output = theme_something($variables);\r\n```\r\n\r\nyou should call\r\n\r\n```\r\n$output = theme('something', $variables);\r\n```\r\n\r\nto allow for overrides and modifications. See [Default theme implementations](/api/backdrop/core%21modules%21system%21theme.api.php/group/themeable/1) for more details.",
+                        "content": "Theme functions are used to render UI elements in a consistent way. There are theme functions defined for over 200 elements in Backdrop core, and while many of them are only used for special purposes, many others are used widely; all are available to developers.\r\n\r\nNote that you should never call a theme function directly; instead of \r\n\r\n```\r\n$output = theme_something($variables);\r\n```\r\n\r\nyou should call\r\n\r\n```\r\n$output = theme('something', $variables);\r\n```\r\n\r\nto allow for setting of default values, overrides, and modifications. See [Default theme implementations](/api/backdrop/core%21modules%21system%21theme.api.php/group/themeable/1) for more details.",
                         "format": "markdown",
                         "tokenize": 0
                     }

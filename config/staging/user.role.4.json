@@ -8,8 +8,6 @@
         "access administration pages",
         "access all views",
         "access content overview",
-        "add content to books",
-        "administer book outlines",
         "administer menu",
         "administer nodes",
         "create book content",
@@ -53,5 +51,6 @@
         "view the administration theme",
         "use text format full_html",
         "use text format markdown"
-    ]
+    ],
+    "description": ""
 }
