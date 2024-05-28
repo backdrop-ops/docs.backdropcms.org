@@ -83,3 +83,16 @@
     padding: 30px 0 15px 0;
   }
 }
+
+ .container {
+
+}
+
+/*******************************************************************************
+ * Increase the page width for API pages so the source code looks pretty.
+ ******************************************************************************/
+@media (min-width: 87.5em) {  /* 1400 px */
+  .api-backdrop .container {
+    max-width: 84rem;
+  }
+}
