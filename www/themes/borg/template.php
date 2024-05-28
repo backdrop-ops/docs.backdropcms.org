@@ -30,7 +30,7 @@ function borg_form_user_register_form_alter(&$form, &$form_state) {
   // Remove description text from password.
   unset($form['account']['pass']['#description']);
   // Fix the description text for email address.
-  $form['account']['mail']['#description'] = t('This e-mail address is not made public and will only be used if you request to receive a new password.');
+  $form['account']['mail']['#description'] = t('This e-mail address is not made public and will only be used if you choose to receive messages.');
 }
 
 /**
@@ -84,13 +84,19 @@ function borg_menu_alter(&$items) {
  * @see page.tpl.php
  */
 function borg_preprocess_page(&$variables) {
-  $arg0 = check_plain(arg(0));
-  $arg1 = check_plain(arg(1));
-  $arg2 = check_plain(arg(2));
   // Add the Source Sans Pro font.
-  backdrop_add_css('https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700', array('type' => 'external'));
+  $source_sans = 'https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700';
+  backdrop_add_css($source_sans, array('type' => 'external'));
   // Add FontAwesome.
-  backdrop_add_js('https://use.fontawesome.com/baf3c35582.js', array('type' => 'external'));
+  $font_awesome = 'https://use.fontawesome.com/baf3c35582.js';
+  backdrop_add_js($font_awesome, array('type' => 'external'));
+  // Add ForkAwesome.
+  $fork_awesome = 'https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css';
+  $attributes = array(
+    'integrity' => 'sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=',
+    'crossorigin' => 'anonymous',
+  );
+  backdrop_add_css($fork_awesome, array('type' => 'external', 'attributes' => $attributes));
 
   // Add a body class based on the admin bar.
   if (module_exists('admin_bar') && user_access('admin_bar')) {
@@ -98,6 +104,9 @@ function borg_preprocess_page(&$variables) {
   }
 
   $path = backdrop_get_path('theme', 'borg');
+  $arg0 = check_plain(arg(0));
+  $arg1 = check_plain(arg(1));
+  $arg2 = check_plain(arg(2));
 
   // Add Flexslider to the front page only.
   if (backdrop_is_front_page()) {
@@ -725,9 +734,9 @@ function borg_menu_tree__user_menu($variables) {
   $output .= '    </li>';
   $output .= '  </ul>';
 
-  $output .= '  <a class="icon" title="Find us on GitHub" href="https://github.com/backdrop/backdrop"><i class="fa fa-github fa-2x" aria-hidden="true"></i></a>';
-  $output .= '  <a class="icon" title="Follow us on Twitter" href="https://twitter.com/backdropcms"><i class="fa fa-twitter fa-2x" aria-hidden="true"></i></a>';
-  $output .= '  <a class="icon" title="Subscribe to our Newsletter" href="https://backdropcms.org/newsletter"><i class="fa fa-envelope fa-2x" aria-hidden="true"></i></a>';
+  $output .= '  <a class="icon" title="Code on GitHub" href="https://github.com/backdrop/backdrop"><i class="fa fa-github fa-2x" aria-hidden="true"></i></a>';
+  $output .= '  <a class="icon" title="Live Chat on Zulip" href="https://backdrop.zulipchat.com/#narrow/stream/218635-Backdrop"><i class="fa fa-commenting fa-2x" aria-hidden="true"></i></a>';
+  $output .= '  <a class="icon" title="Updates from our Newsletter" href="https://backdropcms.org/newsletter"><i class="fa fa-envelope fa-2x" aria-hidden="true"></i></a>';
 
   $output .= '</nav>';
 
@@ -777,6 +786,93 @@ function borg_menu_local_tasks($variables) {
   }
 
   return $output;
+}
+
+/**
+ * Theme function
+ *
+ * @param $service
+ *    Icon for appropriate service.
+ * @param $link
+ *    URL where link should point.
+ * @param $title
+ *    Title attribute for the link tag.
+ *
+ * @return
+ *    Linked icon with wrapper markup.
+ */
+function borg_on_the_web_item($variables) {
+  $service = $variables['service'];
+  $link = $variables['link'];
+  $icon = $variables['icon'];
+  $size = $variables['size'];
+  $title = $variables['title'];
+  $link_classes = $variables['classes'];
+  $icon_classes = $variables['icon_classes'];
+
+  $config = config('on_the_web.settings');
+  $type = $config->get('type');
+  $target = $config->get('target');
+
+  if ($type == 'anchor') {
+    // Add a new link class for SVG masks.
+    $link_classes[] = 'otw-svg-mask';
+  }
+
+  // Determine attributes for the link
+  $attributes = array(
+    'class' => $link_classes,
+    'title' => $title,
+    'aria-label' => $title,
+    'rel' => 'nofollow',
+  );
+  if ($target == TRUE) {
+    $attributes['target'] = '_blank';
+    $attributes['aria-label'] .= ' (' . t('opens in new window') . ')';
+  }
+
+  $text = '';
+  if ($type == 'font') {
+    // Add the font awesome icon classes with support for v5.
+    $icon_classes[] = $icon;
+    $icon_classes[] = 'fa-fw';
+
+    if ((!module_exists('font_awesome') && $config->get('version') == '5.x.x')
+       || (module_exists('font_awesome') && config_get('font_awesome.settings', 'fontawesome') == 'v5')) {
+
+      if (!in_array('fas', $icon_classes)) {
+        $icon_classes[] = 'fab';
+      }
+    }
+    else {
+      $icon_classes[] = 'fa';
+    }
+
+    // Add the font awesome size classes.
+    if ($size == 'lg') {
+      $icon_classes[] = 'fa-3x';
+    }
+    else {
+      $icon_classes[] = 'fa-2x';
+    }
+
+    $text = '<i aria-hidden="true" class="' . implode(' ', $icon_classes) . '"></i>';
+  }
+
+  elseif ($type == 'image') {
+    $text = '<img src="' . $icon . '" />';
+  }
+
+  elseif ($type == 'anchor') {
+    $style = '';
+    //$style = 'background: transparent url(' . $icon . ') no-repeat top left;';
+    //$style .= ' -webkit-mask-image: url(' . $icon . ');';
+    $style .= ' mask-image: url(' . $icon . ');';
+    $attributes['style'] = $style;
+  }
+
+  $options = array('attributes' => $attributes, 'html' => TRUE);
+  return l($text, $link, $options);
 }
 
 /**
