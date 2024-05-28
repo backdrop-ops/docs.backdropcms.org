@@ -6,10 +6,10 @@
     "deleted": "0",
     "default_value": [
         {
-            "value": "1.0.x"
+            "value": "1.x"
         }
     ],
-    "description": "Enter the branch this change was first applied in. Examples: 1.0.x, or 1.1.x-1.2.x",
+    "description": "Enter the branch this change was first applied in. Examples: 1.x, or 1.1.x-1.2.x",
     "display": {
         "default": {
             "label": "inline",
@@ -29,6 +29,7 @@
     "required": 0,
     "settings": {
         "text_processing": "0",
+        "allowed_formats": [],
         "user_register_form": false
     },
     "widget": {
