@@ -912,6 +912,8 @@ function paragraphs_field_update($entity_type, $entity, $field, $instance, $lang
         $item->deleteRevision(TRUE);
       }
     }
+    list($entity_id,,) = entity_extract_ids($entity_type, $entity);
+    entity_get_controller($entity_type)->resetCache(array($entity_id));
   }
 }
 
@@ -1355,7 +1357,10 @@ function theme_paragraphs_field_multiple_value_form(array $variables) {
           'data' => '',
           'class' => array('field-multiple-drag'),
         ),
-        backdrop_render($item),
+        array(
+          'data' => backdrop_render($item),
+          'class' => array('paragraph-item'),
+        ),
         array(
           'data' => $delta_element,
           'class' => array('delta-order'),
@@ -1959,4 +1964,42 @@ function paragraphs_autoload_info() {
     'ParagraphsMigrateParagraphsFieldHandler' => 'migrate/fields/ParagraphsMigrateParagraphsFieldHandler.inc',
     'paragraphs_handler_relationship' => 'views/paragraphs_handler_relationship.inc',
   );
+}
+
+/**
+ * Retrieves the default theme's Paragraphs stylesheets defined in the .info file.
+ *
+ * Themes may specify CSS files for use with Paragraphs by
+ * including a "paragraphs_stylesheets" key in the theme .info file.
+ *
+ * @code
+ * paragraphs_stylesheets[] = css/paragraphs.css
+ * @endcode
+ *
+ * @param string $theme
+ *   The theme name from which the "paragraphs_stylesheets" property should be
+ *   read in the .info files. This theme and all its parent themes will be
+ *   checked. Defaults to the current front-end theme.
+ *
+ * @return array
+ *   An array of all CSS to be added by the theme within the Paragraphs.
+ */
+function _paragraphs_theme_css($theme = NULL) {
+  $css = array();
+  if (!isset($theme)) {
+    $theme = config_get('system.core', 'theme_default');
+  }
+  if ($theme_path = backdrop_get_path('theme', $theme)) {
+    $info = system_get_info('theme', $theme);
+    if (isset($info['paragraphs_stylesheets'])) {
+      $css = $info['paragraphs_stylesheets'];
+      foreach ($css as $key => $path) {
+        $css[$key] = $theme_path . '/' . $path;
+      }
+    }
+    if (isset($info['base theme'])) {
+      $css = array_merge($css, _paragraphs_theme_css($info['base theme']));
+    }
+  }
+  return $css;
 }

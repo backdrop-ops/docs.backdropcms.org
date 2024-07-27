@@ -155,15 +155,15 @@ function paragraphs_field_multiple_value_form($field, $instance, $langcode, $ite
 
   if (module_exists('file')) {
     // file.js triggers uploads when the main Submit button is clicked.
-    $field_elements['#attached']['js'] = array(
-      backdrop_get_path('module', 'file') . '/js/file.js',
-      array(
-        'data' => backdrop_get_path('module', 'paragraphs') . '/paragraphs.js',
-        'type' => 'file',
-        'weight' => 9999,
-      ),
-    );
+    $field_elements['#attached']['js'][] = backdrop_get_path('module', 'file') . '/js/file.js';
+    $field_elements['#attached']['js'][] = backdrop_get_path('module', 'paragraphs') . '/paragraphs.js';
     $form_state['has_file_element'] = TRUE;
+  }
+  $field_elements['#attached']['js'][] = backdrop_get_path('module', 'paragraphs') . '/js/paragraphs_actions.js';
+
+  // Attach any paragraph specific stylesheets from the default theme.
+  if ($css = _paragraphs_theme_css()) {
+    $field_elements['#attached']['css'] = $css;
   }
 
   return $field_elements;
@@ -246,7 +246,7 @@ function _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_
       );
     }
     elseif (count($select_bundles)) {
-      // uasort($select_bundles, 'backdrop_sort_weight');
+      // uasort($select_bundles, 'backdrop_sort_weight');.
       backdrop_sort($select_bundles, array('weight' => SORT_NUMERIC));
 
       if ($field['cardinality'] == FIELD_CARDINALITY_UNLIMITED || $field_state['real_items_count'] < $field['cardinality']) {
@@ -273,7 +273,9 @@ function _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_
               '#name' => strtr($id_prefix, '-', '_') . '_add_more_add_more_bundle_' . $machine_name,
               '#value' => t('Add !title', array('!title' => $bundle['name'])),
               '#access' => entity_access('create', 'paragraphs_item', $entity_shell),
-              '#attributes' => array('class' => array('field-add-more-submit', 'paragraphs-add-more-submit')),
+              '#attributes' => array(
+                'class' => array('field-add-more-submit', 'paragraphs-add-more-submit'),
+              ),
               '#limit_validation_errors' => array(),
               '#submit' => array('paragraphs_add_more_submit'),
               '#ajax' => array(
@@ -285,7 +287,7 @@ function _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_
           }
         }
         else {
-          // uasort($select_bundles, 'backdrop_sort_weight');
+          // uasort($select_bundles, 'backdrop_sort_weight');.
           backdrop_sort($select_bundles, array('weight' => SORT_NUMERIC));
 
           $select_list = array();
@@ -298,7 +300,9 @@ function _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_
             '#name' => strtr($id_prefix, '-', '_') . '_add_more_type',
             '#title' => t('!title type', array('!title' => $instance_title)),
             '#options' => $select_list,
-            '#attributes' => array('class' => array('field-add-more-type')),
+            '#attributes' => array(
+              'class' => array('field-add-more-type'),
+            ),
             '#limit_validation_errors' => array(
               array_merge($parents, array($field_name, $langcode)),
             ),
@@ -325,7 +329,9 @@ function _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_
             '#type' => 'submit',
             '#name' => strtr($id_prefix, '-', '_') . '_add_more_add_more',
             '#value' => $text,
-            '#attributes' => array('class' => array('field-add-more-submit', 'paragraphs-add-more-submit')),
+            '#attributes' => array(
+              'class' => array('field-add-more-submit', 'paragraphs-add-more-submit'),
+            ),
             '#limit_validation_errors' => array(),
             '#submit' => array('paragraphs_add_more_submit'),
             '#ajax' => array(
@@ -485,17 +491,38 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
     $bundle_info = paragraphs_bundle_load($paragraphs_item->bundle);
 
     if ($bundle_info) {
-      $element['paragraph_bundle_title'] = array(
+      $element['paragraph_bundle_header'] = array(
         '#type' => 'container',
         '#weight' => -100,
+        '#attributes' => array(
+          'class' => array('paragraph-bundle-header'),
+        ),
       );
-      $element['paragraph_bundle_title']['info'] = array(
+      $element['paragraph_bundle_header']['paragraph_bundle_title'] = array(
+        '#type' => 'container',
+        '#attributes' => array(
+          'class' => array('paragraph-bundle-title'),
+        ),
+      );
+      $element['paragraph_bundle_header']['paragraph_bundle_title']['info'] = array(
         '#markup' => t('@title type: %bundle', array('@title' => $instance_title, '%bundle' => $bundle_info->label)),
       );
     }
-    $element['inner_actions'] = array(
+    $element['paragraph_bundle_header']['inner_actions'] = array(
       '#type' => 'container',
-      '#weight' => 9999,
+      '#attributes' => array(
+        'class' => array('inner-actions'),
+      ),
+    );
+    $element['paragraph_bundle_header']['inner_actions']['more'] = array(
+      '#type' => 'details',
+      '#summary' => '...',
+      'child' => array(),
+      '#attributes' => array(
+        'class' => array('paragraphs-actions-more'),
+        'aria-label' => t('More actions'),
+      ),
+      '#weight' => 1003,
     );
 
     if (!$deleted_paragraph) {
@@ -504,7 +531,7 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
       if ($being_edited_paragraph) {
         if (!$is_new_paragraph && !entity_access('update', 'paragraphs_item', $paragraphs_item)) {
           foreach (element_children($element) as $key) {
-            if ($key != 'paragraph_bundle_title' && $key != 'inner_actions' && $key != 'paragraph_bundle_preview' && $key != 'access_info') {
+            if ($key != 'paragraph_bundle_header' && $key != 'inner_actions' && $key != 'paragraph_bundle_preview' && $key != 'access_info') {
               $element[$key]['#access'] = FALSE;
             }
           }
@@ -525,7 +552,7 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
         }
 
         if ($default_edit_mode != 'open') {
-          $element['inner_actions']['collapse_button'] = array(
+          $element['paragraph_bundle_header']['inner_actions']['collapse_button'] = array(
             '#delta' => $delta,
             '#name' => implode('_', $parents) . '_collapse_button',
             '#type' => 'submit',
@@ -540,20 +567,27 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
             ),
             '#access' => entity_access('update', 'paragraphs_item', $paragraphs_item),
             '#weight' => 999,
+            '#attributes' => array(
+              'class' => array('paragraphs-collapse-button'),
+            ),
           );
+
         }
       }
       else {
         if ($default_edit_mode === 'preview' && entity_access('view', 'paragraphs_item', $paragraphs_item)) {
           $element['paragraph_bundle_preview'] = array(
             '#type' => 'container',
+            '#attributes' => array(
+              'class' => array('paragraph-bundle-preview'),
+            ),
           );
           $preview = $paragraphs_item->view('paragraphs_editor_preview', $langcode);
           $element['paragraph_bundle_preview']['preview'] = $preview;
         }
 
         foreach (element_children($element) as $key) {
-          if ($key != 'paragraph_bundle_title' && $key != 'inner_actions' && $key != 'paragraph_bundle_preview' && $key != 'access_info') {
+          if ($key != 'paragraph_bundle_header' && $key != 'inner_actions' && $key != 'paragraph_bundle_preview' && $key != 'access_info') {
             $element[$key]['#access'] = FALSE;
           }
         }
@@ -565,15 +599,15 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
             backdrop_add_library('system', 'backdrop.dismiss');
             $markup .= '<a href="#" class="dismiss" title="' . t('Dismiss') . '"><span class="element-invisible">' . t('Dismiss') . '</span></a>' . "\n";
           }
-          $markup .= t('This content must be saved to record recent changes.');
+          $markup .= t('Click the main "Save" button to make content changes permanent.');
           $markup .= '</div>';
-          $element['inner_actions']['must_be_saved'] = array(
+          $element['must_be_saved'] = array(
             '#markup' => $markup,
-            '#weight' => 998,
+            '#weight' => 1000,
           );
         }
 
-        $element['inner_actions']['edit_button'] = array(
+        $element['paragraph_bundle_header']['inner_actions']['edit_button'] = array(
           '#delta' => $delta,
           '#name' => implode('_', $parents) . '_edit_button',
           '#type' => 'submit',
@@ -588,6 +622,9 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
           ),
           '#access' => entity_access('update', 'paragraphs_item', $paragraphs_item),
           '#weight' => 999,
+          '#attributes' => array(
+            'class' => array('paragraphs-edit-button'),
+          ),
         );
       }
 
@@ -600,7 +637,7 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
             $button_value = t('Publish');
             $unpublished_paragraph = TRUE;
           }
-          $element['inner_actions']['togglepublish_button'] = array(
+          $element['paragraph_bundle_header']['inner_actions']['more']['child']['togglepublish_button'] = array(
             '#delta' => $delta,
             '#name' => implode('_', $parents) . '_togglepublish_button',
             '#type' => 'submit',
@@ -611,15 +648,18 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
             ),
             '#limit_validation_errors' => array($parents),
             '#ajax' => array(
-              'callback' => '_paragraphs_ajax_update_callback',
+              'callback' => '_paragraphs_ajax_update_more_callback',
               'effect' => 'fade',
               'wrapper' => $element['#wrapper_id'],
             ),
             '#access' => entity_access('update', 'paragraphs_item', $paragraphs_item),
-            '#weight' => 1000,
+            '#weight' => 999,
+            '#attributes' => array(
+              'class' => array('paragraphs-togglepublish-button'),
+            ),
           );
         }
-        $element['inner_actions']['remove_button'] = array(
+        $element['paragraph_bundle_header']['inner_actions']['more']['child']['remove_button'] = array(
           '#delta' => $delta,
           '#name' => implode('_', $parents) . '_remove_button',
           '#type' => 'submit',
@@ -628,20 +668,20 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
           '#submit' => array('paragraphs_remove_submit'),
           '#limit_validation_errors' => array(),
           '#ajax' => array(
-            'callback' => '_paragraphs_ajax_update_callback',
+            'callback' => '_paragraphs_ajax_update_more_callback',
             'effect' => 'fade',
             'wrapper' => $element['#wrapper_id'],
           ),
           '#access' => entity_access('delete', 'paragraphs_item', $paragraphs_item),
-          '#weight' => 1001,
+          '#weight' => 999,
           '#attributes' => array(
-            'class' => array('button-danger'),
+            'class' => array('button-danger', 'paragraph-remove-button'),
           ),
         );
       }
 
-      if (isset($element['inner_actions']['edit_button']) && !$element['inner_actions']['edit_button']['#access']
-           && isset($element['inner_actions']['remove_button']) && !$element['inner_actions']['remove_button']['#access']) {
+      if (isset($element['paragraph_bundle_header']['inner_actions']['edit_button']) && !$element['paragraph_bundle_header']['inner_actions']['edit_button']['#access']
+           && isset($element['paragraph_bundle_header']['inner_actions']['more']['child']['remove_button']) && !$element['paragraph_bundle_header']['inner_actions']['more']['child']['remove_button']['#access']) {
         $element['access_info'] = array(
           '#type' => 'container',
           '#weight' => 9998,
@@ -651,7 +691,7 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
           '#markup' => '<em>' . t('You are not allowed to edit or remove this @title item.', array('@title' => $instance_title)) . '</em>',
         );
       }
-      elseif (isset($element['inner_actions']['edit_button']) && !$element['inner_actions']['edit_button']['#access']) {
+      elseif (isset($element['paragraph_bundle_header']['inner_actions']['edit_button']) && !$element['paragraph_bundle_header']['inner_actions']['edit_button']['#access']) {
         $element['access_info'] = array(
           '#type' => 'container',
           '#weight' => 9998,
@@ -661,7 +701,7 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
           '#markup' => '<em>' . t('You are not allowed to edit this @title item.', array('@title' => $instance_title)) . '</em>',
         );
       }
-      elseif (isset($element['inner_actions']['remove_button']) && !$element['inner_actions']['remove_button']['#access']) {
+      elseif (isset($element['paragraph_bundle_header']['inner_actions']['more']['child']['remove_button']) && !$element['paragraph_bundle_header']['inner_actions']['more']['child']['remove_button']['#access']) {
         $element['access_info'] = array(
           '#type' => 'container',
           '#weight' => 9998,
@@ -673,23 +713,27 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
       }
     }
     else {
-      $remove_button = '<p>' . t('This @title has been removed.', array('@title' => $instance_title)) . ' </p>';
-      $remove_button .= '<div class="messages warning">';
+      $remove_markup = '<p>' . t('This @title has been removed.', array('@title' => $instance_title)) . ' </p>';
+      $remove_markup .= '<div class="messages warning">';
       if (config_get('system.core', 'messages_dismissible')) {
         // Add the 'Dismiss' library and place a 'Dismiss' link on messages.
         backdrop_add_library('system', 'backdrop.dismiss');
-        $remove_button .= '<a href="#" class="dismiss" title="' . t('Dismiss') . '"><span class="element-invisible">' . t('Dismiss') . '</span></a>' . "\n";
+        $remove_markup .= '<a href="#" class="dismiss" title="' . t('Dismiss') . '"><span class="element-invisible">' . t('Dismiss') . '</span></a>' . "\n";
       }
-      $remove_button .= t('This @title will be permanently deleted when you press %confirm or save this page. (You can restore it with the %restore button or by closing this screen without saving.)', array(
+      $remove_markup .= t('This @title will be permanently deleted when you press %confirm or save this page. (You can restore it with the %restore button or by closing this screen without saving.)', array(
         '@title' => $instance_title,
         '%confirm' => t('Confirm Deletion'),
         '%restore' => t('Restore'),
-        ));
-      $remove_button .= '</div>';
-      $element['inner_actions']['remove_button'] = array(
-        '#markup' => $remove_button,
+      ));
+      $remove_markup .= '</div>';
+      $element['paragraph_bundle_header']['inner_actions']['more']['child']['remove_button'] = array(
+        '#markup' => '',
       );
-      $element['inner_actions']['restore_button'] = array(
+      $element['remove_warning'] = array(
+        '#markup' => $remove_markup,
+        '#weight' => 1000,
+      );
+      $element['paragraph_bundle_header']['inner_actions']['restore_button'] = array(
         '#delta' => $delta,
         '#name' => implode('_', $parents) . '_restore_button',
         '#type' => 'submit',
@@ -703,8 +747,11 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
           'wrapper' => $element['#wrapper_id'],
         ),
         '#weight' => 1000,
+        '#attributes' => array(
+          'class' => array('paragraphs-restore-button'),
+        ),
       );
-      $element['inner_actions']['confirm_delete_button'] = array(
+      $element['paragraph_bundle_header']['inner_actions']['confirm_delete_button'] = array(
         '#delta' => $delta,
         '#name' => implode('_', $parents) . '_deleteconfirm_button',
         '#type' => 'submit',
@@ -719,7 +766,7 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
         ),
         '#weight' => 1001,
         '#attributes' => array(
-          'class' => array('button-danger'),
+          'class' => array('button-danger', 'paragraphs-deleteconfirm-button'),
         ),
       );
     }
@@ -739,11 +786,7 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
     $class = 'unpublished';
   }
   if (!empty($class)) {
-    $element['paragraph_bundle_title']['#attributes'] = array(
-      'class' => array(
-        $class,
-      ),
-    );
+    $element['paragraph_bundle_header']['#attributes']['class'][] = $class;
   }
   $recursion--;
   return $element;
@@ -756,8 +799,22 @@ function _paragraphs_ajax_update_callback($form, $form_state) {
   // Get the information on what we're updating.
   $button = $form_state['triggering_element'];
 
-  // Go three levels up in the form, to the whole widget.
-  $element = backdrop_array_get_nested_value($form, array_slice($button['#array_parents'], 0, -3));
+  // Go four levels up in the form, to the whole widget.
+  $element = backdrop_array_get_nested_value($form, array_slice($button['#array_parents'], 0, -4));
+
+  // Send back the rendered element and let Backdrop wrap it in an AJAX command.
+  return backdrop_render($element);
+}
+
+/**
+ * FAPI #ajax callback to update a paragraphs item from the extra buttons.
+ */
+function _paragraphs_ajax_update_more_callback($form, $form_state) {
+  // Get the information on what we're updating.
+  $button = $form_state['triggering_element'];
+
+  // Go six levels up in the form, to the whole widget.
+  $element = backdrop_array_get_nested_value($form, array_slice($button['#array_parents'], 0, -6));
 
   // Send back the rendered element and let Backdrop wrap it in an AJAX command.
   return backdrop_render($element);
@@ -1027,7 +1084,7 @@ function paragraphs_remove_submit(array $form, array &$form_state) {
   $delta = $button['#delta'];
 
   // Where in the form we'll find the parent element.
-  $address = array_slice($button['#array_parents'], 0, -3);
+  $address = array_slice($button['#array_parents'], 0, -6);
 
   // Go one level up in the form, to the widgets container.
   $parent_element = backdrop_array_get_nested_value($form, $address);
@@ -1091,7 +1148,7 @@ function paragraphs_togglepublish_submit(array $form, array &$form_state) {
   $delta = $button['#delta'];
 
   // Where in the form we'll find the parent element.
-  $address = array_slice($button['#array_parents'], 0, -3);
+  $address = array_slice($button['#array_parents'], 0, -6);
 
   // Go one level up in the form, to the widgets container.
   $parent_element = backdrop_array_get_nested_value($form, $address);
@@ -1154,7 +1211,7 @@ function paragraphs_edit_submit(array $form, array &$form_state) {
   $delta = $button['#delta'];
 
   // Where in the form we'll find the parent element.
-  $address = array_slice($button['#array_parents'], 0, -3);
+  $address = array_slice($button['#array_parents'], 0, -4);
 
   // Go one level up in the form, to the widgets container.
   $parent_element = backdrop_array_get_nested_value($form, $address);
@@ -1217,7 +1274,7 @@ function paragraphs_collapse_submit(array $form, array &$form_state) {
   $delta = $button['#delta'];
 
   // Where in the form we'll find the parent element.
-  $address = array_slice($button['#array_parents'], 0, -3);
+  $address = array_slice($button['#array_parents'], 0, -4);
 
   // Go one level up in the form, to the widgets container.
   $parent_element = backdrop_array_get_nested_value($form, $address);
@@ -1281,7 +1338,7 @@ function paragraphs_deleteconfirm_submit(array $form, array &$form_state) {
   $delta = $button['#delta'];
 
   // Where in the form we'll find the parent element.
-  $address = array_slice($button['#array_parents'], 0, -3);
+  $address = array_slice($button['#array_parents'], 0, -4);
 
   // Go one level up in the form, to the widgets container.
   $parent_element = backdrop_array_get_nested_value($form, $address);
@@ -1338,7 +1395,7 @@ function paragraphs_restore_submit(array $form, array &$form_state) {
   $delta = $button['#delta'];
 
   // Where in the form we'll find the parent element.
-  $address = array_slice($button['#array_parents'], 0, -3);
+  $address = array_slice($button['#array_parents'], 0, -4);
 
   // Go one level up in the form, to the widgets container.
   $parent_element = backdrop_array_get_nested_value($form, $address);

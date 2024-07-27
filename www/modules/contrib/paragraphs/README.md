@@ -47,6 +47,7 @@ Some more examples:
  - [Feeds Paragraphs Mapper](https://github.com/backdrop-contrib/feeds_para_mapper)
  - [Paragraphs jQuery UI Accordion](https://github.com/backdrop-contrib/paragraphs_jquery_ui_accordion)
  - [Replicate Paragraphs](https://github.com/backdrop-contrib/replicate_paragraphs)
+ - [Paragraphs Aplenty](https://github.com/backdrop-contrib/paragraphs_aplenty)
 
 ## Issues
 

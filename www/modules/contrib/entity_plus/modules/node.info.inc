@@ -152,15 +152,6 @@ function entity_plus_metadata_node_entity_property_info() {
     'setter callback' => 'entity_plus_property_verbatim_set',
     'access callback' => 'entity_plus_metadata_node_revision_access',
   );
-  $properties['comment'] = array(
-    'label' => t('Comment settings'),
-    'description' => t("Whether the comments are allowed on this node."),
-    'type' => 'integer',
-    'setter callback' => 'entity_plus_property_verbatim_set',
-    'setter permission' => 'administer comment settings',
-    'schema field' => 'comment',
-    'options list' => 'entity_plus_metadata_node_comment_settings_options_list',
-  );
   return $info;
 }
 

@@ -256,7 +256,7 @@ class ParagraphsFieldTestCase extends BackdropWebTestCase {
     $this->backdropPost(NULL, $create_edit, t('Collapse'));
 
     // Paragraph item should collapse after passing validation.
-    $this->assertRaw(t('This content must be saved to record recent changes.'), 'Field passed per-paragraph validation');
+    $this->assertRaw(t('Click the main "Save" button to make content changes permanent.'), 'Field passed per-paragraph validation');
 
     $create_edit = array(
       'title' => $title,

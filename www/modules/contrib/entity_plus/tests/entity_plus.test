@@ -496,8 +496,12 @@ class EntityPlusMetadataTestCase extends EntityPlusHelperTestCase {
 
     // Save vocabulary with wrapper save method.
     $vocabulary_wrapper->save();
-    // Remove 'original' to allow comparison
-    unset($vocabulary->original);
+
+    // Assign NULL to 'original' to allow comparison.
+    // Note: after https://github.com/backdrop/backdrop-issues/issues/6197, all
+    // vocabulary objects contain an `original` property with a null value
+    // by default. 
+    $vocabulary->original = NULL;
     $vocabulary2 = taxonomy_vocabulary_load($machine_name);
     $this->assertEqual($vocabulary2, $vocabulary, 'Vocabulary was saved correctly.');
 

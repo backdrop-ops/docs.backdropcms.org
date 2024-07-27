@@ -23,7 +23,7 @@ Installation and Usage:
 Current Maintainers
 ---------------
 
-- [Laryn Kragt Bakker](https://github.com/laryn) - [CEDC.org](https://cedc.org)
+- [Laryn Kragt Bakker](https://github.com/laryn)
 - [Joseph Flatt](https://github.com/hosef)
 - [Alejandro Cremaschi](https://github.com/argiepiano)
 - Seeking co-maintainers
