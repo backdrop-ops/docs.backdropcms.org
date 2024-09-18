@@ -12,5 +12,13 @@
 # Ignore modules for development.
 www/modules/contrib/devel
 
+# Ignore local development settings
+www/settings.local.dev.php
+
 # Ignore env vars.
-.env
+i.env
+
+# Ignore .ddev files
+.ddev
+www/settings.ddev.php
+www/drushrc.php
