@@ -47,76 +47,92 @@ function backdropapi_block_view($delta = '', $settings = array(), $contexts = ar
  * Returns a table of Form API elements and properties.
  */
 function backdropapi_form_api_table() {
-  // Get lists of Form API elements & properties.
-  $elements = views_get_view_result('form_api', 'attachment_1');
-  $properties = views_get_view_result('form_api', 'attachment_2');
+  $properties = views_get_view_result('form_api_v2', 'attachment_2');
 
-  // Setup the table headers.
-  $header_elements = array('');
-  $header_special = $header_elements;
-  foreach ($elements as $element) {
-    $value = '<a href="#' . $element->node_title . '">' . $element->node_title . '</a>';
+  $output = '';
 
-    if (!empty($element->field_field_special) && $element->field_field_special[0]['raw']['value']) {
-      $header_special[] = $value;
+  $element_types = config_get('field.field.field_element_type', 'settings.allowed_values');
+  if (is_array($element_types)) {
+    foreach ($element_types as $type => $label) {
+
+      // Get lists of Form API elements & properties - with contextual filters.
+      $elements = backdropapi_views_get_view_result('form_api_v2', 'attachment_1', array($type));
+
+      // Setup the table headers.
+      $header_elements = array('');
+      foreach ($elements as $element) {
+        $value = '<a href="#' . $element->node_title . '">' . $element->node_title . '</a>';
+        $header_elements[] = $value;
+      }
+
+      // Setup the table rows.
+      $mark = '&#10003;'; // checkmark
+      $rows_elements = array();
+      foreach ($properties as $property) {
+        $id_suffix = in_array($property->node_title, backdropapi_form_api_elements()) ? '_property' : '';
+        $anchor = $property->node_title . $id_suffix;
+        $row_element = array('<a href="#' . $anchor . '">#' . $property->node_title . '</a>');
+
+        foreach ($elements as $element) {
+          // Get all properties for this element.
+          $element_properties = array();
+          foreach ($element->field_field_fapi_properties as $element_property) {
+            $element_properties[] = $element_property['rendered']['entity']['paragraphs_item'][$element_property['raw']['value']]['field_fapi_property'][0]['#markup'];
+          }
+
+          // Set the value of the cell to be a checkmark.
+          $value = '';
+          if (in_array($property->node_title, $element_properties)) {
+            $value = $mark;
+          }
+
+          $row_element[] = $value;
+        }
+
+        // Only display non-empty rows in each table.
+        if (in_array($mark, $row_element)) {
+          $rows_elements[] = $row_element;
+        }
+      }
+
+      // Print the tables.
+      $text = '@label Elements';
+      if ($type == 'render') {
+        $text .= ' (not limited to forms)';
+      }
+      $heading = t($text, array('@label' => $label));
+      $output .= '<h2 id="' . $type . '-elements">' . $heading . '</h2>';
+      $output .= theme('table', array(
+        'header' => $header_elements,
+        'rows' => $rows_elements,
+        'attributes' => array('class' => array('form-api')),
+      ));
+    }
+  }
+
+  return $output;
+}
+
+/**
+ * Copy of views_get_view_result but with arguments.
+ */
+function backdropapi_views_get_view_result($name, $display_id = NULL, $args = array()) {
+  $view = views_get_view($name);
+  if (is_object($view)) {
+    if (is_array($args)) {
+      $view->set_arguments($args);
+    }
+    if (is_string($display_id)) {
+      $view->set_display($display_id);
     }
     else {
-      $header_elements[] = $value;
+      $view->init_display();
     }
+    $view->pre_execute();
+    $view->execute();
+    return $view->result;
   }
-
-  // Setup the table rows.
-  $mark = '&#10003;'; // checkmark
-  foreach ($properties as $property) {
-    $id_suffix = in_array($property->node_title, backdropapi_form_api_elements()) ? '_property' : '';
-    $row_element = array('<a href="#' . $property->node_title . $id_suffix . '">#' . $property->node_title . '</a>');
-    $row_special = $row_element;
-
-    foreach ($elements as $element) {
-      // Get all properties for this element.
-      $element_properties = array();
-      foreach ($element->field_field_fapi_properties as $element_property) {
-        $element_properties[] = $element_property['rendered']['entity']['paragraphs_item'][$element_property['raw']['value']]['field_fapi_property'][0]['#markup'];
-      }
-
-      // Set the value of the cell.
-      $value = '';
-      if (in_array($property->node_title, $element_properties)) {
-        $value = $mark;
-      }
-
-      if (!empty($element->field_field_special) && $element->field_field_special[0]['raw']['value']) {
-        $row_special[] = $value;
-      }
-      else {
-        $row_element[] = $value;
-      }
-    }
-
-    // Only display non-empty rows in each table.
-    if (in_array($mark, $row_element)) {
-      $rows_elements[] = $row_element;
-    }
-    if (in_array($mark, $row_special)) {
-      $rows_special[] = $row_special;
-    }
-  }
-
-  // Theme the tables.
-  $heading_elements = '<h2 id="input-elements">' . t('Input elements') . '</h2>';
-  $table_elements = theme('table', array(
-    'header' => $header_elements,
-    'rows' => $rows_elements,
-    'attributes' => array('class' => array('form-api')),
-  ));
-  $heading_special = '<h2 id="special-elements">' . t('Structure elements') . '</h2>';
-  $table_special = theme('table', array(
-    'header' => $header_special,
-    'rows' => $rows_special,
-    'attributes' => array('class' => array('form-api')),
-  ));
-
-  return $heading_elements . $table_elements . $heading_special . $table_special;
+  return;
 }
 
 /**
