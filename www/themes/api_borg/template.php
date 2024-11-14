@@ -85,9 +85,12 @@ function api_borg_preprocess_paragraphs_item(&$variables, $hook) {
 
   if ($variables['bundle'] == 'fapi_properties') {
     $property = $content['field_fapi_property'][0]['#markup'];
-    $recommended = !empty($content['field_recommended'][0]['#markup']);
-    $default = $content['field_default_value'][0]['#markup'];
     $id_suffix = in_array($property, backdropapi_form_api_elements()) ? '_property' : '';
+
+    $recommended = !empty($content['field_recommended'][0]['#markup']);
+    if (isset($content['field_default_value'])) {
+      $default = $content['field_default_value'][0]['#markup'];
+    }
 
     $text = '#' . $property;
     if ($recommended) {
