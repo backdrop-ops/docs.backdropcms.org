@@ -4,7 +4,7 @@
     "name": "Documentation Page",
     "base": "node_content",
     "module": "node",
-    "description": "<em>Books</em> have a built-in hierarchical navigation. Use for handbooks or tutorials.",
+    "description": "Documentation <em>Books</em> have a built-in hierarchical navigation. Use for handbooks or tutorials.",
     "help": "",
     "has_title": true,
     "title_label": "Title",
@@ -18,7 +18,7 @@
         "promote_enabled": 1,
         "promote_default": 0,
         "revision_enabled": 1,
-        "revision_default": 0,
+        "revision_default": 1,
         "node_preview": "1",
         "node_submitted": 0,
         "node_user_picture": true,
@@ -36,9 +36,9 @@
         "scheduling_enabled": 1,
         "node_submitted_format": "[node:created:medium] by [node:author]",
         "language": 0,
-        "diff_show_preview_changes_node": 0,
-        "diff_enable_revisions_page_node": 0,
-        "diff_view_mode_preview_node": ""
+        "diff_show_preview_changes_node": 1,
+        "diff_enable_revisions_page_node": 1,
+        "diff_view_mode_preview_node": "diff_standard"
     },
     "node_preview": "1"
 }

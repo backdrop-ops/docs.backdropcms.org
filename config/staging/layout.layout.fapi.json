@@ -9,7 +9,7 @@
     "weight": 0,
     "storage": 1,
     "layout_template": "boxton",
-    "disabled": false,
+    "disabled": true,
     "settings": {
         "title": "",
         "title_display": "default",
@@ -34,10 +34,12 @@
         ]
     },
     "contexts": [],
+    "relationships": [],
     "content": {
         "62f4fcd5-7e6f-4440-9500-e940d743ace2": {
             "plugin": "system:header",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "header",
                 "settings": {
@@ -66,6 +68,7 @@
         "3219ff81-0340-429c-9200-0a721567537c": {
             "plugin": "system:user-menu",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "user-menu",
                 "settings": {
@@ -96,6 +99,7 @@
         "57d5c6f1-93c2-4761-8800-d0128a8fd6c6": {
             "plugin": "system:breadcrumb",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "breadcrumb",
                 "settings": {
@@ -119,6 +123,7 @@
         "66368322-d532-4fc6-b304-04f8e4ae0509": {
             "plugin": "system:main",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "main",
                 "settings": {
@@ -142,6 +147,7 @@
         "66cac9d1-9937-4731-a100-cb1e7e3754c1": {
             "plugin": "on_the_web:social_links",
             "data": {
+                "status": 1,
                 "module": "on_the_web",
                 "delta": "social_links",
                 "settings": {
@@ -178,6 +184,7 @@
         "278b3a91-0f96-4205-8e07-7d93109a7c0e": {
             "plugin": "block:newsletter",
             "data": {
+                "status": 1,
                 "module": "block",
                 "delta": "newsletter",
                 "settings": {
@@ -204,6 +211,7 @@
         "4d37196d-6215-4510-9000-afc9ea27de75": {
             "plugin": "system:powered-by",
             "data": {
+                "status": 1,
                 "module": "system",
                 "delta": "powered-by",
                 "settings": {
@@ -227,6 +235,7 @@
         "451942c0-63ca-4311-b700-ec3ab83b1215": {
             "plugin": "menu:menu-footer-menu",
             "data": {
+                "status": 1,
                 "module": "menu",
                 "delta": "menu-footer-menu",
                 "settings": {
