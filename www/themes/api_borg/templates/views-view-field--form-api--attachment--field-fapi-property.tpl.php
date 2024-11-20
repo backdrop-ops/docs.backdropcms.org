@@ -20,11 +20,16 @@
  * regardless of any changes in the aliasing that might happen if
  * the view is modified.
  */
-?>
 
-<?php
+$default_value = '';
+if (isset($row->field_field_default_value[0])) {
   $default_value = $row->field_field_default_value[0]['rendered']['#markup'];
+}
+$property = '';
+if (isset($row->field_field_fapi_property[0])) {
   $property = $row->field_field_fapi_property[0]['rendered']['#markup'];
   $id_suffix = in_array($property, backdropapi_form_api_elements()) ? '_property' : '';
+}
+
 ?>
 <a href="#<?php print $property . $id_suffix; ?>">#<?php print $property; ?></a> = <?php print $default_value; ?>
