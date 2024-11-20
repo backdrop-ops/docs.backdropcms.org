@@ -11,10 +11,10 @@
     "entity_types": [],
     "settings": {
         "allowed_values": {
-            "basic": "Basic (formerly \"not special\")",
-            "structural": "Structural (formerly \"special\")",
+            "basic": "Simple",
+            "structural": "Structural",
             "complex": "Complex",
-            "render": "Render element (not limited to forms)"
+            "render": "Renderable"
         },
         "allowed_values_function": ""
     },

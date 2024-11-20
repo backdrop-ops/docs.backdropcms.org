@@ -11,7 +11,7 @@ required = TRUE
 
 configure = admin/config/content/formats
 
-; Added by Backdrop CMS packaging script on 2024-09-15
+; Added by Backdrop CMS packaging script on 2024-11-20
 project = backdrop
-version = 1.29.0
-timestamp = 1726467067
+version = 1.29.2
+timestamp = 1732142640
