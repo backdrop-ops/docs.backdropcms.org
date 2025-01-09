@@ -60,6 +60,9 @@ function template_preprocess_paragraphs_item(&$variables, $hook) {
   // Make the field variables available with the appropriate language.
   field_attach_preprocess($paragraphs_item_type, $paragraphs_item, $variables['content'], $variables);
 
+  // Generate a unique HTML id for the paragraph item to support anchor links.
+  $variables['html_id'] = backdrop_html_id('paragraphs-item-' . $paragraphs_item_id);
+
   // Gather css classes.
   $variables['classes_array'][] = backdrop_html_class($paragraphs_item_type);
   $variables['classes_array'][] = backdrop_html_class($paragraphs_item_type . '-' . $bundle);
@@ -77,7 +80,8 @@ function template_preprocess_paragraphs_item(&$variables, $hook) {
   if (!paragraphs_item_access('delete', $paragraphs_item)
     || !paragraphs_item_access('create', $paragraphs_item)
     || !paragraphs_item_access('update', $paragraphs_item)
-    || empty($variables['elements']['#modal_admin'])) {
+    || empty($variables['elements']['#modal_admin'])
+    || !empty($variables['elements']['#in_preview'])) {
     return;
   }
   $variables['classes_array'][] = backdrop_html_class('paragraphs-item-modal-admin');

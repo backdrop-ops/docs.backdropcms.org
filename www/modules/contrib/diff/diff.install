@@ -47,8 +47,14 @@ function diff_update_1001()
     $config->set('diff_show_header.user', $config->get('diff_show_header_user'));
     $config->clear('diff_show_header_user');
   }
-  $config->clear('diff_additional_options_node');
-  $config->clear('diff_additional_options_user');
+  if (isset($settings['diff_additional_options_node'])) {
+    $config->set('diff_additional_options.node', $config->get('diff_additional_options_node'));
+    $config->clear('diff_additional_options_node');
+  }
+  if (isset($settings['diff_additional_options_user'])) {
+    $config->set('diff_additional_options.user', $config->get('diff_additional_options_user'));
+    $config->clear('diff_additional_options_user');
+  }
 
   foreach (field_info_fields() as $field) {
     $setting_name = $field['module'] . '_field_' . $field['type'];
@@ -121,4 +127,31 @@ function diff_update_1000()
  */
 function diff_update_last_removed() {
   return 7306;
+}
+
+/**
+ * Set default values for config settings.
+ */
+function diff_update_1002() {
+  $config = config('diff.settings');
+  $new = array(
+    'diff_show_diff_inline_node_bundles',
+    'diff_field_default_options',
+  );
+  foreach ($new as $key) {
+    $existing = $config->get($key);
+    if (empty($existing)) {
+      $config->set($key, array());
+    }
+  }
+  $config->save();
+}
+
+/**
+ * Set default state display mode.
+ */
+function diff_update_1003() {
+  // The other display mode "raw_plain" was removed.
+  config_set('diff.settings', 'diff_default_state.node', 'raw');
+  config_set('diff.settings', 'diff_default_state.user', 'raw');
 }

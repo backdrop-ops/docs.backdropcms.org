@@ -86,7 +86,9 @@ function hook_entity_diff($old_entity, $new_entity, $context) {
         'show_header' => FALSE,
       ),
     );
+    return $result;
   }
+  return NULL;
 }
 
 /**

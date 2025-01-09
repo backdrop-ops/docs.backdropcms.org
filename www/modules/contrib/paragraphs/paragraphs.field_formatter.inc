@@ -77,8 +77,10 @@ function paragraphs_field_formatter_settings_summary($field, $instance, $view_mo
 function paragraphs_field_prepare_view($entity_type, $entities, $field, $instances, $langcode, &$items) {
   if ($field['type'] == 'paragraphs') {
     foreach ($items as $key => $item) {
-      if (!isset($item[0]['value'])) {
-        $items[$key][0]['value'] = 'scratch_paragraph';
+      foreach ($item as $delta => $instance) {
+        if (!isset($instance['value'])) {
+          $items[$key][$delta]['value'] = 'scratch_paragraph';
+        }
       }
     }
   }
@@ -93,16 +95,13 @@ function paragraphs_field_formatter_view($entity_type, $entity, $field, $instanc
   switch ($display['type']) {
     case 'paragraphs_view':
 
-      // Prevent displaying useless markup if we don't have any values.
-      if (empty($items)) {
-        return $element;
+      $in_preview = &backdrop_static('in_preview');
+      if (!isset($in_preview)) {
+        $in_preview = !empty($entity->in_preview);
       }
 
-      // If we are dealing with an empty paragraphs field, render an insert point.
-      if ($items[0]['value'] == 'scratch_paragraph') {
-        if (!empty($instance['settings']['modal_admin'])) {
-          $entity_ids = entity_extract_ids($entity_type, $entity);
-        }
+      // Prevent displaying useless markup if we don't have any values.
+      if (empty($items)) {
         return $element;
       }
 
@@ -110,28 +109,34 @@ function paragraphs_field_formatter_view($entity_type, $entity, $field, $instanc
       $display_view_mode = empty($display['settings']['view_mode']) ? 'full' : $display['settings']['view_mode'];
       // Get view mode from field instance (if configured).
       $view_mode = empty($instance['display'][$display_view_mode]['settings']['view_mode']) ? $display_view_mode : $instance['display'][$display_view_mode]['settings']['view_mode'];
+
+      $show_field = FALSE;
+      foreach ($items as $delta => $item) {
+        if ($paragraph = paragraphs_field_get_entity($item)) {
+          if ($paragraph->status) {
+            $show_field = TRUE;
+            $paragraph->setHostEntity($entity_type, $entity, $langcode);
+            if (entity_access('view', 'paragraphs_item', $paragraph)) {
+              // Enter the paragraph item itself.
+              $element[$delta]['entity'] = $paragraph->view($view_mode, $langcode);
+            }
+            if (!empty($instance['settings']['modal_admin'])) {
+              $element[$delta]['entity']['paragraphs_item'][$paragraph->item_id]['#modal_admin'] = 1;
+            }
+            $element[$delta]['entity']['paragraphs_item'][$paragraph->item_id]['#in_preview'] = $in_preview;
+          }
+        }
+      }
+      if (!$show_field) {
+        // There are Paragraphs items, but none of them are visible.
+        return $element;
+      }
       $element['#theme_wrappers'] = array('paragraphs_items');
       $element['#attributes']['class'][] = backdrop_clean_css_identifier('paragraphs-items');
       $element['#attributes']['class'][] = backdrop_clean_css_identifier('paragraphs-items-view-mode-' . $view_mode);
       $element['#attributes']['class'][] = backdrop_clean_css_identifier('paragraphs-items-field-' . $instance['field_name']);
       $element['#paragraphs_items_view_mode'] = $view_mode;
 
-      $count = 0;
-      foreach ($items as $delta => $item) {
-        if ($paragraph = paragraphs_field_get_entity($item)) {
-          $paragraph->setHostEntity($entity_type, $entity, $langcode);
-          if (entity_access('view', 'paragraphs_item', $paragraph)) {
-
-            // Enter the paragraph item itself.
-            $element[$delta]['entity'] = $paragraph->view($view_mode, $langcode);
-
-          }
-          if (!empty($instance['settings']['modal_admin'])) {
-            $element[$delta]['entity']['paragraphs_item'][$paragraph->item_id]['#modal_admin'] = 1;
-          }
-          $count++;
-        }
-      }
       break;
   }
 

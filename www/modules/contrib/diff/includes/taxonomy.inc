@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Implements pusdeo-hook hook_field_diff_view() for the Taxonomy module.
+ * Implements pseudo-hook hook_field_diff_view() for the Taxonomy module.
  */
 
 /**

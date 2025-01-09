@@ -32,19 +32,21 @@ See readme.txt for more information about usage.
 This project is GPL v2 software. See the LICENSE.txt file in this
 directory for complete text.
         
-## Current porting to Backdrop
-Graham Oliver (github.com/Graham-72/)
+## Current maintainers
+- [Graham Oliver](https://github.com/Graham-72) (original port to Backdrop)
+- [Greg Netsas (klonos)](https://github.com/klonos)
+- [Nate Lampton (quicksketch)](https://github.com/quicksketch)
 
 ## Credits
 Grateful thanks to the developers and maintainers (past and present) of the Drupal 7 module.
 
 ### Maintainers for Drupal:
-- Adam G-H (phenaproxima)
-- Alan D. (Alan Davison)
-- Miro Dietiker (miro_dietiker)
-- Juampy NR (juampynr)
-- Lucian Hangea (lhangea)
+- [Adam G-H (phenaproxima)](https://www.drupal.org/u/phenaproxima)
+- [Alan Davison (alan-d)](https://www.drupal.org/u/alan-d)
+- [Miro Dietiker (miro_dietiker)](https://www.drupal.org/u/miro_dietiker)
+- [Juampy NR (juampynr)](https://www.drupal.org/u/juampynr)
+- [Lucian Hangea (lhangea)](https://www.drupal.org/u/lhangea)
 
 ### Supporting organisations for the D7 module
-- Lullabot
+- [Lullabot](https://www.lullabot.com)
 

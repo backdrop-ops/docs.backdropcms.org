@@ -29,7 +29,7 @@ function _user_entity_diff_additional_options_name($old_user, $new_user, $contex
         );
         break;
 
-      // We specify a default so that the name is always compared.
+      // We specify a default, so that the name is always compared.
       case 'raw':
       default:
         $row['#states'][$state] = array(
@@ -137,7 +137,7 @@ function _user_entity_diff_additional_options_roles($old_user, $new_user, $conte
   );
 
   $roles = user_roles(TRUE);
-  unset($roles[BACKDROP_AUTHENTICATED_RID]);
+  unset($roles[BACKDROP_AUTHENTICATED_ROLE]);
   foreach ($context['states'] as $state) {
     $row['#states'][$state] = array(
       '#old' => array(implode("\n", array_intersect_key($roles, $old_user->roles))),

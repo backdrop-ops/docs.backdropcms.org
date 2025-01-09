@@ -21,6 +21,7 @@ function theme_diff_node_revisions($vars) {
     array('data' => backdrop_render($form['submit']), 'colspan' => 2),
     array('data' => t('Operations'), 'colspan' => 2),
   );
+  $rows = array();
   if (isset($form['info']) && is_array($form['info'])) {
     foreach (element_children($form['info']) as $key) {
       $row = array();

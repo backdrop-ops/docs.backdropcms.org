@@ -6,6 +6,7 @@ html.dialog-open {
   display: flex;
   justify-content: space-between;
 }
+
 .field-widget-paragraphs-embed table td.paragraph-item .inner-actions {
   display: flex;
 }
@@ -17,13 +18,16 @@ html.dialog-open {
   background-color: transparent;
   overflow: visible;
 }
+
 .paragraphs-actions-more summary {
   border: 0;
   list-style: none;
 }
-.paragraphs-actions-more>summary::-webkit-details-marker {
+
+.paragraphs-actions-more > summary::-webkit-details-marker {
   display: none;
 }
+
 .paragraphs-actions-more .details-child-wrapper {
   position: absolute;
   right: 0;
@@ -35,6 +39,7 @@ html.dialog-open {
   margin-top: 5px;
   box-shadow: 0 0 4px #ddd;
 }
+
 .paragraphs-actions-more .details-child-wrapper:before {
   content: "";
   display: inline-block;
@@ -45,6 +50,7 @@ html.dialog-open {
   border: 9px solid transparent;
   border-bottom: 9px solid #ccc;
 }
+
 .paragraphs-actions-more .details-child-wrapper:after {
   content: "";
   display: inline-block;
@@ -55,6 +61,7 @@ html.dialog-open {
   border: 8px solid transparent;
   border-bottom: 8px solid #fff;
 }
+
 .paragraphs-actions-more .details-child-wrapper input.form-submit {
   padding: 0.5em 1em;
   margin: 0;
@@ -66,16 +73,20 @@ html.dialog-open {
   text-align: left;
   width: 100%;
 }
+
 .paragraphs-actions-more .details-child-wrapper input.form-submit:hover {
   box-shadow: none;
 }
+
 .paragraphs-actions-more .details-child-wrapper input.form-submit:not(.button-danger):hover {
   color: #ffffff;
   background-color: #0074bd;
 }
+
 .paragraphs-actions-more .details-child-wrapper input:first-child {
   margin-top: 0.5em;
 }
+
 .paragraphs-actions-more .details-child-wrapper input:last-child {
   margin-bottom: 0.5em;
 }
@@ -108,155 +119,4 @@ html.dialog-open {
       white-space: normal;
     }
   }
-}
-
-/* Modal Admin styles. */
-
-.paragraphs-item-modal-admin .dropbutton-wrapper {
-  float: right;
-  margin: 2px 2px 10px 10px;
-  display: none;
-  min-height: 2em;
-  position: relative;
-  z-index: 10;
-}
-
-.paragraphs-item-modal-admin > .content {
-  position: relative;
-  z-index: 9;
-}
-
-.paragraphs-item-modal-admin {
-  border: 1px solid transparent;
-  position: relative;
-}
-
-.paragraphs-item-modal-admin::before {
-  position: relative;
-  display: table-cell;
-  content: '';
-  top: 0;
-  left: 0;
-  z-index: -5;
-}
-
-.paragraphs-item-modal-admin:hover::before {
-  border: 1px dashed rgba(0, 0, 0, .04);
-  position: absolute;
-  display: table-cell;
-  content: '';
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 5;
-  border: 1px dashed #d0e2d5;
-  background-image: repeating-linear-gradient(45deg,
-      rgba(0, 0, 0, .04),
-      rgba(0, 0, 0, .04) 20px,
-      rgba(0, 0, 0, .02) 20px,
-      rgba(0, 0, 0, .02) 40px);
-  transition: .1s ease-in-out;
-}
-
-.ui-dialog .paragraphs-item-modal-admin:hover {
-  border: 1px solid transparent;
-  background-color: inherit;
-  position: inherit;
-}
-
-.paragraphs-item-modal-admin:hover .dropbutton-wrapper {
-  display: inherit;
-  position: absolute;
-  top: 0;
-  right: 0;
-  text-align: right;
-  z-index: 1000;
-}
-
-.paragraphs-item-modal-admin:hover .dropbutton-widget {
-  left: auto;
-  right: 0;
-  min-width: 6em;
-  padding-right: 2em;
-}
-
-.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton li,
-.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton a {
-  text-align: left;
-}
-
-.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton a.font-awesome {
-  padding: 0.1em 0.5em 0.1em 1em;
-}
-
-.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton a.font-awesome:before {
-  font-family: "Font Awesome 5 Free";
-  display: inline-block;
-  padding-right: .5em;
-  vertical-align: middle;
-  font-weight: 900;
-}
-
-.paragraphs-admin-dropbutton a {
-  text-decoration: none;
-}
-
-.ui-dialog-content .paragraphs-dialog-edit img {
-  max-width: 100%;
-  width: auto;
-}
-
-.font-awesome.paragraphs-edit:before {
-  content: '\f304';
-}
-
-.font-awesome.paragraphs-remove:before {
-  content: '\f2ed';
-}
-
-.font-awesome.paragraphs-add:before {
-  content: '\f055';
-}
-
-.font-awesome.paragraphs-sort:before {
-  content: '\f338';
-}
-
-.font-awesome.paragraphs-unpublish:before {
-  content: '\f070';
-}
-
-.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons {
-  padding: 0.1em 0.5em 0.1em 32px;
-  vertical-align: middle;
-}
-
-.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons.paragraphs-add {
-  background: transparent url(../images/add.svg) 6px center no-repeat;
-  background-size: 14px;
-}
-
-.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons.paragraphs-edit {
-  background: transparent url(../images/edit.svg) 6px center no-repeat;
-  background-size: 14px;
-}
-
-.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons.paragraphs-sort {
-  background: transparent url(../images/sort.svg) 6px center no-repeat;
-  background-size: 14px;
-}
-
-.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons.paragraphs-remove {
-  background: transparent url(../images/remove.svg) 6px center no-repeat;
-  background-size: 14px;
-}
-
-.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons.paragraphs-unpublish {
-  background: transparent url(../images/unpublish.svg) 6px center no-repeat;
-  background-size: 14px;
-}
-
-.paragraphs-admin-bundle-clone-create-form .paragraphs-type-clone-readonly-field {
-  background-color: #f1f1f1;
 }

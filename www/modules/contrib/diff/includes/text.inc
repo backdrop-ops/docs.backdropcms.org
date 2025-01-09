@@ -65,8 +65,6 @@ function text_field_diff_view($items, $context) {
     if ($format_text && !$summary) {
       $diff_items[$delta][] = t('Text format: !text_format', array('!text_format' => $format_text));
     }
-
-    $diff_items[$delta] = $diff_items[$delta];
   }
   return $diff_items;
 }
