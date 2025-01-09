@@ -66,16 +66,11 @@ function diff_entity_fields_diff($old_entity, $new_entity, $context, $default_la
 
   $field_context = $context;
 
-  $actual_mode = FALSE;
   list(, , $bundle_name) = entity_extract_ids($entity_type, $new_entity);
   $instances = field_info_instances($entity_type, $bundle_name);
 
   // Some fields piggy back the display settings, so we need to fake these by
   // ensuring that the field mode is always set.
-  if (empty($view_mode)) {
-    $actual_mode = 'diff_standard';
-    $field_context['custom_settings'] = FALSE;
-  }
   $view_mode_settings = field_view_mode_settings($entity_type, $bundle_name);
   $actual_mode = (!empty($view_mode_settings[$view_mode]['custom_settings'])) ? $view_mode : 'default';
   if (!isset($field_context['custom_settings'])) {
@@ -217,7 +212,7 @@ function diff_field_diff_view($items, $context) {
 /**
  * Helper function to get the settings for a given field or formatter.
  *
- * @param array $context
+ * @param array $field_context
  *   This will get the settings for a field.
  *   - field (required): The field that the items belong to.
  *   - entity: The entity that we are looking up.
@@ -346,8 +341,8 @@ function _diff_autoload($field_or_module) {
  */
 function diff_extract_state($diff, $state = 'raw') {
   $states = array(
-    0 => NULL,
-    1 => NULL,
+    0 => '',
+    1 => '',
   );
   if (isset($diff['#states'][$state])) {
     if (isset($diff['#states'][$state]['#old'])) {

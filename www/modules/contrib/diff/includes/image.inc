@@ -35,7 +35,7 @@ function image_field_diff_view($items, $context) {
     if (isset($item['file'])) {
       $output = array();
 
-      // We populate as much as possible to allow the best flexability in any
+      // We populate as much as possible to allow the best flexibility in any
       // string overrides.
       $t_args = array();
       foreach ($item as $key => $value) {

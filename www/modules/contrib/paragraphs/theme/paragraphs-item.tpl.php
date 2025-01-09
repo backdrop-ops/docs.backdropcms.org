@@ -22,7 +22,7 @@
  * @see template_process()
  */
 ?>
-<div class="<?php print implode(' ', $classes_array); ?>"<?php print backdrop_attributes($attributes); ?>>
+<div id="<?php print $variables['html_id']; ?>" class="<?php print implode(' ', $classes_array); ?>"<?php print backdrop_attributes($attributes); ?>>
   <?php print render($admin_links); ?>
   <?php print render($title_prefix); ?>
   <?php print render($title_suffix); ?>

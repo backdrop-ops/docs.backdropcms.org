@@ -195,6 +195,7 @@ dd {
 label {
   margin: 0 0 0.5em;
   font-size: 1.125em; /* relative size */
+  line-height: 2.2em;
 }
 input,
 textarea {

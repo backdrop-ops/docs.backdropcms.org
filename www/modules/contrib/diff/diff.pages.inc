@@ -71,6 +71,7 @@ function diff_node_revisions($form, $form_state, $node) {
     $delete_permission = TRUE;
   }
 
+  $revision_ids = array();
   foreach ($revisions as $revision) {
     $operations = array();
     $revision_ids[$revision->vid] = '';
@@ -133,17 +134,17 @@ function diff_node_revisions($form, $form_state, $node) {
 }
 
 /**
- * Submit code for input form to select two revisions.
+ * Submit code for input form to select two node revisions.
  */
 function diff_node_revisions_submit($form, &$form_state) {
-  // The ids are ordered so the old revision is always on the left.
+  // The node IDs are ordered so that the old revision is always on the left.
   $old_vid = min($form_state['values']['old'], $form_state['values']['new']);
   $new_vid = max($form_state['values']['old'], $form_state['values']['new']);
   $form_state['redirect'] = 'node/' . $form_state['values']['nid'] . '/revisions/view/' . $old_vid . '/' . $new_vid;
 }
 
 /**
- * Validation for input form to select two revisions.
+ * Validation for input form to select two node revisions.
  */
 function diff_node_revisions_validate($form, &$form_state) {
   $old_vid = $form_state['values']['old'];
@@ -156,20 +157,20 @@ function diff_node_revisions_validate($form, &$form_state) {
 /**
  * Create a comparison for the node between versions 'old_vid' and 'new_vid'.
  *
- * @param object $node
+ * @param Node $node
  *   Node on which to perform comparison
  * @param integer $old_vid
  *   Version ID of the old revision.
  * @param integer $new_vid
  *   Version ID of the new revision.
  */
-function diff_diffs_show($node, $old_vid, $new_vid, $state = NULL) {
+function diff_diffs_show(Node $node, $old_vid, $new_vid, $state = '') {
   // Attaches the CSS.
   $build['#attached'] = diff_build_attachments();
   $build['info'] = array(
-    '#markup' => t('<strong>Comparing two revisions:</strong>'),
+    '#markup' => '<strong>' . t('Comparing two revisions:') . '</strong>',
   );
-  $default_state = config_get('diff.settings','diff_default_state_node');
+  $default_state = config_get('diff.settings', 'diff_default_state.node');
   if (empty($state)) {
     $state = $default_state;
   }
@@ -246,9 +247,6 @@ function diff_diffs_show($node, $old_vid, $new_vid, $state = NULL) {
 
   $links = array();
   foreach (diff_available_states('node') as $alternative_state => $label) {
-    if ($alternative_state == $state) {
-      // @todo: Should we show both or just alternatives?
-    }
     $links[$alternative_state] = array(
       'title' => $label,
       'href' => "node/{$node->nid}/revisions/view/{$old_vid}/{$new_vid}" . ($alternative_state == $default_state ? '' : '/' . str_replace('_', '-', $alternative_state)),
@@ -311,7 +309,7 @@ function diff_diffs_show($node, $old_vid, $new_vid, $state = NULL) {
  *   The context used to render the diff.
  */
 function diff_entity_body_rows($entity_type, $left_entity, $right_entity, $context = array()) {
-  // This is an unique index only, so no need for backdrop_static().
+  // This is a unique index only, so no need for backdrop_static().
   static $table_row_counter = 0;
 
   if ($theme = config_get('diff.settings','diff_theme')) {
@@ -477,7 +475,7 @@ function diff_compare_entities($left_entity, $right_entity, $context) {
 
   // One of the children has a #weight.
   if (!isset($diff['#sorted'])) {
-    uasort($diff, 'element_sort');
+    backdrop_sort($diff, array('#weight'));
   }
 
   // Process the array and get line counts per field.

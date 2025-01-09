@@ -1,0 +1,125 @@
+.deprecated-icons {
+  /* Backport icon functionality for older versions of Backdrop. Can be removed
+     when usage of versions earlier than 1.28.0 is negligible. */
+  --icon-paragraphs-add: url(../icons/paragraphs-add.svg);
+  --icon-paragraphs-edit: url(../icons/paragraphs-edit.svg);
+  --icon-paragraphs-sort: url(../icons/paragraphs-sort.svg);
+  --icon-paragraphs-remove: url(../icons/paragraphs-remove.svg);
+  --icon-paragraphs-unpublish: url(../icons/paragraphs-unpublish.svg);
+}
+
+.paragraphs-item-modal-admin .dropbutton-wrapper {
+  float: right;
+  margin: 2px 2px 10px 10px;
+  display: none;
+  min-height: 2em;
+  position: relative;
+  z-index: 10;
+}
+
+.paragraphs-item-modal-admin > .content {
+  position: relative;
+  z-index: 9;
+}
+
+.paragraphs-item-modal-admin {
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.paragraphs-item-modal-admin::before {
+  position: relative;
+  display: table-cell;
+  content: '';
+  top: 0;
+  left: 0;
+  z-index: -5;
+}
+
+.paragraphs-item-modal-admin:hover::before {
+  border: 1px dashed rgba(0, 0, 0, .04);
+  position: absolute;
+  display: table-cell;
+  content: '';
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  border: 1px dashed #d0e2d5;
+  background-image: repeating-linear-gradient(45deg,
+      rgba(0, 0, 0, .04),
+      rgba(0, 0, 0, .04) 20px,
+      rgba(0, 0, 0, .02) 20px,
+      rgba(0, 0, 0, .02) 40px);
+  transition: .1s ease-in-out;
+}
+
+.ui-dialog .paragraphs-item-modal-admin:hover {
+  border: 1px solid transparent;
+  background-color: inherit;
+  position: inherit;
+}
+
+.paragraphs-item-modal-admin:hover .dropbutton-wrapper {
+  display: inherit;
+  position: absolute;
+  top: 0;
+  right: 0;
+  text-align: right;
+  z-index: 1000;
+}
+
+.paragraphs-item-modal-admin:hover .dropbutton-widget {
+  left: auto;
+  right: 0;
+  min-width: 6em;
+  padding-right: 2em;
+}
+
+.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton li,
+.paragraphs-item-modal-admin:hover .dropbutton-widget .dropbutton a {
+  text-align: left;
+}
+
+.paragraphs-admin-dropbutton a {
+  text-decoration: none;
+}
+
+.ui-dialog-content .paragraphs-dialog-edit img {
+  max-width: 100%;
+  width: auto;
+}
+
+.paragraphs-item-modal-admin .dropbutton-widget .dropbutton a.svg-icons {
+  padding: 0.1em 0.5em 0.1em 32px;
+  vertical-align: middle;
+  background-size: 14px;
+  background-repeat: no-repeat;
+  background-position: 6px center;
+  background-color: transparent;
+
+  &.paragraphs-add {
+    background-image: var(--icon-paragraphs-add);
+  }
+
+  &.paragraphs-edit {
+    background-image: var(--icon-paragraphs-edit);
+  }
+
+  &.paragraphs-sort {
+    background-image: var(--icon-paragraphs-sort);
+  }
+
+  &.paragraphs-remove {
+    background-image: var(--icon-paragraphs-remove);
+  }
+
+  &.paragraphs-unpublish {
+    background-image: var(--icon-paragraphs-unpublish);
+  }
+}
+
+.paragraphs-admin-bundle-clone-create-form .paragraphs-type-clone-readonly-field {
+  background-color: #f1f1f1;
+}

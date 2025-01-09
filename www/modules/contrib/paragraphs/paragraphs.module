@@ -504,13 +504,62 @@ function paragraphs_field_info() {
       'allowed_bundles' => array(),
       'bundle_weights' => array(),
     ),
-    'default_widget' => 'paragraphs_hidden',
+    'default_widget' => 'paragraphs_embed',
     'default_formatter' => 'paragraphs_view',
     'settings' => array(),
     'property_type' => 'paragraphs_item',
     'property_callbacks' => array('paragraphs_entity_metadata_property_callback'),
   );
   return $info;
+}
+
+/**
+ * Implements hook_icon_info().
+ */
+function paragraphs_icon_info() {
+  $icons = array(
+    'paragraphs-add' => array(),
+    'paragraphs-edit' => array(),
+    'paragraphs-remove' => array(),
+    'paragraphs-unpublish' => array(),
+    'paragraphs-sort' => array(),
+    'paragraph' => array(),
+  );
+  return $icons;
+}
+
+/**
+ * Implements hook_library_info().
+ */
+function paragraphs_library_info() {
+  $libraries = array();
+  $module_path = backdrop_get_path('module', 'paragraphs');
+  $info = system_get_info('module', 'paragraphs');
+  $libraries['paragraphs_modal_admin'] = array(
+    'title' => 'Paragraphs Modal Admin',
+    'version' => $info['version'],
+    'js' => array(
+      $module_path . '/js/paragraphs_modal_admin.js' => array(
+        'type' => 'file',
+        'scope' => 'footer',
+      ),
+    ),
+    'css' => array(
+      $module_path . '/css/paragraphs_modal_admin.css' => array(),
+    ),
+    'icons' => array(
+      'paragraphs-add',
+      'paragraphs-edit',
+      'paragraphs-remove',
+      'paragraphs-unpublish',
+      'paragraphs-sort',
+      'paragraph',
+    ),
+    'dependencies' => array(
+      array('system', 'backdrop.dialog.ajax'),
+    ),
+  );
+  return $libraries;
 }
 
 /**
@@ -1699,12 +1748,13 @@ function paragraphs_modal_admin_links($paragraphs_item) {
   // Set up array of links.
   $classes = array(
     'use-ajax',
+    'svg-icons',
   );
-  if (module_exists('font_awesome')) {
-    $classes[] = 'font-awesome';
-  }
-  else {
-    $classes[] = 'svg-icons';
+  // @todo: At some future point when there is little or no usage of versions of
+  // core prior to 1.28.0, we can remove the deprecated icon implementation here
+  // and in the paragraphs_modal_admin.css file.
+  if (!function_exists('icon_get_info')) {
+    $classes[] = 'deprecated-icons';
   }
   if (is_numeric($paragraph_id) && $access) {
     $admin_links = array(
@@ -1846,13 +1896,7 @@ function paragraphs_modal_admin_links($paragraphs_item) {
         }
       }
     }
-
-    $admin_links['#attached']['js'][] = array(
-      'data' => backdrop_get_path('module', 'paragraphs') . '/js/paragraphs_modal_admin.js',
-      'type' => 'file',
-      'scope' => 'footer',
-    );
-    $admin_links['#attached']['library'][] = array('system', 'backdrop.dialog.ajax');
+    $admin_links['#attached']['library'][] = array('paragraphs', 'paragraphs_modal_admin');
   }
   return $admin_links;
 }
