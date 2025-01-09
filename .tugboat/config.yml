@@ -1,12 +1,17 @@
 services:
   php:
-    image: tugboatqa/php:7.2-apache
+    image: tugboatqa/php:8.3-apache-bullseye
     default: true
-    depends: mariadb
+    depends: mysql
     commands:
       init:
-        # Install PHP 'zip' extension to allow installing Backdrop modules.
-        - docker-php-ext-install zip
+        # Ensure JPG support is enabled.
+        # See https://github.com/docker-library/php/issues/912#issuecomment-559918036
+        - docker-php-ext-configure gd --with-jpeg
+        # Install zip, igbinary, memcache, and opcache PHP extensions support.
+        - apt update
+        - apt install libzip-dev
+        - docker-php-ext-install zip opcache gd > /dev/null
         # Enable Apache 'rewrite' module for clean URLs.
         - a2enmod rewrite
         # Link the document root to the expected path.
@@ -36,12 +41,16 @@ services:
         - cd $TUGBOAT_ROOT/www && $TUGBOAT_ROOT/.tugboat/reset-password.sh
         # Post a comment in the PR.
         - cd $TUGBOAT_ROOT/.tugboat && ./post-comment.sh
-  mariadb:
-    image: tugboatqa/mariadb:latest
+  mysql:
+    # Use the latest available 8.x version of MySQL
+    image: tugboatqa/mysql:8
     commands:
       init:
-        # Configure database for UTF-8: https://docs.backdropcms.org/database-configuration#utf8mb4
-        - echo "[mysqld]\ninnodb_large_prefix=true\ninnodb_file_format=barracuda\ninnodb_file_per_table=true" >> /etc/mysql/conf.d/utf8mb.conf
+        # Avoids "MYSQL has gone away" issues.
+        # See: https://docs.tugboat.qa/troubleshooting/fix-problem-x/#mysql-server-has-gone-away
+        - mysql -e "SET GLOBAL max_allowed_packet=536870912;"
+        - echo "max_allowed_packet=536870912" >> /etc/mysql/conf.d/tugboat.cnf
+
         # Download a copy of the latest database.
         - wget --http-user=$SANITIZE_USER --http-password=$SANITIZE_PASS -c https://sanitize.backdropcms.org/docs.backdropcms.org/sanitized/docs-latest-sanitized.sql.gz
         - gunzip docs-latest-sanitized.sql.gz
