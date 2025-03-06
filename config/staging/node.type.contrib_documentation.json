@@ -1,0 +1,43 @@
+{
+    "_config_name": "node.type.contrib_documentation",
+    "type": "contrib_documentation",
+    "name": "Contrib Documentation",
+    "base": "node_content",
+    "module": "node",
+    "node_preview": "1",
+    "description": "<em>Contrib Documentation</em> can be added by anyone, and will appear in the \"Add-On Documentation\" section.",
+    "help": "",
+    "modified": true,
+    "disabled": false,
+    "has_title": true,
+    "title_label": "Title",
+    "settings": {
+        "menu_default": 0,
+        "menu_options": {
+            "menu-footer-menu": 0,
+            "main-menu": 0,
+            "management": 0,
+            "user-menu": 0
+        },
+        "menu_parent": "main-menu:0",
+        "status_default": 1,
+        "scheduling_enabled": 0,
+        "promote_enabled": 0,
+        "promote_default": 0,
+        "sticky_enabled": 0,
+        "sticky_default": 0,
+        "revision_enabled": 1,
+        "revision_default": 0,
+        "node_preview": "1",
+        "node_submitted": 0,
+        "node_submitted_format": "[node:created:medium] by [node:author]",
+        "node_user_picture": true,
+        "hidden_path": 0,
+        "language": 0,
+        "node_permissions": true,
+        "diff_show_preview_changes_node": 1,
+        "diff_enable_revisions_page_node": 1,
+        "diff_view_mode_preview_node": ""
+    },
+    "orig_type": "contrib_documentation"
+}
