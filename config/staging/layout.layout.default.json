@@ -28,6 +28,7 @@
         "content": [
             "2885b5da-3df1-49e9-a005-5dda5be7dfec",
             "default",
+            "e277ed29-fca5-44e6-b005-5a3bf3852b16",
             "62750c0f-a9c3-4346-803b-591ded599912",
             "e56b9770-c9bc-4cc3-a22d-45abc1d3fd22",
             "f8dd8908-d722-450d-8807-7de88c0ad93f"
@@ -190,6 +191,55 @@
                         }
                     }
                 }
+            }
+        },
+        "e277ed29-fca5-44e6-b005-5a3bf3852b16": {
+            "plugin": "views:contrib_documentation-block",
+            "data": {
+                "status": 1,
+                "module": "views",
+                "delta": "contrib_documentation-block",
+                "settings": {
+                    "link_to_view": 0,
+                    "more_link": false,
+                    "use_pager": true,
+                    "pager_id": "0",
+                    "items_per_page": "50",
+                    "offset": 0,
+                    "path": null,
+                    "fields_override": null,
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": [],
+                    "allowed": [],
+                    "path_override": false,
+                    "exposed": [],
+                    "admin_label": "",
+                    "admin_description": ""
+                },
+                "uuid": "e277ed29-fca5-44e6-b005-5a3bf3852b16",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": ""
+                        }
+                    }
+                },
+                "conditions": [
+                    {
+                        "plugin": "path",
+                        "data": {
+                            "settings": {
+                                "visibility_setting": "1",
+                                "paths": "node/48737",
+                                "load_condition_nojs": "Load condition"
+                            }
+                        }
+                    }
+                ]
             }
         },
         "62750c0f-a9c3-4346-803b-591ded599912": {
