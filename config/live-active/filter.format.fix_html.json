@@ -72,7 +72,10 @@
             "status": 1,
             "weight": 0,
             "module": "token_filter",
-            "settings": []
+            "settings": {
+                "replace": 0,
+                "tokens": ""
+            }
         }
     },
     "editor": "",
