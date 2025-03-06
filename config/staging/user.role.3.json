@@ -138,7 +138,8 @@
         "view any unpublished content",
         "tamper documentation",
         "use text format markdown",
-        "administer google analytics"
+        "administer google analytics",
+        "administer menu positions"
     ],
     "description": ""
 }

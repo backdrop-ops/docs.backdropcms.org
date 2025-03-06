@@ -1,0 +1,14 @@
+{
+    "_config_name": "field.bundle.node.contrib_documentation",
+    "bundle": "contrib_documentation",
+    "entity_type": "node",
+    "view_modes": [],
+    "extra_fields": {
+        "form": {
+            "title": {
+                "weight": "0"
+            }
+        },
+        "display": []
+    }
+}
