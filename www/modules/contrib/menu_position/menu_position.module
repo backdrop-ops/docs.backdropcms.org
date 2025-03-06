@@ -1,0 +1,710 @@
+<?php
+/**
+ * @file
+ * Provides dynamic menu links based on configurable rules.
+ */
+
+/**
+* Implements hook_config_info().
+*/
+function menu_position_config_info() {
+  $prefixes['menu_position.settings'] = array(
+    'label' => t('Main settings'),
+    'group' => t('Menu Position'),
+  );
+  return $prefixes;
+}
+
+/**
+ * Implements hook_preprocess_block().
+ *
+ */
+function menu_position_preprocess_block(&$variables) {
+  // Don't evaluate the rules twice.
+  $evaluated = &backdrop_static(__FUNCTION__, FALSE);
+  if ($evaluated) {
+    return;
+  }
+  $evaluated = TRUE;
+
+  // Build a small context.
+  $context = array(
+    'path' => $_GET['q'],
+    'entity_type' => NULL,
+    'bundle_name' => NULL,
+  );
+  // Determine what kind of entity page this is.
+  list($arg0, $arg1, $arg2) = explode('/', $context['path'] . '//');
+  if ($arg0 == 'node' && is_numeric($arg1)) {
+    $context['node'] = node_load($arg1);
+    // Don't evaluate the rules on a 404 page.
+    if (!$context['node']) {
+      return;
+    }
+    $context['entity_type'] = 'node';
+    $context['bundle_name'] = $context['node']->type;
+  }
+  elseif ($arg0 == 'user' && is_numeric($arg1)) {
+    $context['user'] = user_load($arg1);
+    // Don't evaluate the rules on a 404 page.
+    if (!$context['user']) {
+      return;
+    }
+    $context['entity_type'] = 'user';
+    $context['bundle_name'] = 'user';
+  }
+  elseif ($arg0 == 'taxonomy' && $arg1 == 'term' && is_numeric($arg2)) {
+    $context['taxonomy_term'] = taxonomy_term_load($arg2);
+    // Don't evaluate the rules on a 404 page.
+    if (!$context['taxonomy_term']) {
+      return;
+    }
+    $context['entity_type'] = 'taxonomy_term';
+    $context['bundle_name'] = $context['taxonomy_term']->vocabulary;
+  }
+
+  menu_position_evaluate_rules($context);
+}
+
+/**
+ * Implements hook_permission().
+ */
+function menu_position_permission() {
+  return array(
+    'administer menu positions' => array(
+      'title' => t('Administer menu position rules'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function menu_position_menu() {
+  $items['admin/structure/menu-position'] = array(
+    'title' => 'Menu position rules',
+    'description' => 'Configure rules for menu positions.',
+    'access arguments' => array('administer menu positions'),
+    'page callback' => 'menu_position_rules_form_callback',
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'menu_position.admin.inc',
+  );
+  $items['admin/structure/menu-position/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  $items['admin/structure/menu-position/settings'] = array(
+    'title' => 'Settings',
+    'description' => 'Configure settings for menu positions.',
+    'access arguments' => array('administer menu positions'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('menu_position_settings_form'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'menu_position.admin.inc',
+    'weight' => 10,
+  );
+  $items['admin/structure/menu-position/add'] = array(
+    'title' => 'Add menu position rule',
+    'description' => 'Add a new menu position rule.',
+    'access arguments' => array('administer menu positions'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('menu_position_add_rule_form'),
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'menu_position.admin.inc',
+  );
+  $items['admin/structure/menu-position/edit'] = array(
+    'title' => 'Edit menu position rule',
+    'description' => 'Edit a menu position rule.',
+    'access arguments' => array('administer menu positions'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('menu_position_edit_rule_form'),
+    'type' => MENU_CALLBACK,
+    'file' => 'menu_position.admin.inc',
+  );
+  $items['admin/structure/menu-position/delete'] = array(
+    'title' => 'Delete menu position rule',
+    'description' => 'Delete a menu position rule.',
+    'access arguments' => array('administer menu positions'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('menu_position_delete_rule_form'),
+    'type' => MENU_CALLBACK,
+    'file' => 'menu_position.admin.inc',
+  );
+  $items['menu-position/%'] = array(
+    'title' => 'Menu position router',
+    'description' => 'Sets access to all menu position links.',
+    'access arguments' => array('access content'),
+    'page callback' => 'menu_position_router',
+    'page arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'file' => 'menu_position.admin.inc',
+  );
+  if (module_exists('taxonomy')) {
+    $items['menu-position/taxonomy/autocomplete'] = array(
+      'title' => 'Autocomplete taxonomy',
+      'page callback' => 'menu_position_taxonomy_autocomplete',
+      'page arguments' => array(3, 4),
+      'access arguments' => array('access content'),
+      'type' => MENU_CALLBACK,
+      'file' => 'plugins/menu_position.taxonomy.inc',
+    );
+  }
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function menu_position_theme() {
+  return array(
+    'menu_position_rules_order' => array(
+      'render element' => 'element',
+      'file' => 'menu_position.admin.inc',
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu_position_rule_plugins().
+ */
+function menu_position_menu_position_rule_plugins() {
+  $plugins = array(
+    'content_type' => array(
+      'file' => 'plugins/menu_position.content_type.inc',
+    ),
+    'pages' => array(
+      'file' => 'plugins/menu_position.pages.inc',
+    ),
+    'user_page' => array(
+      'file' => 'plugins/menu_position.user_page.inc',
+    ),
+    'user_role' => array(
+      'file' => 'plugins/menu_position.user_roles.inc',
+    ),
+  );
+  if (module_exists('locale')) {
+    $plugins['language'] = array(
+      'file' => 'plugins/menu_position.language.inc',
+    );
+  }
+  if (module_exists('taxonomy')) {
+    $plugins['taxonomy'] = array(
+      'file' => 'plugins/menu_position.taxonomy.inc',
+    );
+  }
+  return $plugins;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function menu_position_form_menu_overview_form_alter(&$form, &$form_state) {
+  module_load_include('inc', 'menu_position', 'menu_position.admin');
+  _menu_position_form_menu_overview_form_alter($form, $form_state);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function menu_position_form_menu_edit_item_alter(&$form, &$form_state) {
+  module_load_include('inc', 'menu_position', 'menu_position.admin');
+  _menu_position_form_menu_edit_item_alter($form, $form_state);
+}
+
+/**
+ * Implements hook_menu_link_alter().
+ */
+function menu_position_menu_link_alter(&$item) {
+  if (isset($item['module']) && $item['module'] == 'menu_position') {
+    // Don't allow the link to be "enabled".
+    $item['hidden'] = 1;
+    $item['customized'] = 1;
+  }
+}
+
+/**
+ * Implements hook_menu_link_update().
+ */
+function menu_position_menu_link_update($link) {
+  module_load_include('inc', 'menu_position', 'menu_position.admin');
+  _menu_position_menu_link_update($link);
+}
+
+/**
+ * Return the activated rule(s) for the specified context.
+ *
+ * @see menu_position_evaluate_rules()
+ */
+function menu_position_get_activated_rules($context) {
+  return menu_position_evaluate_rules($context, TRUE);
+}
+
+/**
+ * Evaluate all rules based on a given context.
+ *
+ * Multiple rules may be activated, but only if they are all assigned to
+ * different menus (no more than one rule will be activated for any given
+ * menu).
+ *
+ * Existing menu links for the context's path take precedence over menu
+ * position rules. Rules assigned to the menus associated with those links
+ * will be ignored.
+ *
+ * The breadcrumb will be set according to the first matching rule, unless
+ * an existing menu link has been found for the context's path in one of the
+ * menus considered so far. (n.b. The order of the rules, and each rule's
+ * associated menu, determines the order in which menus are considered for
+ * this purpose.)
+ *
+ * @param array $context
+ *   A small context array containing the following data:
+ *     - 'path'        => The path of the current page.
+ *     - 'entity_type' => The type of the current page's entity.
+ *     - 'bundle_name' => The bundle of the current page's entity.
+ *     - [entity]      => The current page's entity object. The key is the
+ *                        entity type value (i.e. "node", "user", etc).
+ *
+ *   n.b. Only 'path' is guaranteed to be populated. The other values
+ *   will be available only if the current page is an "entity" page.
+ * @param bool $use_static_cache
+ *   If TRUE and the specified context has already been processed, then
+ *   simply return the cached array of rules which were activated for that
+ *   context. If the context has not yet been processed, normal processing
+ *   will take place.
+ * @param bool $use_cache
+ *   If TRUE (default) and the specified context has already been processed by
+ *   a previous request, then use that as a list for rules to evaluate for the
+ *   context. If the context has not yet been processed, normal processing will
+ *   take place. Note that this takes effect only when the variable
+ *   'menu_position_rules_cache_enabled' is set to 1. By default it is 0.
+ *   This can be set through the settings.php or the module's settigns form.
+ *
+ * @return array
+ *   An array of the rules which were activated for the specified context.
+ */
+function menu_position_evaluate_rules($context = array(), $use_static_cache = FALSE, $use_cache = TRUE) {
+  if (empty($context)) {
+    return array();
+  }
+
+  // Use the cache only when needed and it is enabled.
+  $use_cache = $use_cache && config_get('menu_position.settings', 'rules_cache_enabled');
+
+  $cache = &backdrop_static(__FUNCTION__, array());
+
+  // Hash the context array to generate a cache key.
+  $cache_key = array(
+    'path' => md5($context['path']),
+    'entity_type' => '',
+    'bundle_name' => '',
+    'entity_id'   => '',
+  );
+  if (!empty($context['entity_type'])) {
+    $entity_type = $context['entity_type'];
+    $entity = $context[$entity_type];
+    list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+    $cache_key['entity_type'] = $entity_type;
+    $cache_key['bundle_name'] = $bundle;
+    $cache_key['entity_id'] = $id;
+  }
+  $cache_key = implode(':', array_filter(array(
+    'menu_position:rules',
+    $cache_key['entity_type'],
+    $cache_key['bundle_name'],
+    $cache_key['entity_id'],
+    $cache_key['path'],
+  )));
+
+  // If we just want the rules and we have a cached value, return immediately.
+  if ($use_static_cache) {
+    if (array_key_exists($cache_key, $cache)) {
+      return $cache[$cache_key];
+    }
+  }
+
+  // Otherwise process the context as normal, cache the result, and return that.
+  $cache[$cache_key] = array();
+
+  // Sanity check: if there is no existing menu item, Backdrop won't display any
+  // navigation menus anyway and will error out when we try methods below.
+  if (menu_get_item($context['path']) === FALSE) {
+    return $cache[$cache_key];
+  }
+
+  // Retrieve the list of menus the path is already in.
+  $menu_names = db_select('menu_links', 'm')
+    ->fields('m', array('menu_name'))
+    ->condition('m.link_path', $context['path'], '=')
+    ->execute()
+    ->fetchCol();
+
+  // Extract a list from cache.
+  if ($use_cache && ($cache_entry = cache_get($cache_key, 'cache')) !== FALSE) {
+    $rules = $cache_entry->data;
+  }
+  else {
+    // Retrieve the rules from the database. For speed, we don't call
+    // menu_position_read_rules() and unserialize the conditions only if needed.
+    $rules_query = db_select('menu_position_rules', 'm')
+      ->fields('m', array('rid', 'conditions', 'menu_name', 'plid', 'mlid'))
+      ->condition('m.enabled', 1, '=')
+      ->orderBy('m.weight')
+      ->orderBy('m.rid');
+
+    // Try to additionally filter-out the rules list.
+    if (count($menu_names) && !count(module_implements("menu_position_rule_alter"))) {
+      $rules_query->condition('m.menu_name', $menu_names, 'NOT IN');
+    }
+
+    $rules = $rules_query->execute();
+  }
+
+  // Flag that we still need to set the breadcrumb.
+  $set_breadcrumb = TRUE;
+
+  // Examine each rule and check its conditions.
+  foreach ($rules as $rule) {
+
+    if (in_array($rule->menu_name, $menu_names, TRUE)) {
+      // If the page is already placed in the rule's menu, skip the rule.
+      $rule_matches = FALSE;
+      $set_breadcrumb = FALSE;
+    }
+    else {
+      // A rule with no conditions always matches.
+      $rule_matches = TRUE;
+
+      // The ones from cache are already unserialized.
+      if (is_string($rule->conditions)) {
+        $rule->conditions = unserialize($rule->conditions);
+      }
+
+      // Go through each condition, AND-ing each result.
+      foreach ($rule->conditions as $plugin => $variables) {
+        // Add the current rule and node to the callback's variables.
+        $variables['rule'] = $rule;
+        $variables['context'] = $context;
+        // Find the plugin's callback function.
+        $callback = menu_position_get_condition_callback($plugin);
+        if ($callback) {
+          // Check if this condition matches.
+          $rule_matches = $callback($variables);
+        }
+        else {
+          // If the callback cannot be found, the condition has failed.
+          $rule_matches = FALSE;
+        }
+
+        // No need to check other conditions if this condition failed.
+        if (!$rule_matches) {
+          break;
+        }
+      }
+    }
+
+    // Let other modules manipulate the rule (or any of the other parameters).
+    backdrop_alter('menu_position_rule', $rule, $context, $rule_matches, $set_breadcrumb);
+
+    if ($rule_matches && menu_position_activate_rule($rule, $context, $set_breadcrumb)) {
+      $rule->set_breadcrumb = $set_breadcrumb;
+      $cache[$cache_key][] = $rule;
+
+      // Don't let other rules set the breadcrumb.
+      $set_breadcrumb = FALSE;
+
+      // Don't let other rules match against this rule's menu.
+      $menu_names[] = $rule->menu_name;
+    }
+  }
+
+  if ($use_cache && $cache_entry === FALSE) {
+    // There was a cache-miss, so iniialize the cache for next request(s).
+    cache_set($cache_key, $cache[$cache_key], 'cache', CACHE_PERMANENT);
+  }
+
+  return $cache[$cache_key];
+}
+
+/**
+ * Activates a specific rule for the given context.
+ *
+ * May additionally set the active trail.
+ *
+ * @param object $rule
+ *   The rule that should be activated.
+ * @param array $context
+ *   A small context variable used by the menu_position module.
+ * @param bool $set_breadcrumb
+ *   Whether to set the active trail / breadcrumb.
+ */
+function menu_position_activate_rule($rule, array $context, $set_breadcrumb) {
+  // Retrieve menu item specified in the rule.
+  $menu_item = menu_link_load($rule->mlid);
+
+  // Get the current page title.
+  $cached_title = backdrop_get_title();
+
+  // Sanity check: if the menu link doesn't exist abort processing the rule.
+  if (!$menu_item) {
+    return FALSE;
+  }
+
+  // Reset the menu trail that views may have set.
+  $original_router_item = menu_get_item();
+  if ($original_router_item['page_callback'] == 'views_page') {
+    $preferred = &backdrop_static('menu_link_get_preferred');
+    unset($preferred[$context['path']]);
+  }
+
+  // Set the active path for the rule's menu.
+  menu_tree_set_path($rule->menu_name, $menu_item['link_path']);
+
+  // Get the default preferred link and save it so that it can be used in
+  // place of the rule's menu link when menu trees are rendered.
+  menu_position_set_link($rule->rid, menu_link_get_preferred());
+
+  // Allow the rule's parent menu item to show "expanded" status.
+  menu_position_expand_parent_link($rule->plid);
+
+  // Alter the active trail if breadcrumbs still need to be set.
+  if ($set_breadcrumb) {
+    // Manually set the preferred link for this path so that
+    // menu_get_active_trail() returns the proper trail.
+    $preferred_links = &backdrop_static('menu_link_get_preferred');
+    $preferred_links[$_GET['q']][MENU_PREFERRED_LINK] = menu_link_get_preferred($menu_item['link_path']);
+
+    // Reset static trail and breadcrumb caches.
+    backdrop_static_reset('menu_set_active_trail');
+    backdrop_static_reset('backdrop_set_breadcrumb');
+
+    // Remove the menu position router from the end of the trail.
+    $active_trail = menu_set_active_trail();
+    array_pop($active_trail);
+    menu_set_active_trail($active_trail);
+
+    if (backdrop_get_title() !== $cached_title) {
+      backdrop_set_title($cached_title, PASS_THROUGH);
+    }
+  }
+
+  return TRUE;
+}
+
+/**
+ * Dynamically expands the parent menu item for a rule.
+ *
+ * @param int $plid
+ *   The parent menu item's mlid.
+ */
+function menu_position_expand_parent_link($plid = NULL) {
+  $link_id = &backdrop_static(__FUNCTION__, NULL);
+
+  if (isset($plid)) {
+    $link_id = $plid;
+  }
+  return $link_id;
+}
+
+/**
+ * Dynamically sets the menu item for a specified rule.
+ *
+ * @param int $rid
+ *   The rule ID.
+ * @param string $link
+ *   The menu item that should be used for the rule.
+ */
+function menu_position_set_link($rid, $link) {
+  menu_position_get_link('menu-position/' . $rid, $link);
+}
+
+/**
+ * Returns the dynamically set menu item for a specified rule.
+ *
+ * @param string $path
+ *   The path of the requested rule, e.g. menu-position/10.
+ *
+ * @return string
+ *   The title that should be used for the rule's menu item.
+ */
+function menu_position_get_link($path, $link = NULL) {
+  $links = &backdrop_static(__FUNCTION__, array());
+
+  // If a link is given, save it for later retrieval.
+  if ($link) {
+    $links[$path] = $link;
+  }
+  return isset($links[$path]) ? $links[$path] : NULL;
+}
+
+/**
+ * Implements hook_translated_menu_link_alter().
+ *
+ * All of the menu items of menu position rules have their "alter" option set
+ * which allows them to be altered with this hook. We "translate" the menu item
+ * to have the proper URL and title for the current page.
+ */
+function menu_position_translated_menu_link_alter(&$item, &$map) {
+  // Check if the rule's links are configured to be hidden.
+  switch (config_get('menu_position.settings', 'active_link_display')) {
+    case 'child':
+      if ($item['module'] == 'menu_position') {
+        $menu_item = menu_position_get_link($item['link_path']);
+        // We only alter the link after its replacement has been set.
+        if (!empty($menu_item['title'])) {
+          $item['title'] = $menu_item['title'];
+          $item['href'] = $menu_item['href'];
+          $item['hidden'] = 0;
+          $item['customized'] = 1;
+        }
+      }
+      elseif ($item['mlid'] == menu_position_expand_parent_link()) {
+        $item['has_children'] = 1;
+      }
+      break;
+
+    case 'parent':
+      if ($item['mlid'] == menu_position_expand_parent_link()) {
+        $item['localized_options']['attributes']['class'][] = 'active';
+      }
+      break;
+  }
+}
+
+/**
+ * Retrieves a list of information about every rule plugin.
+ */
+function menu_position_get_plugins() {
+  $plugins = &backdrop_static(__FUNCTION__, array());
+
+  if (empty($plugins)) {
+    foreach (module_implements('menu_position_rule_plugins') as $module) {
+      $function = $module . '_menu_position_rule_plugins';
+      if (function_exists($function)) {
+        // Register each module's plugin while setting baseline defaults.
+        foreach ($function() as $name => $plugin) {
+          $plugins[$name] = $plugin + array(
+            'module' => $module,
+            'file' => '',
+            'form_callback' => $module . '_menu_position_rule_' . $name . '_form',
+            'condition_callback' => $module . '_menu_position_condition_' . $name,
+          );
+        }
+      }
+    }
+  }
+
+  return $plugins;
+}
+
+/**
+ * Loads the include file containing a condition's callback function definition.
+ *
+ * @param string $plugin
+ *   The name of the plugin.
+ *
+ * @return string/bool
+ *   The name of the callback function, or FALSE if it could not be found.
+ */
+function menu_position_get_condition_callback($plugin) {
+  $plugins = menu_position_get_plugins();
+  $callback = !empty($plugins[$plugin]['condition_callback']) ? $plugins[$plugin]['condition_callback'] : FALSE;
+
+  if ($callback && !function_exists($callback)) {
+    // Load the specified include file.
+    if (!empty($plugins[$plugin]['file'])) {
+      $file = pathinfo($plugins[$plugin]['file']);
+      // Allow plugins to be in a sub-directory.
+      if ($file['dirname']) {
+        $file['filename'] = $file['dirname'] . '/' . $file['filename'];
+      }
+      module_load_include($file['extension'], $plugins[$plugin]['module'], $file['filename']);
+    }
+    // Note if the callback still cannot be found.
+    if (!function_exists($callback)) {
+      $callback = FALSE;
+    }
+  }
+
+  return $callback;
+}
+
+/**
+ * Return a menu link for the given node.
+ *
+ * It uses the first menu position rule activated for that node.
+ */
+function menu_position_token_menu_link_load($node) {
+  $cache = &backdrop_static(__FUNCTION__);
+  if (!isset($cache)) {
+    $cache = array();
+  }
+  if (!array_key_exists($node->nid, $cache)) {
+    // Check for a menu position menu link.
+    $context = array(
+      'path'        => sprintf('node/%d', $node->nid),
+      'entity_type' => 'node',
+      'bundle_name' => $node->type,
+      'node'        => $node,
+    );
+    if ($rules = menu_position_get_activated_rules($context)) {
+      $rule = array_shift($rules);
+      $link = token_menu_link_load($rule->mlid);
+    }
+    else {
+      $link = NULL;
+    }
+    $cache[$node->nid] = $link;
+  }
+  return $cache[$node->nid];
+}
+
+/**
+ * Implements hook_tokens_alter().
+ */
+function menu_position_tokens_alter(array &$replacements, array $context) {
+  $options = $context['options'];
+  $sanitize = !empty($options['sanitize']);
+
+  if ($context['type'] == 'node' && !empty($context['data']['node'])) {
+    $node = $context['data']['node'];
+    $tokens = $context['tokens'];
+
+    // If the 'menu-link' token is present and no replacement value was
+    // generated for it, try using the menu position rules instead.
+    if (array_key_exists('menu-link', $tokens)) {
+      $original = $tokens['menu-link'];
+      if (empty($replacements[$original])) {
+        if ($link = menu_position_token_menu_link_load($node)) {
+          // We found a menu position rule, but the chances of us ever
+          // wanting to use the *title* of a menu position rule's menu link
+          // are vanishingly small, so we'll use the node title instead.
+          $replacements[$original] = $sanitize ? check_plain($node->title) : $node->title;
+        }
+      }
+    }
+
+    // Process tokens that chain from a 'menu-link' token.
+    if ($menu_tokens = token_find_with_prefix($tokens, 'menu-link')) {
+      foreach ($menu_tokens as $token => $original) {
+        if (empty($replacements[$original])) {
+          // No replacement value was generated for this token, so now we
+          // want to try the menu position rules. We need to unset its key
+          // from the replacements array in order to merge in a new value.
+          unset($replacements[$original]);
+        }
+        else {
+          // This token was successfully replaced using the standard
+          // 'menu-link' processing, so do not re-process it here.
+          unset($menu_tokens[$token]);
+        }
+      }
+      if ($menu_tokens) {
+        if ($link = menu_position_token_menu_link_load($node)) {
+          $data = array('menu-link' => $link);
+          $replacements += token_generate('menu-link', $menu_tokens, $data, $options);
+        }
+      }
+    }
+  }
+}

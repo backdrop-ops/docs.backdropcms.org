@@ -1,0 +1,221 @@
+<?php
+/**
+ * @file
+ * Provides install, update and un-install functions for menu_position.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function menu_position_schema() {
+  $schema['menu_position_rules'] = array(
+    'description' => 'Stores breadcrumb rules for nodes.',
+    'fields' => array(
+      'rid' => array(
+        'description' => 'The primary identifier for a rule.',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'admin_title' => array(
+        'description' => 'The administrative title of this rule.',
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => NULL,
+      ),
+      'enabled' => array(
+        'description' => 'Whether the rule is enabled or not.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'conditions' => array(
+        'description' => 'The serialized conditions for this rule.',
+        'type' => 'text',
+        'serialize' => TRUE,
+      ),
+      'menu_name' => array(
+        'description' => 'The menu of the menu link for this rule.',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'plid' => array(
+        'description' => 'The parent menu link id for this rule.',
+        'type' => 'int',
+        'default' => NULL,
+      ),
+      'mlid' => array(
+        'description' => 'The menu link id for this rule.',
+        'type' => 'int',
+        'default' => NULL,
+      ),
+      'weight' => array(
+        'description' => 'The weight of this rule.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'machine_name' => array(
+        'description' => 'The machine name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => NULL,
+      ),
+    ),
+    'indexes' => array(
+      'rule_enabled' => array('enabled', 'weight', 'rid'),
+      'rule_weight'  => array('weight', 'rid'),
+    ),
+    'primary key' => array('rid'),
+    'unique keys' => array(
+      'machine_name' => array('machine_name'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_enable().
+ *
+ * When the module is disabled, the menu links it owns are deleted. When
+ * re-enabling this module, we need to ensure that any menu links are re-created
+ * and to re-configure any old rules existing in the database.
+ */
+function menu_position_enable() {
+  $rules = db_query('SELECT rid, plid, admin_title FROM {menu_position_rules} WHERE enabled = :enabled', array(':enabled' => 1));
+  if ($rules->rowCount()) {
+    backdrop_set_message(t('Existing menu position rules were discovered. They will be disabled until you visit the <a href="!url">menu position rules admin page</a>.', array('!url' => url('admin/structure/menu-position'))), 'error');
+  }
+  foreach ($rules as $rule) {
+    // If we were to attempt menu_position_add_menu_link() here it would fail
+    // because the module's router item isn't in the system yet. Instead we flag
+    // the rule with a zero-value mlid and fix it in
+    // menu_position_rules_form_callback().
+    db_update('menu_position_rules')
+      ->fields(array('mlid' => 0))
+      ->condition('rid', $rule->rid)
+      ->execute();
+  }
+}
+
+/**
+ * Migrate variables to config.
+ */
+function menu_position_update_1000() {
+  $config = config('menu_position.settings');
+  $config->set('active_link_display', update_variable_get('menu_position_active_link_display', 'child'));
+  update_variable_del('menu_position_active_link_display');
+  $config->save();
+}
+
+/**
+ * Adding the machine_name field if needed.
+ */
+function menu_position_update_1100() {
+  // Add the 'machine_name' column if needed.
+  // See update 7103 in Drupal 7.
+  if (!db_field_exists('menu_position_rules', 'machine_name')) {
+    db_add_field(
+      'menu_position_rules',
+      'machine_name',
+      array(
+        'description' => 'The machine name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'default' => NULL,
+      )
+    );
+    db_add_unique_key(
+      'menu_position_rules',
+      'machine_name',
+      array('machine_name')
+    );
+  }
+  $result = db_query('SELECT admin_title, rid FROM {menu_position_rules}')->fetchAll();
+
+  // Fill in a machine name if needed.
+  foreach ($result as $rule) {
+    if (empty($rule->machine_name)) {
+      $rule->machine_name = substr(preg_replace('/[^a-z0-9_]+/', '_', backdrop_strtolower($rule->admin_title)), 0, 255);
+      $rule->machine_name .= $rule->rid;
+      db_update('menu_position_rules')
+        ->fields(array('machine_name' => $rule->machine_name))
+        ->condition('rid', $rule->rid)
+        ->execute();
+    }
+  }
+}
+
+/**
+ * Verify that the values in the menu_position_rules table are consistent.
+ */
+function menu_position_update_1101() {
+  $changed = _menu_position_verify_mlids();
+  if ($changed) {
+    backdrop_set_message(t('Menu Position rules have been updated to match the menu links in the system. You may wish to double check them.'), 'status');
+  }
+}
+
+/**
+ * Helper function to check consistency, particularly after an upgrade from
+ * Drupal 7. At times the Menu Position items in the `menu_links` table seem to
+ * disappear during the upgrade and the `mlid` values in `menu_position_rules`
+ * no longer match.
+ *
+ * @return bool
+ *   TRUE if any changes were made, FALSE otherwise.
+ */
+function _menu_position_verify_mlids() {
+  $menu_links = db_query('SELECT mlid, link_path FROM {menu_links} WHERE module = :module', array(':module' => 'menu_position'))->fetchAllKeyed();
+  $rules = db_query('SELECT * FROM {menu_position_rules} WHERE mlid > 0')->fetchAll();
+  $changes = FALSE;
+  foreach ($rules as $rule) {
+    if (!isset($menu_links[$rule->mlid])) {
+      // We've found a menu ID from this module that has no entry in the
+      // `menu_links` table. We'll try to fix it.
+      $new_mlid = FALSE;
+      if (in_array('menu-position/' . $rule->rid, $menu_links)) {
+        // The menu link is in the table, but the mlid is wrong.
+        $new_mlid = array_search('menu-position/' . $rule->rid, $menu_links);
+      }
+      else {
+        // The menu link is entirely missing, so we'll attempt to recreate it.
+        $menu_link = array(
+          'link_path' => 'menu-position/' . $rule->rid,
+          'link_title' => $rule->admin_title . ' (' . t('menu position rule') . ')',
+          'menu_name' => $rule->menu_name,
+          'router_path' => 'menu-position/%',
+          'module' => 'menu_position',
+          'plid' => $rule->plid,
+          'hidden' => 1,
+          'external' => 0,
+          'customized' => 1,
+        );
+        $new_mlid = menu_link_save($menu_link);
+      }
+      if (!empty($new_mlid)) {
+        db_update('menu_position_rules')
+          ->fields(array('mlid' => $new_mlid))
+          ->condition('rid', $rule->rid)
+          ->execute();
+        $changes = TRUE;
+      }
+    }
+  }
+  if ($changes) {
+    menu_cache_clear_all();
+  }
+  return $changes;
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function menu_position_update_last_removed() {
+  return 7102;
+}
