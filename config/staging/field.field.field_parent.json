@@ -1,0 +1,33 @@
+{
+    "_config_name": "field.field.field_parent",
+    "field_name": "field_parent",
+    "type": "node_reference",
+    "translatable": false,
+    "module": "node_reference",
+    "active": 1,
+    "locked": 0,
+    "cardinality": "1",
+    "deleted": 0,
+    "entity_types": [],
+    "settings": {
+        "referenceable_types": {
+            "contrib_documentation": "contrib_documentation",
+            "api": 0,
+            "book": 0,
+            "changenotice": 0,
+            "fapi_element": 0,
+            "fapi_property": 0
+        },
+        "view": {
+            "view_name": "",
+            "display_name": "",
+            "args": []
+        }
+    },
+    "storage": {
+        "type": "field_sql_storage",
+        "settings": [],
+        "module": "field_sql_storage",
+        "active": 1
+    }
+}

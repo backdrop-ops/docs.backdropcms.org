@@ -27,9 +27,9 @@
         "default": {
             "label": "hidden",
             "type": "text_default",
+            "weight": "1",
             "settings": [],
-            "module": "text",
-            "weight": 1
+            "module": "text"
         }
     }
 }

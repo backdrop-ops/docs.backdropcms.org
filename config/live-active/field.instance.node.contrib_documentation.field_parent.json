@@ -1,0 +1,35 @@
+{
+    "_config_name": "field.instance.node.contrib_documentation.field_parent",
+    "field_name": "field_parent",
+    "entity_type": "node",
+    "bundle": "contrib_documentation",
+    "label": "Parent Page",
+    "widget": {
+        "weight": "4",
+        "type": "node_reference_autocomplete",
+        "module": "node_reference",
+        "active": 1,
+        "settings": {
+            "autocomplete_match": "contains",
+            "limit": "15",
+            "size": "90",
+            "autocomplete_path": "node_reference/autocomplete"
+        }
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "hidden",
+            "weight": "3",
+            "settings": []
+        }
+    }
+}
