@@ -50,5 +50,5 @@
     "node_changenotice_pattern": "change-records/[node:title]",
     "node_fapi_property_pattern": "form_api/[node:title]",
     "node_fapi_element_pattern": "form_api/[node:title]",
-    "node_contrib_documentation_pattern": "documentation/add-on-documentation/[node:title]"
+    "node_contrib_documentation_pattern": "documentation/add-ons/[node:field_parent]/[node:title]"
 }

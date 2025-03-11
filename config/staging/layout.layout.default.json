@@ -372,8 +372,8 @@
                 "module": "system",
                 "delta": "main-menu",
                 "settings": {
-                    "title_display": "none",
-                    "title": "",
+                    "title_display": "custom",
+                    "title": "Directory",
                     "style": "default",
                     "block_settings": {
                         "menu_name": "main-menu",
@@ -381,9 +381,15 @@
                         "level": "1",
                         "depth": "0",
                         "expand_all": 0,
-                        "toggle": 1
+                        "clickdown": 0,
+                        "toggle": 1,
+                        "toggle_text": "Menu",
+                        "collapse": "default",
+                        "accordion": 0
                     },
-                    "contexts": []
+                    "contexts": [],
+                    "admin_label": "",
+                    "admin_description": ""
                 },
                 "uuid": "8c98048d-abc2-48dc-b700-af6ce8c2ebeb",
                 "style": {
