@@ -4,7 +4,7 @@
  */
 ?>
 <div class="<?php print implode(' ', $classes); ?>">
-  <?php if ($delta == 'main-menu'): ?>
+  <?php if (in_array('block-system-main-menu', $classes)): ?>
     <?php print render($title_prefix); ?>
     <?php if ($title): ?>
       <h2 class="block-title"><?php print $title; ?></h2>
