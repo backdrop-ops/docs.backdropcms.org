@@ -17,6 +17,9 @@ article {
   padding: 15px 20px;
   margin-bottom: 15px;
 }
+.l-sidebar .block h2.block-title {
+  margin-top: 0;
+}
 .l-sidebar .block ul {
   padding-left: 1.5em;
 }
