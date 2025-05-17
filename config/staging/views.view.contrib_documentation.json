@@ -91,7 +91,8 @@
                         "field": "type",
                         "value": {
                             "contrib_documentation": "contrib_documentation"
-                        }
+                        },
+                        "group": 1
                     },
                     "field_parent_nid": {
                         "id": "field_parent_nid",
@@ -102,7 +103,7 @@
                         "ui_name": "",
                         "operator": "empty",
                         "value": [],
-                        "group": "1",
+                        "group": 1,
                         "exposed": false,
                         "expose": {
                             "operator_id": false,
@@ -132,6 +133,92 @@
                             "default_group_multiple": [],
                             "group_items": []
                         }
+                    },
+                    "title": {
+                        "id": "title",
+                        "table": "node",
+                        "field": "title",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "operator": "contains",
+                        "value": "",
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "title_op",
+                            "label": "Search",
+                            "description": "",
+                            "use_operator": 0,
+                            "operator": "title_op",
+                            "identifier": "title",
+                            "required": 0,
+                            "remember": 0,
+                            "multiple": false,
+                            "remember_roles": {
+                                "authenticated": "authenticated",
+                                "anonymous": 0,
+                                "4": 0,
+                                "3": 0
+                            }
+                        },
+                        "is_grouped": false,
+                        "group_info": {
+                            "label": "",
+                            "description": "",
+                            "identifier": "",
+                            "optional": true,
+                            "widget": "select",
+                            "multiple": false,
+                            "remember": 0,
+                            "default_group": "All",
+                            "default_group_multiple": [],
+                            "group_items": []
+                        }
+                    },
+                    "field_add_on_type_value": {
+                        "id": "field_add_on_type_value",
+                        "table": "field_data_field_add_on_type",
+                        "field": "field_add_on_type_value",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "operator": "or",
+                        "value": [],
+                        "group": 1,
+                        "exposed": true,
+                        "expose": {
+                            "operator_id": "field_add_on_type_value_op",
+                            "label": "Type of Add-on",
+                            "description": "",
+                            "use_operator": 0,
+                            "operator": "field_add_on_type_value_op",
+                            "identifier": "field_add_on_type_value",
+                            "required": 0,
+                            "remember": 0,
+                            "multiple": 0,
+                            "remember_roles": {
+                                "authenticated": "authenticated",
+                                "anonymous": 0,
+                                "4": 0,
+                                "3": 0
+                            },
+                            "reduce": 0
+                        },
+                        "is_grouped": false,
+                        "group_info": {
+                            "label": "",
+                            "description": "",
+                            "identifier": "",
+                            "optional": true,
+                            "widget": "select",
+                            "multiple": false,
+                            "remember": 0,
+                            "default_group": "All",
+                            "default_group_multiple": [],
+                            "group_items": []
+                        },
+                        "reduce_duplicates": 0
                     }
                 },
                 "sorts": {
@@ -149,7 +236,13 @@
                         }
                     }
                 },
-                "title": "Add-On Documentation"
+                "title": "Add-On Documentation",
+                "filter_groups": {
+                    "operator": "AND",
+                    "groups": {
+                        "1": "AND"
+                    }
+                }
             }
         },
         "block": {

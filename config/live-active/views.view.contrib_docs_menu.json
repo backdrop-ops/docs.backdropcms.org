@@ -166,7 +166,7 @@
                         "order": "DESC"
                     }
                 },
-                "title": "Add-Ons",
+                "title": "Add-ons",
                 "relationships": {
                     "reverse_field_parent_node": {
                         "id": "reverse_field_parent_node",
