@@ -10,7 +10,7 @@ backdrop = 1.x
 configure = admin/config/development/configuration
 
 
-; Added by Backdrop CMS packaging script on 2025-02-18
+; Added by Backdrop CMS packaging script on 2025-05-15
 project = backdrop
-version = 1.30.1
-timestamp = 1739922397
+version = 1.31.0
+timestamp = 1747353459

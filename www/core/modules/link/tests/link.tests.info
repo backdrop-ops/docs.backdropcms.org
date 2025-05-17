@@ -34,7 +34,13 @@ description = Tests link fields being used on custom forms.
 group = Link
 file = link.custom.test
 
-; Added by Backdrop CMS packaging script on 2025-02-18
+[LinkSanitizeTest]
+name = Link sanitize tests
+description = Tests the _link_sanitize() function by itself, without invoking the field life cycle.
+group = Link
+file = link.sanitize.test
+
+; Added by Backdrop CMS packaging script on 2025-05-15
 project = backdrop
-version = 1.30.1
-timestamp = 1739922397
+version = 1.31.0
+timestamp = 1747353459

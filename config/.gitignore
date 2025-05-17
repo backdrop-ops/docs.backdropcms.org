@@ -1,8 +1,11 @@
+# Ignore readmes
+*/README.md
+
 # Ignore the dev-active directory
 dev-active/*.json
 dev-active/.htaccess
 
-# Ignore devel settings
-staging/devel.settings.json
-
+# Ignore development settings
+*/devel.settings.json
+*/stage_file_proxy.settings.json
 

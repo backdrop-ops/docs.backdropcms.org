@@ -1,5 +1,6 @@
 type = layout
 name = Taylor Flipped
+description = Includes a header, top, content, two sidebars on the left, bottom, and footer.
 version = BACKDROP_VERSION
 backdrop = 1.x
 
@@ -27,7 +28,7 @@ preview = taylor-flipped.png
 ; Include the Bootstrap4 Grid System
 libraries[] = bootstrap4-gs
 
-; Added by Backdrop CMS packaging script on 2025-02-18
+; Added by Backdrop CMS packaging script on 2025-05-15
 project = backdrop
-version = 1.30.1
-timestamp = 1739922397
+version = 1.31.0
+timestamp = 1747353459
