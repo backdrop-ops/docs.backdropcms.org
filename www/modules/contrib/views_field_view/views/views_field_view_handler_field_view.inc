@@ -117,11 +117,11 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#fieldset' => 'views_field_view',
       );
 
-      // Provide a way to directly access the views edit link of the child view.
+      // Provide a way to directly access the views configure link of the child view.
       // Don't show this link if the current view is the selected child view.
       if ($this->options['view'] && $this->options['display'] && ($this->view->name != $this->options['view'])) {
         // use t() here, and set HTML on #link options.
-        $link_text = t('Edit "%view (@display)" view', array('%view' => $view_options[$this->options['view']], '@display' => $this->options['display']));
+        $link_text = t('Configure "%view (@display)" view', array('%view' => $view_options[$this->options['view']], '@display' => $this->options['display']));
         $form['view_edit'] = array(
           '#type' => 'container',
           '#fieldset' => 'views_field_view',
@@ -129,7 +129,7 @@ class views_field_view_handler_field_view extends views_handler_field {
         $form['view_edit']['view_edit_link'] = array(
           '#theme' => 'link',
           '#text' => $link_text,
-          '#path' => 'admin/structure/views/view/' . $this->options['view'] . '/edit/' . $this->options['display'],
+          '#path' => 'admin/structure/views/view/' . $this->options['view'] . '/configure/' . $this->options['display'],
           '#options' => array(
             'attributes' => array(
               'target' => '_blank',
@@ -139,14 +139,14 @@ class views_field_view_handler_field_view extends views_handler_field {
           ),
           '#attached' => array(
             'css' => array(
-              drupal_get_path('module', 'views_field_view') . '/views_field_view.css',
+              backdrop_get_path('module', 'views_field_view') . '/views_field_view.css',
             ),
           ),
           '#prefix' => '<span>[</span>',
           '#suffix' => '<span>]</span>',
         );
         $form['view_edit']['description'] = array(
-          '#markup' => t('Use this link to open the current child view\'s edit page in a new window.'),
+          '#markup' => t('Use this link to open the current child view\'s configuration page in a new window.'),
           '#prefix' => '<div class="description">',
           '#suffix' => '</div>',
         );

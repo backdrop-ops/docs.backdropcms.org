@@ -5,7 +5,7 @@ package = Views
 backdrop = 1.x
 dependencies[] = views
 
-; Added by Backdrop CMS packaging script on 2020-07-02
+; Added by Backdrop CMS packaging script on 2025-03-06
 project = views_field_view
-version = 1.x-1.2.0
-timestamp = 1593708753
+version = 1.x-1.2.1
+timestamp = 1741293363
