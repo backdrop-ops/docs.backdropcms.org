@@ -204,6 +204,9 @@ function paragraphs_update_1001() {
     $bundles[$bundle_object->bundle] = $bundle_object;
   }
   foreach ($bundles as $bundle) {
+    if (!property_exists($bundle, 'allow_unpublish')) {
+      $bundle->allow_unpublish = 0;
+    }
     paragraphs_bundle_save($bundle);
   }
   db_drop_table('paragraphs_bundle');

@@ -516,7 +516,13 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
     );
     $element['paragraph_bundle_header']['inner_actions']['more'] = array(
       '#type' => 'details',
-      '#summary' => '...',
+      '#summary' => icon('dots-three-outline-fill', array(
+        'alt' => t('More actions'),
+        'attributes' => array(
+          'width' => 22,
+          'height' => 22,
+        ),
+      )),
       'child' => array(),
       '#attributes' => array(
         'class' => array('paragraphs-actions-more'),

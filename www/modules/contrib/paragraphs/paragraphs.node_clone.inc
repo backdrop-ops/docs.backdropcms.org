@@ -74,6 +74,7 @@ function paragraphs_clone_items($entity_type, &$entity, $field_name, $langcode =
     /* @var $new_item ParagraphsItemEntity */
     $new_item = entity_create('paragraphs_item', array('bundle' => $bundle, 'field_name' => $field_name));
     $new_item->setHostEntity($entity_type, $entity, $langcode);
+    $new_item->status = $old_item->status;
 
     // Check if any of the fields in the newly cloned fc item is a paragraph.
     foreach (field_info_instances('paragraphs_item', $bundle) as $new_field_name => $new_field_instance) {

@@ -10,7 +10,7 @@ dependencies[] = entity
 dependencies[] = entity_plus (>=1.0.5)
 dependencies[] = system (>=1.20.0)
 
-; Added by Backdrop CMS packaging script on 2024-11-11
+; Added by Backdrop CMS packaging script on 2025-03-29
 project = paragraphs
-version = 1.x-1.3.2
-timestamp = 1731351159
+version = 1.x-1.3.3
+timestamp = 1743251850
