@@ -1,24 +1,29 @@
-# OS and IDE files.
-/.idea
-.DS_Store
+# Ignore this file so it can be changed as needed.
+.gitignore
 
-# Backups.
+# Ignore the private files directory.
+private-files
+
+# Ignore all backups.
 *.sql
 *.sql.gz
 *.tgz
 *.tar
 *.tar.gz
+*.zip
 
 # Ignore modules for development.
 www/modules/contrib/devel
 
-# Ignore local development settings
-www/settings.local.dev.php
-
 # Ignore env vars.
 i.env
+.env
 
 # Ignore .ddev files
 .ddev
 www/settings.ddev.php
 www/drushrc.php
+
+# OS and IDE files.
+.idea
+.DS_Store
