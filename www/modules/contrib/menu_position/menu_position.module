@@ -649,7 +649,7 @@ function menu_position_token_menu_link_load($node) {
     );
     if ($rules = menu_position_get_activated_rules($context)) {
       $rule = array_shift($rules);
-      $link = token_menu_link_load($rule->mlid);
+      $link = menu_link_load($rule->mlid);
     }
     else {
       $link = NULL;
