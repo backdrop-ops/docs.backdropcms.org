@@ -26,8 +26,14 @@
     "display": {
         "default": {
             "label": "hidden",
+            "type": "hidden",
+            "weight": "2",
+            "settings": []
+        },
+        "teaser": {
+            "label": "inline",
             "type": "text_default",
-            "weight": "1",
+            "weight": "0",
             "settings": [],
             "module": "text"
         }

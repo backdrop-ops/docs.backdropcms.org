@@ -11,13 +11,14 @@
             "rows": 20,
             "summary_rows": 5
         },
-        "weight": "5",
+        "weight": "4",
         "module": "text"
     },
     "settings": {
         "display_summary": true,
         "text_processing": 1,
-        "user_register_form": false
+        "user_register_form": false,
+        "allowed_formats": []
     },
     "display": {
         "default": {
