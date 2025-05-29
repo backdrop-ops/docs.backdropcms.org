@@ -170,6 +170,6 @@ article {
 /*******************************************************************************
  * Contrib docs nodes
  ******************************************************************************/
-article.node .contrib-subtitle {
+article.node .contrib-title {
   font-weight: normal;
 }
