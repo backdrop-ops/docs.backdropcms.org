@@ -47,6 +47,29 @@ function api_borg_preprocess_layout(&$variables) {
 }
 
 /**
+ * Prepares variables for node templates.
+ * @see node.tpl.php
+ */
+function api_borg_preprocess_node(&$variables) {
+  if ($variables['node']->type == 'contrib_documentation') {
+    if ($variables['view_mode'] == 'full') {
+      if (isset($variables['content']['field_project'])) {
+        $project_name = backdrop_render($variables['content']['field_project']);
+        $contrib_title = strip_tags($project_name);
+        if (!empty($variables['content']['field_add_on_type'])) {
+          $contrib_type = backdrop_render($variables['content']['field_add_on_type']);
+          $contrib_title .= ' ';
+          $contrib_title .= strip_tags($contrib_type);
+        }
+        $contrib_title .= ' ' . t('Documentation');
+        $variables['contrib_subtitle'] = $variables['title'];
+        $variables['contrib_title'] = $contrib_title;
+      }
+    }
+  }
+}
+
+/**
  * Prepares variables for search result templates.
  * @see search-results.tpl.php
  */
