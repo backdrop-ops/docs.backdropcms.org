@@ -10,7 +10,7 @@
             "rows": 10,
             "summary_rows": 5
         },
-        "weight": "3",
+        "weight": "4",
         "module": "text"
     },
     "settings": {
@@ -23,7 +23,7 @@
         "default": {
             "label": "hidden",
             "type": "text_default",
-            "weight": "0",
+            "weight": "2",
             "settings": [],
             "module": "text"
         },

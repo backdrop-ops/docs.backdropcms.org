@@ -166,7 +166,7 @@
                         "order": "DESC"
                     }
                 },
-                "title": "Add-on Documentation",
+                "title": "Add-on Docs",
                 "relationships": {
                     "reverse_field_parent_node": {
                         "id": "reverse_field_parent_node",

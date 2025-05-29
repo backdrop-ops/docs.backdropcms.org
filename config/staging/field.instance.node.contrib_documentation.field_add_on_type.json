@@ -26,9 +26,10 @@
     "display": {
         "default": {
             "label": "hidden",
-            "type": "hidden",
-            "weight": "3",
-            "settings": []
+            "type": "list_default",
+            "weight": "1",
+            "settings": [],
+            "module": "list"
         },
         "teaser": {
             "label": "inline",
