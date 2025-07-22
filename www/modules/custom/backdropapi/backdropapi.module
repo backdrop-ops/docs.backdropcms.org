@@ -77,6 +77,7 @@ function backdropapi_form_api_table() {
           // Get all properties for this element.
           $element_properties = array();
           foreach ($element->field_field_fapi_properties as $element_property) {
+            // @todo needs reworking.
             $element_properties[] = $element_property['rendered']['entity']['paragraphs_item'][$element_property['raw']['value']]['field_fapi_property'][0]['#markup'];
           }
 
@@ -296,7 +297,7 @@ function backdropapi_fapi_check_view() {
     $items = paragraphs_item_load_multiple($ids);
     $element_node_properties = array();
     foreach ($items as $item) {
-      $property_nid = $item->field_fapi_property['und'][0]['nid'];
+      $property_nid = $item->field_fapi_property['und'][0]['target_id'];
       $property_name = $property_nodes_by_nid[$property_nid]->title;
       $element_node_properties[$property_name] = $item;
     }
