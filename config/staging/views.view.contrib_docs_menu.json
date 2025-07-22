@@ -245,7 +245,8 @@
                     "wrapper_class": "menu-tree",
                     "class": ""
                 },
-                "empty": []
+                "empty": [],
+                "footer": []
             }
         },
         "block_1": {
@@ -271,7 +272,8 @@
                     "style_plugin": true,
                     "style_options": true,
                     "row_plugin": true,
-                    "row_options": true
+                    "row_options": true,
+                    "footer": false
                 },
                 "fields": {
                     "title": {
@@ -442,6 +444,21 @@
                         "label": "Parent",
                         "required": 0,
                         "delta": "-1"
+                    }
+                },
+                "footer": {
+                    "area": {
+                        "id": "area",
+                        "table": "views",
+                        "field": "area",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "label": "",
+                        "empty": 0,
+                        "content": "<div class=\"more-link\">\r\n    <a href=\"/documentation/add-on-documentation\">See all -&gt;</a>\r\n</div>",
+                        "format": "full_html",
+                        "tokenize": 0
                     }
                 }
             }
