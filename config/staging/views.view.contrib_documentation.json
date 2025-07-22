@@ -184,7 +184,9 @@
                         "group_type": "group",
                         "ui_name": "",
                         "operator": "or",
-                        "value": [],
+                        "value": {
+                            "module": "module"
+                        },
                         "group": 1,
                         "exposed": true,
                         "expose": {
@@ -241,6 +243,22 @@
                     "operator": "AND",
                     "groups": {
                         "1": "AND"
+                    }
+                },
+                "use_ajax": true,
+                "empty": {
+                    "area": {
+                        "id": "area",
+                        "table": "views",
+                        "field": "area",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "label": "",
+                        "empty": true,
+                        "content": "<p>\r\n    No contributed project documentation located for this inquiry.&nbsp;\r\n</p>",
+                        "format": "documentation",
+                        "tokenize": 0
                     }
                 }
             }
