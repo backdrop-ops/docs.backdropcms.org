@@ -134,7 +134,7 @@
                         "empty": "",
                         "hide_empty": 0,
                         "empty_zero": 0,
-                        "hide_alter_empty": 1,
+                        "hide_alter_empty": 0,
                         "link_to_node": 1
                     }
                 },
@@ -166,7 +166,7 @@
                         "order": "DESC"
                     }
                 },
-                "title": "Add-on Documentation",
+                "title": "Add-on Docs",
                 "relationships": {
                     "reverse_field_parent_node": {
                         "id": "reverse_field_parent_node",
@@ -176,7 +176,7 @@
                         "group_type": "group",
                         "ui_name": "",
                         "label": "Children",
-                        "required": 0
+                        "required": 1
                     }
                 },
                 "arguments": {
@@ -244,7 +244,8 @@
                     "type": "ul",
                     "wrapper_class": "menu-tree",
                     "class": ""
-                }
+                },
+                "empty": []
             }
         },
         "block_1": {
@@ -460,7 +461,157 @@
                 },
                 "display_description": "Only works for parents",
                 "block_description": "Contrib Docs: Parent Menu",
-                "enabled": true
+                "enabled": true,
+                "empty": {
+                    "view_field": {
+                        "id": "view_field",
+                        "table": "views",
+                        "field": "view_field",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "label": "",
+                        "exclude": 0,
+                        "alter": {
+                            "alter_text": false,
+                            "text": "",
+                            "make_link": false,
+                            "path": "",
+                            "absolute": false,
+                            "external": false,
+                            "replace_spaces": false,
+                            "path_case": "none",
+                            "trim_whitespace": false,
+                            "alt": "",
+                            "rel": "",
+                            "link_class": "",
+                            "prefix": "",
+                            "suffix": "",
+                            "target": "",
+                            "nl2br": false,
+                            "max_length": "",
+                            "word_boundary": true,
+                            "ellipsis": true,
+                            "more_link": false,
+                            "more_link_text": "",
+                            "more_link_path": "",
+                            "strip_tags": false,
+                            "trim": false,
+                            "preserve_tags": "",
+                            "html": false
+                        },
+                        "element_type": "",
+                        "element_class": "",
+                        "element_label_type": "",
+                        "element_label_class": "",
+                        "element_label_colon": false,
+                        "element_wrapper_type": "",
+                        "element_wrapper_class": "",
+                        "element_default_classes": 1,
+                        "empty": "",
+                        "hide_empty": 0,
+                        "empty_zero": 0,
+                        "hide_alter_empty": 1,
+                        "view": "contrib_docs_menu",
+                        "display": "block_2",
+                        "arguments": "",
+                        "query_aggregation": false
+                    }
+                },
+                "defaults": {
+                    "empty": false
+                }
+            }
+        },
+        "block_2": {
+            "display_title": "Parent link only",
+            "display_plugin": "block",
+            "display_options": {
+                "query": {
+                    "type": "views_query",
+                    "options": []
+                },
+                "field": {
+                    "title": {
+                        "link_to_node": 1
+                    }
+                },
+                "display_description": "Only works for parents",
+                "block_description": "Contrib Docs: Parent Menu",
+                "enabled": true,
+                "relationships": [],
+                "defaults": {
+                    "relationships": false,
+                    "header": false,
+                    "fields": false,
+                    "style_plugin": false,
+                    "style_options": false,
+                    "row_plugin": false,
+                    "row_options": false
+                },
+                "header": [],
+                "fields": {
+                    "title": {
+                        "id": "title",
+                        "table": "node",
+                        "field": "title",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "(Parent) Content: Title -- self ",
+                        "label": "",
+                        "exclude": 0,
+                        "alter": {
+                            "alter_text": 0,
+                            "text": "",
+                            "make_link": 0,
+                            "path": "",
+                            "absolute": 0,
+                            "external": 0,
+                            "replace_spaces": 0,
+                            "path_case": "none",
+                            "trim_whitespace": 0,
+                            "alt": "",
+                            "rel": "",
+                            "link_class": "",
+                            "prefix": "",
+                            "suffix": "",
+                            "target": "",
+                            "nl2br": 0,
+                            "max_length": "",
+                            "word_boundary": 1,
+                            "ellipsis": 1,
+                            "more_link": 0,
+                            "more_link_text": "",
+                            "more_link_path": "",
+                            "strip_tags": 0,
+                            "trim": 0,
+                            "preserve_tags": "",
+                            "html": 0
+                        },
+                        "element_type": "",
+                        "element_class": "",
+                        "element_label_type": "",
+                        "element_label_class": "",
+                        "element_label_colon": false,
+                        "element_wrapper_type": "",
+                        "element_wrapper_class": "",
+                        "element_default_classes": 1,
+                        "empty": "",
+                        "hide_empty": 0,
+                        "empty_zero": 0,
+                        "hide_alter_empty": 1,
+                        "link_to_node": 1
+                    }
+                },
+                "style_plugin": "default",
+                "style_options": {
+                    "grouping": [],
+                    "row_class": "",
+                    "default_row_class": 0,
+                    "row_class_special": 0
+                },
+                "row_plugin": "fields",
+                "row_options": []
             }
         }
     }

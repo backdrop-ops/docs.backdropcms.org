@@ -3,7 +3,7 @@
     "field_name": "field_related_projects",
     "entity_type": "node",
     "bundle": "contrib_documentation",
-    "label": "Related Projects",
+    "label": "Other related projects",
     "widget": {
         "weight": "5",
         "type": "link_field",
@@ -43,7 +43,7 @@
         "default": {
             "label": "above",
             "type": "link_default",
-            "weight": "1",
+            "weight": "3",
             "settings": [],
             "module": "link"
         }
