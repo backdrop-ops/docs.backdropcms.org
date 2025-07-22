@@ -90,7 +90,7 @@
                         "id": "title_1",
                         "table": "node",
                         "field": "title",
-                        "relationship": "reverse_field_parent_node",
+                        "relationship": "reverse_field_parent_docs_node",
                         "group_type": "group",
                         "ui_name": "",
                         "label": "",
@@ -168,10 +168,10 @@
                 },
                 "title": "Add-on Docs",
                 "relationships": {
-                    "reverse_field_parent_node": {
-                        "id": "reverse_field_parent_node",
+                    "reverse_field_parent_docs_node": {
+                        "id": "reverse_field_parent_docs_node",
                         "table": "node",
-                        "field": "reverse_field_parent_node",
+                        "field": "reverse_field_parent_docs_node",
                         "relationship": "none",
                         "group_type": "group",
                         "ui_name": "",
@@ -331,7 +331,7 @@
                         "id": "nid",
                         "table": "node",
                         "field": "nid",
-                        "relationship": "field_parent_nid",
+                        "relationship": "field_parent_docs_nid",
                         "group_type": "group",
                         "ui_name": "",
                         "label": "",
@@ -434,10 +434,10 @@
                     }
                 },
                 "relationships": {
-                    "field_parent_nid": {
-                        "id": "field_parent_nid",
-                        "table": "field_data_field_parent",
-                        "field": "field_parent_nid",
+                    "field_parent_docs_nid": {
+                        "id": "field_parent_docs_nid",
+                        "table": "field_data_field_parent_docs",
+                        "field": "field_parent_docs_nid",
                         "relationship": "none",
                         "group_type": "group",
                         "ui_name": "",
