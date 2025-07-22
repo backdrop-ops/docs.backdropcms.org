@@ -5,7 +5,7 @@
     "bundle": "contrib_documentation",
     "label": "Other related projects",
     "widget": {
-        "weight": "5",
+        "weight": "6",
         "type": "link_field",
         "module": "link",
         "active": 0,
