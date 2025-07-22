@@ -94,15 +94,19 @@
                         },
                         "group": 1
                     },
-                    "field_parent_nid": {
-                        "id": "field_parent_nid",
-                        "table": "field_data_field_parent",
-                        "field": "field_parent_nid",
+                    "field_parent_docs_target_id": {
+                        "id": "field_parent_docs_target_id",
+                        "table": "field_data_field_parent_docs",
+                        "field": "field_parent_docs_target_id",
                         "relationship": "none",
                         "group_type": "group",
                         "ui_name": "",
                         "operator": "empty",
-                        "value": [],
+                        "value": {
+                            "min": "",
+                            "max": "",
+                            "value": ""
+                        },
                         "group": 1,
                         "exposed": false,
                         "expose": {
@@ -117,8 +121,7 @@
                             "multiple": false,
                             "remember_roles": {
                                 "authenticated": "authenticated"
-                            },
-                            "reduce": false
+                            }
                         },
                         "is_grouped": false,
                         "group_info": {

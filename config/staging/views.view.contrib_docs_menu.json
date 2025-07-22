@@ -331,7 +331,7 @@
                         "id": "nid",
                         "table": "node",
                         "field": "nid",
-                        "relationship": "field_parent_docs_nid",
+                        "relationship": "field_parent_docs_target_id",
                         "group_type": "group",
                         "ui_name": "",
                         "label": "",
@@ -434,10 +434,10 @@
                     }
                 },
                 "relationships": {
-                    "field_parent_docs_nid": {
-                        "id": "field_parent_docs_nid",
+                    "field_parent_docs_target_id": {
+                        "id": "field_parent_docs_target_id",
                         "table": "field_data_field_parent_docs",
-                        "field": "field_parent_docs_nid",
+                        "field": "field_parent_docs_target_id",
                         "relationship": "none",
                         "group_type": "group",
                         "ui_name": "",
