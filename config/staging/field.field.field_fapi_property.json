@@ -1,26 +1,29 @@
 {
     "_config_name": "field.field.field_fapi_property",
     "field_name": "field_fapi_property",
-    "type": "node_reference",
+    "type": "entityreference",
     "translatable": false,
-    "module": "node_reference",
+    "module": "entityreference",
     "active": 1,
     "locked": 0,
     "cardinality": "1",
     "deleted": 0,
     "entity_types": [],
     "settings": {
-        "referenceable_types": {
-            "fapi_property": "fapi_property",
-            "api": 0,
-            "book": 0,
-            "changenotice": 0,
-            "fapi_element": 0
-        },
-        "view": {
-            "view_name": "",
-            "display_name": "",
-            "args": []
+        "target_type": "node",
+        "handler": "base",
+        "handler_settings": {
+            "target_bundles": {
+                "fapi_property": "fapi_property"
+            },
+            "sort": {
+                "type": "none"
+            },
+            "behaviors": {
+                "views": {
+                    "status": 0
+                }
+            }
         }
     },
     "storage": {

@@ -31,3 +31,21 @@ function backdropapi_install() {
     'api_search',
   ));
 }
+
+/**
+ * Switches Reference field to Entity Reference.
+ */
+function backdropapi_update_7001() {
+  $entity_ref_field_spec = array(
+    'description' => 'The id of the target entity.',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+  db_change_field('field_data_field_fapi_property',
+    'field_fapi_property_nid',
+    'field_fapi_property_target_id',
+    $entity_ref_field_spec);
+
+  return t('Updated the field_data_field_fapi_property table.');
+}
