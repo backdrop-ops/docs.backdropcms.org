@@ -47,6 +47,7 @@
         "footer": [
             "21c7f990-2385-4e0d-ab4b-75ecde2392c9",
             "e32a443a-ab19-4f0d-ac2c-443c628683b0",
+            "f080aadf-399d-4bf2-8d08-8dbc581996ac",
             "5f160aa4-ce02-4752-9800-be1bebfc8b14",
             "dbe223dd-f24e-40d9-b655-8571bdbd9255"
         ],
@@ -300,7 +301,7 @@
         "e32a443a-ab19-4f0d-ac2c-443c628683b0": {
             "plugin": "block:newsletter",
             "data": {
-                "status": 1,
+                "status": 0,
                 "module": "block",
                 "delta": "newsletter",
                 "settings": {
@@ -315,6 +316,32 @@
                     "contexts": []
                 },
                 "uuid": "e32a443a-ab19-4f0d-ac2c-443c628683b0",
+                "style": {
+                    "plugin": "default",
+                    "data": {
+                        "settings": {
+                            "classes": "col-sm-6"
+                        }
+                    }
+                }
+            }
+        },
+        "f080aadf-399d-4bf2-8d08-8dbc581996ac": {
+            "plugin": "borg_signup:newsletter",
+            "data": {
+                "status": 1,
+                "module": "borg_signup",
+                "delta": "newsletter",
+                "settings": {
+                    "title_display": "default",
+                    "title": "",
+                    "style": "default",
+                    "block_settings": [],
+                    "contexts": [],
+                    "admin_label": "",
+                    "admin_description": ""
+                },
+                "uuid": "f080aadf-399d-4bf2-8d08-8dbc581996ac",
                 "style": {
                     "plugin": "default",
                     "data": {
@@ -356,7 +383,7 @@
                 "module": "menu",
                 "delta": "menu-footer-menu",
                 "settings": {
-                    "title_display": "default",
+                    "title_display": "none",
                     "title": "",
                     "style": "default",
                     "block_settings": {
@@ -365,9 +392,15 @@
                         "level": "1",
                         "depth": "0",
                         "expand_all": 0,
-                        "toggle": 0
+                        "clickdown": 0,
+                        "toggle": 0,
+                        "toggle_text": "Menu",
+                        "collapse": "default",
+                        "accordion": 0
                     },
-                    "contexts": []
+                    "contexts": [],
+                    "admin_label": "",
+                    "admin_description": ""
                 },
                 "uuid": "dbe223dd-f24e-40d9-b655-8571bdbd9255",
                 "style": {
