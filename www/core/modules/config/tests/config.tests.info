@@ -16,13 +16,13 @@ description = Tests the UI for syncing, diffing, importing, and exporting config
 group = Configuration
 file = config.test
 
-[ConfigurationSyncTest]
-name = Configuration sync
-description = Tests that hook_config_create() is run during configuration sync.
+[ConfigurationInstallDefaultHooksTest]
+name = Configuration default config tests
+description = Tests that hook_config_create() is run during installation of default config.
 group = Configuration
 file = config.test
 
-; Added by Backdrop CMS packaging script on 2025-05-15
+; Added by Backdrop CMS packaging script on 2026-01-15
 project = backdrop
-version = 1.31.0
-timestamp = 1747353459
+version = 1.33.0
+timestamp = 1768537839

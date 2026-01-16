@@ -8,7 +8,7 @@ version = BACKDROP_VERSION
 backdrop = 1.x
 dependencies[] = field
 
-; Added by Backdrop CMS packaging script on 2025-05-15
+; Added by Backdrop CMS packaging script on 2026-01-15
 project = backdrop
-version = 1.31.0
-timestamp = 1747353459
+version = 1.33.0
+timestamp = 1768537839
