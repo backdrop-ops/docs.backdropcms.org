@@ -1,0 +1,277 @@
+From e93733009e2f77f8a7deee65973922148cc3308d Mon Sep 17 00:00:00 2001
+From: "Tim Erickson (@stpaultim)" <tim@stpaultim.com>
+Date: Fri, 17 Oct 2025 01:21:16 -0500
+Subject: [PATCH 1/3] Changes suggested by AI to help diff module work with
+ Draft Workflow module
+
+---
+ diff.module    | 47 ++++++++++++++++++-----------------------------
+ diff.pages.inc | 16 ++++++++--------
+ 2 files changed, 26 insertions(+), 37 deletions(-)
+
+diff --git a/diff.module b/diff.module
+index 537b8e1..0ca998b 100644
+--- a/diff.module
++++ b/diff.module
+@@ -61,36 +61,37 @@ function diff_menu() {
+    * a parent that can be accessed by its full path, it seems to work as
+    * desired. Breadcrumbs work decently, at least the node link is among the
+    * crumbs. For some reason any breadcrumbs "before/above" the node is only
+-   * seen at 'node/%node/revisions/%/view'.
++   * seen at 'node/%node/compare/%/%'.
+    */
+ 
+-  // Not used directly, but was created to get the other menu items to work.
+-  $items['node/%node/revisions/list'] = array(
+-    'title' => 'List revisions',
++  // Non-conflicting compare routes that do not override core revisions paths.
++  $items['node/%node/compare'] = array(
++    'title' => 'Compare',
+     'page callback' => 'diff_diffs_overview',
+-    'type' => MENU_DEFAULT_LOCAL_TASK,
++    'page arguments' => array(1),
++    'type' => MENU_LOCAL_TASK,
+     'access callback' => 'diff_node_revision_access',
+     'access arguments' => array(1),
++    'weight' => 3,
+     'file' => 'diff.pages.inc',
+   );
+-  $items['node/%node/revisions/view'] = array(
++  $items['node/%node/compare/%/%'] = array(
+     'title' => 'Compare revisions',
+     'page callback' => 'diff_diffs_show',
+-    'page arguments' => array(1, 4, 5, 6),
++    'page arguments' => array(1, 3, 4, 5),
+     'type' => MENU_LOCAL_TASK,
+     'access callback' => 'diff_node_revision_access',
+     'access arguments' => array(1),
+-    'tab_parent' => 'node/%/revisions/list',
++    'tab_parent' => 'node/%/compare',
+     'file' => 'diff.pages.inc',
+   );
+-
+-  $items['node/%node/revisions/view/latest'] = array(
++  $items['node/%node/compare/latest'] = array(
+     'title' => 'Show latest difference',
+     'page callback' => 'diff_latest',
+     'page arguments' => array(1),
+     'type' => MENU_LOCAL_TASK,
+     'access arguments' => array('access content'),
+-    'tab_parent' => 'node/%/revisions/view',
++    'tab_parent' => 'node/%/compare',
+     'file' => 'diff.pages.inc',
+   );
+ 
+@@ -158,29 +159,17 @@ function diff_menu() {
+  * Implements hook_menu_alter().
+  */
+ function diff_menu_alter(&$callbacks) {
+-  // Overwrite the default 'Revisions' page.
+-  $callbacks['node/%node/revisions']['page callback'] = 'diff_diffs_overview';
+-  $callbacks['node/%node/revisions']['module'] = 'diff';
+-  $callbacks['node/%node/revisions']['file'] = 'diff.pages.inc';
+-
+-  $callbacks['node/%node/revisions/%/view']['tab_parent'] = 'node/%/revisions/list';
+-  $callbacks['node/%node/revisions/%/revert']['tab_parent'] = 'node/%/revisions/%/view';
+-  $callbacks['node/%node/revisions/%/delete']['tab_parent'] = 'node/%/revisions/%/view';
+-
+-  $callbacks['node/%node/revisions']['access callback']
+-    = $callbacks['node/%node/revisions/%/view']['access callback']
+-    = $callbacks['node/%node/revisions/%/revert']['access callback']
+-    = $callbacks['node/%node/revisions/%/delete']['access callback'] = 'diff_node_revision_access';
++  // Do not override core revisions routes. Intentionally left minimal.
+ }
+ 
+ /**
+  * Implements hook_admin_paths_alter().
+  */
+ function diff_admin_paths_alter(&$paths) {
+-  // By default, treat all diff pages as administrative.
++  // Treat compare pages as administrative if configured.
+   if (config_get('diff.settings', 'diff_admin_path.node')) {
+-    $paths['node/*/revisions/view'] = TRUE;
+-    $paths['node/*/revisions/view/*/*'] = TRUE;
++    $paths['node/*/compare'] = TRUE;
++    $paths['node/*/compare/*/*'] = TRUE;
+   }
+ }
+ 
+@@ -548,7 +537,7 @@ function diff_inline_form($form, $form_state, $node, $revisions) {
+   $form['revision'] = array(
+     '#type' => 'select',
+     '#options' => array(0 => t('- No highlighting -')),
+-    '#default_value' => (arg(2) === 'revisions' && arg(3) === $node->vid) ? $node->vid : 0,
++    '#default_value' => ((arg(2) === 'revisions' && arg(3) === $node->vid) || (arg(2) === 'compare')) ? $node->vid : 0,
+     '#ajax' => array(
+       'callback' => 'diff_inline_ajax',
+       'wrapper' => "node-{$node->nid}",
+@@ -587,7 +576,7 @@ function diff_inline_form_submit(&$form, &$form_state) {
+   if (isset($form_state['values']['revision'], $form_state['values']['node'])) {
+     $node = $form_state['values']['node'];
+     $vid = $form_state['values']['revision'];
+-    $form_state['redirect'] = "node/{$node->nid}/revisions/{$vid}/view";
++    $form_state['redirect'] = "node/{$node->nid}/compare/{$vid}/" . $node->vid;
+   }
+ }
+ 
+diff --git a/diff.pages.inc b/diff.pages.inc
+index a003ed2..50a7a68 100644
+--- a/diff.pages.inc
++++ b/diff.pages.inc
+@@ -15,7 +15,7 @@ function diff_latest($node) {
+   }
+   $new = array_shift($revisions);
+   $old = array_shift($revisions);
+-  backdrop_goto("node/{$node->nid}/revisions/view/{$old->vid}/{$new->vid}");
++  backdrop_goto("node/{$node->nid}/compare/{$old->vid}/{$new->vid}");
+ }
+ 
+ /**
+@@ -85,7 +85,7 @@ function diff_node_revisions($form, $form_state, $node) {
+       );
+     }
+     else {
+-      $diff_date = l(format_date($revision->timestamp, 'small'), "node/$node->nid/revisions/$revision->vid/view");
++      $diff_date = l(format_date($revision->timestamp, 'small'), "node/$node->nid/compare/$revision->vid/" . $node->vid);
+       $form['info'][$revision->vid] = array(
+         '#markup' => t('!date by !username', array(
+           '!date' => $diff_date,
+@@ -140,7 +140,7 @@ function diff_node_revisions_submit($form, &$form_state) {
+   // The node IDs are ordered so that the old revision is always on the left.
+   $old_vid = min($form_state['values']['old'], $form_state['values']['new']);
+   $new_vid = max($form_state['values']['old'], $form_state['values']['new']);
+-  $form_state['redirect'] = 'node/' . $form_state['values']['nid'] . '/revisions/view/' . $old_vid . '/' . $new_vid;
++  $form_state['redirect'] = 'node/' . $form_state['values']['nid'] . '/compare/' . $old_vid . '/' . $new_vid;
+ }
+ 
+ /**
+@@ -190,11 +190,11 @@ function diff_diffs_show(Node $node, $old_vid, $new_vid, $state = '') {
+ 
+   // Generate table header (date, username, log message).
+   $old_header = t('!date by !username', array(
+-    '!date' => l(format_date($old_node->revision_timestamp), "node/$node->nid/revisions/$old_node->vid/view", array('absolute' => 1)),
++    '!date' => l(format_date($old_node->revision_timestamp), "node/$node->nid/compare/$old_node->vid/" . $new_vid, array('absolute' => 1)),
+     '!username' => theme('username', array('account' => $node_revisions[$old_vid])),
+   ));
+   $new_header = t('!date by !username', array(
+-    '!date' => l(format_date($new_node->revision_timestamp), "node/$node->nid/revisions/$new_node->vid/view", array('absolute' => 1)),
++    '!date' => l(format_date($new_node->revision_timestamp), "node/$node->nid/compare/$old_vid/" . $new_node->vid, array('absolute' => 1)),
+     '!username' => theme('username', array('account' => $node_revisions[$new_vid])),
+   ));
+ 
+@@ -205,14 +205,14 @@ function diff_diffs_show(Node $node, $old_vid, $new_vid, $state = '') {
+   $nav_suffix = ($default_state != $state) ? '/' . str_replace('_', '-', $state) : '';
+   $next_vid = _diff_get_next_vid($node_revisions, $new_vid);
+   if ($next_vid) {
+-    $next_link = l(t('Next difference >'), 'node/' . $node->nid . '/revisions/view/' . $new_vid . '/' . $next_vid . $nav_suffix, array('absolute' => 1));
++    $next_link = l(t('Next difference >'), 'node/' . $node->nid . '/compare/' . $new_vid . '/' . $next_vid . $nav_suffix, array('absolute' => 1));
+   }
+   else {
+     $next_link = '';
+   }
+   $prev_vid = _diff_get_previous_vid($node_revisions, $old_vid);
+   if ($prev_vid) {
+-    $prev_link = l(t('< Previous difference'), 'node/' . $node->nid . '/revisions/view/' . $prev_vid . '/' . $old_vid . $nav_suffix, array('absolute' => 1));
++    $prev_link = l(t('< Previous difference'), 'node/' . $node->nid . '/compare/' . $prev_vid . '/' . $old_vid . $nav_suffix, array('absolute' => 1));
+   }
+   else {
+     $prev_link = '';
+@@ -249,7 +249,7 @@ function diff_diffs_show(Node $node, $old_vid, $new_vid, $state = '') {
+   foreach (diff_available_states('node') as $alternative_state => $label) {
+     $links[$alternative_state] = array(
+       'title' => $label,
+-      'href' => "node/{$node->nid}/revisions/view/{$old_vid}/{$new_vid}" . ($alternative_state == $default_state ? '' : '/' . str_replace('_', '-', $alternative_state)),
++      'href' => "node/{$node->nid}/compare/{$old_vid}/{$new_vid}" . ($alternative_state == $default_state ? '' : '/' . str_replace('_', '-', $alternative_state)),
+     );
+   }
+   if (count($links) > 1) {
+
+From df36d31381dc9c28afd0929757a52d46b6845b40 Mon Sep 17 00:00:00 2001
+From: Tim Erickson <tim@stpaultim.com>
+Date: Thu, 13 Nov 2025 15:14:15 -0600
+Subject: [PATCH 2/3] Replace 'revision' with 'compare' in diff.module
+
+---
+ diff.module | 17 +++++------------
+ 1 file changed, 5 insertions(+), 12 deletions(-)
+
+diff --git a/diff.module b/diff.module
+index 0ca998b..be45945 100644
+--- a/diff.module
++++ b/diff.module
+@@ -155,13 +155,6 @@ function diff_menu() {
+   return $items;
+ }
+ 
+-/**
+- * Implements hook_menu_alter().
+- */
+-function diff_menu_alter(&$callbacks) {
+-  // Do not override core revisions routes. Intentionally left minimal.
+-}
+-
+ /**
+  * Implements hook_admin_paths_alter().
+  */
+@@ -534,7 +527,7 @@ function diff_inline_form($form, $form_state, $node, $revisions) {
+     '#type' => 'value',
+     '#value' => $node,
+   );
+-  $form['revision'] = array(
++  $form['compare'] = array(
+     '#type' => 'select',
+     '#options' => array(0 => t('- No highlighting -')),
+     '#default_value' => ((arg(2) === 'revisions' && arg(3) === $node->vid) || (arg(2) === 'compare')) ? $node->vid : 0,
+@@ -545,7 +538,7 @@ function diff_inline_form($form, $form_state, $node, $revisions) {
+     ),
+   );
+   foreach ($revisions as $revision) {
+-    $form['revision']['#options'][$revision->vid] = t('@revision by @name', array(
++    $form['compare']['#options'][$revision->vid] = t('@revision by @name', array(
+       '@revision' => format_date($revision->timestamp, 'short'),
+       '@name' => user_format_name($revision),
+     ));
+@@ -565,7 +558,7 @@ function diff_inline_form($form, $form_state, $node, $revisions) {
+ function diff_inline_ajax($form, $form_state) {
+   module_load_include('inc', 'diff', 'diff.pages');
+   $node = $form['node']['#value'];
+-  $vid = isset($form_state['values']['revision']) ? $form_state['values']['revision'] : 0;
++  $vid = isset($form_state['values']['compare']) ? $form_state['values']['compare'] : 0;
+   return "<div id='node-{$node->nid}'>" . diff_inline_show($node, $vid) . "</div>";
+ }
+ 
+@@ -573,9 +566,9 @@ function diff_inline_ajax($form, $form_state) {
+  * Form submission handler for diff_inline_form() for JS-disabled clients.
+  */
+ function diff_inline_form_submit(&$form, &$form_state) {
+-  if (isset($form_state['values']['revision'], $form_state['values']['node'])) {
++  if (isset($form_state['values']['compare'], $form_state['values']['node'])) {
+     $node = $form_state['values']['node'];
+-    $vid = $form_state['values']['revision'];
++    $vid = $form_state['values']['compare'];
+     $form_state['redirect'] = "node/{$node->nid}/compare/{$vid}/" . $node->vid;
+   }
+ }
+
+From b28e0c2fbcdb2011c78783de9f0e4e1f8b4c9f47 Mon Sep 17 00:00:00 2001
+From: Tim Erickson <tim@stpaultim.com>
+Date: Thu, 13 Nov 2025 15:15:51 -0600
+Subject: [PATCH 3/3] Change label from 'published' to 'current' revision
+
+---
+ diff.theme.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/diff.theme.inc b/diff.theme.inc
+index 39cac72..5bd1c44 100644
+--- a/diff.theme.inc
++++ b/diff.theme.inc
+@@ -53,7 +53,7 @@ function theme_diff_node_revisions($vars) {
+           'class' => array('revision-current'),
+         );
+         $row[] = array(
+-          'data' => '<strong>' . t('This is the published revision.') . '</strong>',
++          'data' => '<strong>' . t('This is the current revision.') . '</strong>',
+           'class' => array('revision-current'),
+           'colspan' => '2',
+         );

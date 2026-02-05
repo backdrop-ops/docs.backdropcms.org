@@ -53,7 +53,7 @@ function theme_diff_node_revisions($vars) {
           'class' => array('revision-current'),
         );
         $row[] = array(
-          'data' => '<strong>' . t('This is the published revision.') . '</strong>',
+          'data' => '<strong>' . t('This is the current revision.') . '</strong>',
           'class' => array('revision-current'),
           'colspan' => '2',
         );

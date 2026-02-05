@@ -25,6 +25,6 @@ feeds_jsonpath_parser - Prevent PHP notice by adding missing module key
 
 field validation -- running latest -dev (no releases yet)
 
-menu_pager - excess logs in watchdog
-  https://github.com/backdrop-contrib/menu_pager/issues/4
-  https://github.com/backdrop-contrib/menu_pager/pull/5.patch
+diff - Make changes to DIFF to increase compatibility with Draft Workflow
+  https://github.com/backdrop-contrib/diff/issues/40
+  https://github.com/backdrop-contrib/diff/pull/41.patch

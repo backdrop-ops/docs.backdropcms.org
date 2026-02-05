@@ -1,0 +1,421 @@
+<?php
+/**
+ * @file Contains hook implementations and functions for this module.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function draft_workflow_menu() {
+  $items = [];
+
+  $items['node/%node/revisions/%/activate'] = [
+    'title' => 'Make a revision the current revision',
+    'load arguments' => [3],
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => ['draft_workflow_activate_confirm', 1],
+    'access callback' => '_node_revision_access',
+    'access arguments' => [1, 'update'],
+  ];
+  $items['node/%node/publish'] = [
+    'title' => 'Publish the node',
+//    'load arguments' => [1],
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => ['draft_workflow_publish_confirm', 1],
+    'access callback' => 'node_access',
+    'access arguments' => ['update', 1],
+  ];
+  $items['node/%node/unpublish'] = [
+    'title' => 'Unpublish the node',
+//    'load arguments' => [1],
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => ['draft_workflow_unpublish_confirm', 1],
+    'access callback' => 'node_access',
+    'access arguments' => ['update', 1],
+  ];
+  $items['node/%node/revisions/%/new_revision'] = array(
+    'title' => 'Create new revision',
+    'load arguments' => [3],
+    'page callback' => 'draft_workflow_new_revision',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'weight' => 0,
+  );
+  $items['node/%node/revisions/%/edit_revision'] = array(
+    'title' => 'Edit revision',
+    'load arguments' => [3],
+    'page callback' => 'draft_workflow_edit_revision',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'weight' => 0,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function draft_workflow_menu_alter(&$items) {
+  // Override node/%node/revisions.
+  $items['node/%node/revisions']['page callback'] = 'draft_workflow_node_revisions_overview';
+  $items['node/%node/revisions']['access callback'] = 'draft_workflow_node_revisions_access';
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function draft_workflow_admin_paths() {
+  if (config_get('system.core', 'node_admin_theme')) {
+    $paths = array(
+      'node/*/revisions/*/activate' => TRUE,
+      'node/*/publish' => TRUE,
+      'node/*/unpublish' => TRUE,
+      'node/*/revisions/*/new_revision' => TRUE,
+      'node/*/revisions/*/edit_revision' => TRUE,
+    );
+    return $paths;
+  }
+  else {
+    return array();
+  }
+}
+
+/**
+ * An access callback for revision pages.
+ *
+ * This is a modified version of _node_revision_access() to allow use of
+ * revision pages even if the node only has 1 revision.
+ *
+ * @param Node $node
+ *   The node to check.
+ * @param $op
+ *   (optional) The specific operation being checked. Defaults to 'view.'
+ * @param object $account
+ *   (optional) A user object representing the user for whom the operation is
+ *   to be performed. Determines access for a user other than the current user.
+ *
+ * @return
+ *   TRUE if the operation may be performed, FALSE otherwise.
+ *
+ * @see node_menu()
+ */
+function draft_workflow_node_revisions_access(Node $node, $op = 'view', $account = NULL) {
+  $access = &backdrop_static(__FUNCTION__, array());
+
+  $map = array(
+    'view' => 'view revisions',
+    'update' => 'revert revisions',
+    'delete' => 'delete revisions',
+  );
+
+  if (!$node || !isset($map[$op])) {
+    // If there was no node to check against, or the $op was not one of the
+    // supported ones, we return access denied.
+    return FALSE;
+  }
+
+  if (!isset($account)) {
+    $account = $GLOBALS['user'];
+  }
+
+  // Statically cache access by revision ID, user account ID, and operation.
+  $cid = $node->vid . ':' . $account->uid . ':' . $op;
+
+  if (!isset($access[$cid])) {
+    // Perform basic permission checks first.
+    if (!user_access($map[$op], $account) && !user_access('administer nodes', $account)) {
+      return $access[$cid] = FALSE;
+    }
+
+    $node_current_revision = node_load($node->nid);
+    $is_current_revision = $node->isActiveRevision();
+
+    // There should be at least two revisions. If the vid of the given node
+    // and the vid of the active revision differ, then we already have two
+    // different revisions so there is no need for a separate database check.
+    // Also, if you try to revert to or delete the active revision, that's
+    // not good.
+    if ($is_current_revision && ($op == 'delete')) {
+      $access[$cid] = FALSE;
+    }
+    elseif (user_access('administer nodes', $account)) {
+      $access[$cid] = TRUE;
+    }
+    else {
+      // First check the access to the active revision and finally, if the
+      // node passed in is not the active revision then access to that, too.
+      $access[$cid] = node_access($op, $node_current_revision, $account) && ($is_current_revision || node_access($op, $node, $account));
+    }
+  }
+
+  return $access[$cid];
+}
+
+/**
+ * Provides a replacement for the node revisions page.
+ */
+function draft_workflow_node_revisions_overview(Node $node) {
+  module_load_include('inc', 'node', 'node.pages');
+  $build = node_revision_overview($node);
+
+  $build['actions']= [
+    '#type' => 'container',
+    '#weight' => -1,
+    'new_revision' => [
+      '#type' => 'link',
+      '#title' => 'Copy current revision',
+      '#href' => 'node/' . $node->nid . '/revisions/' . $node->vid . '/new_revision',
+      '#attributes' => array('class' => 'button'),
+    ],
+  ];
+
+  $node_type_name =  node_type_get_name($node);
+  if ($node->status == NODE_PUBLISHED) {
+    backdrop_set_message(t('This @node_type is published.', [
+      '@node_type' => $node_type_name,
+    ]), 'info');
+    $build['actions']['unpublish'] = [
+      '#type' => 'link',
+      '#title' => t('Unpublish @node_type', ['@node_type' => $node_type_name]),
+      '#href' => 'node/' . $node->nid . '/unpublish',
+      '#attributes' => array('class' => 'button'),
+    ];
+  }
+  else {
+    backdrop_set_message(t('This @node_type is not published.', [
+      '@node_type' => $node_type_name,
+    ]), 'warning');
+    $build['actions']['publish'] = [
+      '#type' => 'link',
+      '#title' => t('Publish @node_type', ['@node_type' => $node_type_name]),
+      '#href' => 'node/' . $node->nid . '/publish',
+      '#attributes' => array('class' => 'button'),
+    ];
+  }
+
+  $revision_list = node_revision_list($node);
+
+  $key = 0;
+  foreach ($revision_list as $vid => $revision) {
+    $node_revision = node_load($node->nid, $vid);
+
+    // Edit the action links.
+    if ($vid != $node->vid) {
+      // Remove the Revert option.
+      unset($build['node_revisions_table']['#rows'][$key][1]['data']['#links']['revert']);
+
+      array_splice($build['node_revisions_table']['#rows'][$key][1]['data']['#links'], 0, 0, [
+        'activate' => [
+          'title' => t('Make current revision'),
+          'href' => 'node/' . $node->nid . '/revisions/' . $vid . '/activate',
+        ],
+        'edit_revision' => [
+          'title' => t('Edit this revision'),
+          'href' => 'node/' . $node->nid . '/revisions/' . $vid . '/edit_revision',
+        ],
+        'new_revision' => [
+          'title' => t('Copy this revision'),
+          'href' => 'node/' . $node->nid . '/revisions/' . $vid . '/new_revision',
+        ],
+      ]);
+    }
+    $key++;
+  }
+
+  return $build;
+}
+
+/**
+ * The confirmation form for activating a revision.
+ */
+function draft_workflow_activate_confirm($form, $form_state, $node_revision) {
+  $form['#node_revision'] = $node_revision;
+  return confirm_form($form, t('Are you sure you want to make the revision from %revision-date the current revision?', array(
+    '%revision-date' => format_date($node_revision->revision_timestamp),
+  )), 'node/' . $node_revision->nid . '/revisions', '', t('Save'), t('Cancel'));
+}
+
+/**
+ * Form submission handler for draft_workflow_activate_confirm().
+ */
+function draft_workflow_activate_confirm_submit($form, &$form_state) {
+  $node_revision = $form['#node_revision'];
+
+  $node_revision->setIsActiveRevision();
+  $node_revision->save();
+
+  backdrop_set_message(t('@type %title has been set as the current revision.', array(
+    '@type' => node_type_get_name($node_revision),
+    '%title' => $node_revision->title,
+  )));
+  $form_state['redirect'] = 'node/' . $node_revision->nid . '/revisions';
+}
+
+/**
+ * The confirmation form for publishing a draft revision.
+ */
+function draft_workflow_publish_confirm($form, $form_state, $node) {
+  $form['#node'] = $node;
+  return confirm_form($form, t('Are you sure you want to publish %node_title?', array(
+    '%node_title' => $node->title,
+  )), 'node/' . $node->nid . '/revisions', '', t('Publish'), t('Cancel'));
+}
+
+/**
+ * Form submission handler for draft_workflow_publish_confirm().
+ */
+function draft_workflow_publish_confirm_submit($form, &$form_state) {
+  $node = $form['#node'];
+
+  $node->status = NODE_PUBLISHED;
+  $node->save();
+
+  db_update('node_revision')
+    ->fields(['status' => $node->status])
+    ->condition('nid', $node->nid)
+    ->execute();
+
+  backdrop_set_message(t('@type %title has been published.', array(
+    '@type' => node_type_get_name($node),
+    '%title' => $node->title,
+  )));
+  $form_state['redirect'] = 'node/' . $node->nid . '/revisions';
+}
+
+/**
+ * The confirmation form for publishing a draft revision.
+ */
+function draft_workflow_unpublish_confirm($form, $form_state, $node) {
+  $form['#node'] = $node;
+  return confirm_form($form, t('Are you sure you want to unpublish %node_title?', array(
+    '%node_title' => $node->title,
+  )), 'node/' . $node->nid . '/revisions', '', t('Unpublish'), t('Cancel'));
+}
+
+/**
+ * Form submission handler for draft_workflow_publish_confirm().
+ */
+function draft_workflow_unpublish_confirm_submit($form, &$form_state) {
+  $node = $form['#node'];
+
+  $node->status = NODE_NOT_PUBLISHED;
+  $node->save();
+
+  db_update('node_revision')
+    ->fields(['status' => $node->status])
+    ->condition('nid', $node->nid)
+    ->execute();
+
+  backdrop_set_message(t('@type %title has been unpublished.', array(
+    '@type' => node_type_get_name($node),
+    '%title' => $node->title,
+  )));
+  $form_state['redirect'] = 'node/' . $node->nid . '/revisions';
+}
+
+/**
+ * Loads the node form for creating a new revision.
+ */
+function draft_workflow_new_revision(Node $node) {
+  module_load_include('inc', 'node', 'node.pages');
+
+  $type_name = node_type_get_name($node);
+  backdrop_set_title(t('New revision of @type %title', array(
+    '@type' => $type_name,
+    '%title' => $node->title,
+  )), PASS_THROUGH);
+
+  $form = backdrop_get_form($node->type . '_node_form', $node);
+  return $form;
+}
+
+
+/**
+ * Loads the node form for editing an existing revision.
+ */
+function draft_workflow_edit_revision(Node $node) {
+  module_load_include('inc', 'node', 'node.pages');
+
+  $type_name = node_type_get_name($node);
+  backdrop_set_title(t('Edit draft of @type %title', array(
+    '@type' => $type_name,
+    '%title' => $node->title,
+  )), PASS_THROUGH);
+
+  $form = backdrop_get_form($node->type . '_node_form', $node);
+  return $form;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function draft_workflow_form_alter(&$form, &$form_state, $form_id) {
+  $node_form_string = '_node_form';
+  if (substr_compare($form_id, $node_form_string, -strlen($node_form_string)) === 0) {
+    $node = $form['#node'];
+
+    $form['options']['#collapsed'] = TRUE;
+    $form['revision_information']['#collapsed'] = FALSE;
+
+    $form['options']['help_text'] = [
+      '#type' => 'markup',
+      '#weight' => -1,
+      '#markup' => '<strong>' . t('The publishing options will affect all revisions of this @node_type.', [
+          '@node_type' => node_type_get_name($node),
+        ]) . '</strong>',
+    ];
+
+    $args = arg();
+    if (!empty($args[4])) {
+      if ($args[4] == 'new_revision') {
+        $form['revision_information']['revision']['#type'] = 'hidden';
+        $form['revision_information']['revision']['#value'] = 1;
+      }
+      else if ($args[4] == 'edit_revision') {
+        $form['revision_information']['revision']['#type'] = 'hidden';
+        $form['revision_information']['revision']['#value'] = 0;
+
+        $form['options']['help_text'] = [
+          '#type' => 'markup',
+          '#weight' => -1,
+          '#markup' => '<strong>' . t('The publishing options will affect all versions of the node.') . '</strong>',
+        ];
+      }
+    }
+  }
+}
+
+/**
+ * Submit handler for the new revision form.
+ */
+function draft_workflow_new_revision_submit($form, &$form_state) {
+  $form_state['values']['revision'] = 1;
+}
+
+/**
+ * Submit handler for the edit revision form.
+ */
+function draft_workflow_edit_revision_submit($form, &$form_state) {
+  $form_state['values']['revision'] = 0;
+}
+
+/**
+ * Implements hook_node_submit().
+ */
+function draft_workflow_node_submit(Node $node, $form, &$form_state) {
+  $args = arg();
+  if (!empty($args[4])) {
+    if ($args[4] == 'new_revision') {
+      $node->is_active_revision = FALSE;
+    }
+  }
+
+  // Update all the revisions to match the currently saved node.
+  db_update('node_revision')
+    ->fields(['status' => $node->status])
+    ->condition('nid', $node->nid)
+    ->execute();
+
+}
