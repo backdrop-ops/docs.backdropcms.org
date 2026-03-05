@@ -4,42 +4,85 @@
  */
 
 /**
+ * Implements hook_permission().
+ */
+function draft_workflow_permission() {
+  return array(
+    'create draft revisions' => array(
+      'title' => t('Create draft revisions'),
+      'description' => t('Create new draft revisions and edit existing draft revisions.'),
+    ),
+    'activate draft revisions' => array(
+      'title' => t('Activate draft revisions'),
+      'description' => t('Make a draft revision the current (active) revision.'),
+    ),
+    'publish draft workflow content' => array(
+      'title' => t('Publish and unpublish content'),
+      'description' => t('Publish and unpublish content using the draft workflow.'),
+    ),
+    'view pending draft revisions' => array(
+      'title' => t('View pending draft revisions'),
+      'description' => t('View the list of content with draft revisions pending review.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function draft_workflow_theme() {
+  return array(
+    'draft_workflow_settings_form' => array(
+      'render element' => 'form',
+    ),
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function draft_workflow_menu() {
   $items = [];
+
+  $items['admin/config/content/draft-workflow'] = array(
+    'title' => 'Draft Workflow',
+    'description' => 'Configure permissions for the Draft Workflow module.',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('draft_workflow_settings_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer nodes'),
+    'type' => MENU_NORMAL_ITEM,
+  );
 
   $items['node/%node/revisions/%/activate'] = [
     'title' => 'Make a revision the current revision',
     'load arguments' => [3],
     'page callback' => 'backdrop_get_form',
     'page arguments' => ['draft_workflow_activate_confirm', 1],
-    'access callback' => '_node_revision_access',
-    'access arguments' => [1, 'update'],
+    'access callback' => 'draft_workflow_activate_access',
+    'access arguments' => [1],
   ];
   $items['node/%node/publish'] = [
     'title' => 'Publish the node',
-//    'load arguments' => [1],
     'page callback' => 'backdrop_get_form',
     'page arguments' => ['draft_workflow_publish_confirm', 1],
-    'access callback' => 'node_access',
-    'access arguments' => ['update', 1],
+    'access callback' => 'draft_workflow_publish_access',
+    'access arguments' => [1],
   ];
   $items['node/%node/unpublish'] = [
     'title' => 'Unpublish the node',
-//    'load arguments' => [1],
     'page callback' => 'backdrop_get_form',
     'page arguments' => ['draft_workflow_unpublish_confirm', 1],
-    'access callback' => 'node_access',
-    'access arguments' => ['update', 1],
+    'access callback' => 'draft_workflow_publish_access',
+    'access arguments' => [1],
   ];
   $items['node/%node/revisions/%/new_revision'] = array(
     'title' => 'Create new revision',
     'load arguments' => [3],
     'page callback' => 'draft_workflow_new_revision',
     'page arguments' => array(1),
-    'access callback' => 'node_access',
-    'access arguments' => array('update', 1),
+    'access callback' => 'draft_workflow_revision_edit_access',
+    'access arguments' => array(1),
     'weight' => 0,
   );
   $items['node/%node/revisions/%/edit_revision'] = array(
@@ -47,11 +90,236 @@ function draft_workflow_menu() {
     'load arguments' => [3],
     'page callback' => 'draft_workflow_edit_revision',
     'page arguments' => array(1),
-    'access callback' => 'node_access',
-    'access arguments' => array('update', 1),
+    'access callback' => 'draft_workflow_revision_edit_access',
+    'access arguments' => array(1),
     'weight' => 0,
   );
   return $items;
+}
+
+/**
+ * Access callback for creating and editing draft revisions.
+ */
+function draft_workflow_revision_edit_access(Node $node) {
+  return _draft_workflow_type_enabled($node->type) && (user_access('administer nodes') || (node_access('update', $node) && user_access('create draft revisions')));
+}
+
+/**
+ * Access callback for activating a draft revision.
+ *
+ * If the node is currently published, activating a revision changes what is
+ * publicly visible, so the publish permission is also required.
+ */
+function draft_workflow_activate_access(Node $node) {
+  if (!_draft_workflow_type_enabled($node->type)) {
+    return FALSE;
+  }
+  if (user_access('administer nodes')) {
+    return TRUE;
+  }
+  if (!node_access('update', $node) || !user_access('activate draft revisions')) {
+    return FALSE;
+  }
+  // Activating a revision on a published node is a publish action.
+  if ($node->status == NODE_PUBLISHED && !user_access('publish draft workflow content')) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * Access callback for publishing and unpublishing content.
+ */
+function draft_workflow_publish_access(Node $node) {
+  return _draft_workflow_type_enabled($node->type) && (user_access('administer nodes') || (node_access('update', $node) && user_access('publish draft workflow content')));
+}
+
+/**
+ * Returns whether the draft workflow is enabled for a given content type.
+ *
+ * Defaults to TRUE if the setting has not been configured, preserving
+ * backward compatibility for existing installations.
+ */
+function _draft_workflow_type_enabled($type) {
+  $value = config_get('node.type.' . $type, 'settings.draft_workflow_enabled');
+  return $value === NULL ? TRUE : (bool) $value;
+}
+
+/**
+ * Settings form for the Draft Workflow module.
+ *
+ * Displays per-content-type workflow settings and module permissions in role
+ * matrix tables, mirroring the layout of the core permissions page.
+ */
+function draft_workflow_settings_form($form, &$form_state) {
+  $form['#theme'] = 'draft_workflow_settings_form';
+
+  $module_perms = draft_workflow_permission();
+  // user_roles() returns array('machine_name' => 'Label'); load each object
+  // individually to access the permissions array.
+  $roles = user_roles();
+
+  // Permission checkboxes — kept in $form so the Form API processes them on
+  // submission. The theme function renders them into a matrix table.
+  $form['perm'] = array('#tree' => TRUE);
+  foreach ($roles as $role_name => $role_label) {
+    $role = user_role_load($role_name);
+    $role_perms = ($role && isset($role->permissions)) ? $role->permissions : array();
+    foreach ($module_perms as $perm_name => $perm_info) {
+      $form['perm'][$role_name][$perm_name] = array(
+        '#type' => 'checkbox',
+        '#default_value' => in_array($perm_name, $role_perms) ? 1 : 0,
+        '#title' => check_plain($role_label),
+        '#title_display' => 'invisible',
+      );
+    }
+  }
+
+  // Content type settings — one row per type with enable and prominent-info
+  // checkboxes.
+  $form['content_types'] = array('#tree' => TRUE);
+  foreach (node_type_get_types() as $type_name => $type) {
+    $form['content_types'][$type_name]['enabled'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => _draft_workflow_type_enabled($type_name) ? 1 : 0,
+      '#title' => check_plain($type->name),
+      '#title_display' => 'invisible',
+    );
+    $form['content_types'][$type_name]['prominent'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => config_get('node.type.' . $type_name, 'settings.draft_workflow_prominent_revisions') ? 1 : 0,
+      '#title' => check_plain($type->name),
+      '#title_display' => 'invisible',
+    );
+  }
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  return $form;
+}
+
+/**
+ * Submit handler for draft_workflow_settings_form().
+ */
+function draft_workflow_settings_form_submit($form, &$form_state) {
+  $module_perms = array_keys(draft_workflow_permission());
+  $roles = user_roles();
+
+  foreach ($roles as $role_name => $role_label) {
+    $permissions = array();
+    foreach ($module_perms as $perm) {
+      $permissions[$perm] = !empty($form_state['values']['perm'][$role_name][$perm]);
+    }
+    user_role_change_permissions($role_name, $permissions);
+  }
+
+  foreach (node_type_get_types() as $type_name => $type) {
+    $config = config('node.type.' . $type_name);
+    $config->set('settings.draft_workflow_enabled', !empty($form_state['values']['content_types'][$type_name]['enabled']));
+    $config->set('settings.draft_workflow_prominent_revisions', !empty($form_state['values']['content_types'][$type_name]['prominent']));
+    $config->save();
+  }
+
+  backdrop_set_message(t('The settings have been saved.'));
+}
+
+/**
+ * Theme function for draft_workflow_settings_form().
+ *
+ * Renders two matrix tables: one for permissions (roles × permissions) and
+ * one for content type settings. Form elements remain in $form for proper
+ * Form API processing and are placed into cells via backdrop_render().
+ */
+function theme_draft_workflow_settings_form($variables) {
+  $form = $variables['form'];
+
+  $module_perms = draft_workflow_permission();
+  $roles = user_roles();
+
+  // --- Permissions table ---
+  $perm_header = array(t('Permission'));
+  foreach ($roles as $role_label) {
+    $perm_header[] = check_plain($role_label);
+  }
+
+  $perm_rows = array();
+  foreach ($module_perms as $perm_name => $perm_info) {
+    $row = array();
+    $row[] = '<strong>' . check_plain($perm_info['title']) . '</strong>'
+      . '<div class="description">' . check_plain($perm_info['description']) . '</div>';
+    foreach ($roles as $role_name => $role_label) {
+      $row[] = array(
+        'data' => backdrop_render($form['perm'][$role_name][$perm_name]),
+        'class' => array('checkbox'),
+      );
+    }
+    $perm_rows[] = $row;
+  }
+
+  $output = '<p>' . t('When enabled for a content type, this module lets you create draft revisions ahead of the current published version, allowing you to have draft versions ready for review before making them public. The current revision is what the public will see if the node is published — any revision can be made current at any time.') . '</p>';
+
+  $output .= '<h2>' . t('Permissions') . '</h2>';
+  $output .= '<p>' . t('Configure which roles have access to draft workflow actions. These permissions are also available on the main <a href="!url">Permissions</a> page.', array(
+    '!url' => url('admin/config/people/permissions'),
+  )) . '</p>';
+  $output .= theme('table', array(
+    'header' => $perm_header,
+    'rows' => $perm_rows,
+    'attributes' => array('id' => 'draft-workflow-permissions'),
+  ));
+
+  // --- Content type settings table ---
+  $ct_header = array(
+    t('Content type'),
+    t('Enable draft workflow'),
+    t('Prominent revision info'),
+  );
+
+  $ct_rows = array();
+  foreach (node_type_get_types() as $type_name => $type) {
+    $ct_rows[] = array(
+      check_plain($type->name),
+      array('data' => backdrop_render($form['content_types'][$type_name]['enabled']), 'class' => array('checkbox')),
+      array('data' => backdrop_render($form['content_types'][$type_name]['prominent']), 'class' => array('checkbox')),
+    );
+  }
+
+  $output .= '<h2>' . t('Content type settings') . '</h2>';
+  $output .= '<p>' . t('Enable the draft workflow for specific content types. These settings are also available on each <a href="!url">content type edit page</a>.', array(
+    '!url' => url('admin/structure/types'),
+  )) . '</p>';
+  $output .= theme('table', array(
+    'header' => $ct_header,
+    'rows' => $ct_rows,
+    'attributes' => array('id' => 'draft-workflow-content-types'),
+  ));
+
+  $output .= backdrop_render_children($form);
+
+  return $output;
+}
+
+/**
+ * Access callback for the node edit page.
+ *
+ * Wraps core node edit access. When the draft workflow is enabled for a content
+ * type, editing the currently published node requires publish permission —
+ * otherwise editors would inadvertently publish changes by saving the form.
+ * Editors without publish permission should instead create or edit a draft
+ * revision via the revisions tab.
+ */
+function draft_workflow_node_edit_access(Node $node) {
+  if (!node_access('update', $node)) {
+    return FALSE;
+  }
+  if (_draft_workflow_type_enabled($node->type) && $node->status == NODE_PUBLISHED) {
+    return user_access('administer nodes') || user_access('publish draft workflow content');
+  }
+  return TRUE;
 }
 
 /**
@@ -61,6 +329,13 @@ function draft_workflow_menu_alter(&$items) {
   // Override node/%node/revisions.
   $items['node/%node/revisions']['page callback'] = 'draft_workflow_node_revisions_overview';
   $items['node/%node/revisions']['access callback'] = 'draft_workflow_node_revisions_access';
+
+  // Override node edit access to prevent editors from directly editing
+  // published nodes, which would immediately publish their changes.
+  if (isset($items['node/%node/edit'])) {
+    $items['node/%node/edit']['access callback'] = 'draft_workflow_node_edit_access';
+    $items['node/%node/edit']['access arguments'] = array(1);
+  }
 }
 
 /**
@@ -158,41 +433,54 @@ function draft_workflow_node_revisions_access(Node $node, $op = 'view', $account
  */
 function draft_workflow_node_revisions_overview(Node $node) {
   module_load_include('inc', 'node', 'node.pages');
+
+  // If the workflow is not enabled for this type, use the core revisions page.
+  if (!_draft_workflow_type_enabled($node->type)) {
+    return node_revision_overview($node);
+  }
+
   $build = node_revision_overview($node);
 
-  $build['actions']= [
+  $build['actions'] = [
     '#type' => 'container',
     '#weight' => -1,
-    'new_revision' => [
+  ];
+
+  if (draft_workflow_revision_edit_access($node)) {
+    $build['actions']['new_revision'] = [
       '#type' => 'link',
       '#title' => 'Copy current revision',
       '#href' => 'node/' . $node->nid . '/revisions/' . $node->vid . '/new_revision',
       '#attributes' => array('class' => 'button'),
-    ],
-  ];
+    ];
+  }
 
-  $node_type_name =  node_type_get_name($node);
+  $node_type_name = node_type_get_name($node);
   if ($node->status == NODE_PUBLISHED) {
     backdrop_set_message(t('This @node_type is published.', [
       '@node_type' => $node_type_name,
     ]), 'info');
-    $build['actions']['unpublish'] = [
-      '#type' => 'link',
-      '#title' => t('Unpublish @node_type', ['@node_type' => $node_type_name]),
-      '#href' => 'node/' . $node->nid . '/unpublish',
-      '#attributes' => array('class' => 'button'),
-    ];
+    if (draft_workflow_publish_access($node)) {
+      $build['actions']['unpublish'] = [
+        '#type' => 'link',
+        '#title' => t('Unpublish @node_type', ['@node_type' => $node_type_name]),
+        '#href' => 'node/' . $node->nid . '/unpublish',
+        '#attributes' => array('class' => 'button'),
+      ];
+    }
   }
   else {
     backdrop_set_message(t('This @node_type is not published.', [
       '@node_type' => $node_type_name,
     ]), 'warning');
-    $build['actions']['publish'] = [
-      '#type' => 'link',
-      '#title' => t('Publish @node_type', ['@node_type' => $node_type_name]),
-      '#href' => 'node/' . $node->nid . '/publish',
-      '#attributes' => array('class' => 'button'),
-    ];
+    if (draft_workflow_publish_access($node)) {
+      $build['actions']['publish'] = [
+        '#type' => 'link',
+        '#title' => t('Publish @node_type', ['@node_type' => $node_type_name]),
+        '#href' => 'node/' . $node->nid . '/publish',
+        '#attributes' => array('class' => 'button'),
+      ];
+    }
   }
 
   $revision_list = node_revision_list($node);
@@ -201,25 +489,40 @@ function draft_workflow_node_revisions_overview(Node $node) {
   foreach ($revision_list as $vid => $revision) {
     $node_revision = node_load($node->nid, $vid);
 
+    // Add "View - " to the existing revision date link text.
+    $date_str = format_date($revision->timestamp, 'short');
+    if ($revision->current_vid > 0) {
+      $build['node_revisions_table']['#rows'][$key][0]['data'] = str_replace(">$date_str<", ">View - $date_str<", $build['node_revisions_table']['#rows'][$key][0]['data']);
+    }
+    else {
+      $build['node_revisions_table']['#rows'][$key][0] = str_replace(">$date_str<", ">View - $date_str<", $build['node_revisions_table']['#rows'][$key][0]);
+    }
+
     // Edit the action links.
     if ($vid != $node->vid) {
       // Remove the Revert option.
       unset($build['node_revisions_table']['#rows'][$key][1]['data']['#links']['revert']);
 
-      array_splice($build['node_revisions_table']['#rows'][$key][1]['data']['#links'], 0, 0, [
-        'activate' => [
+      $extra_links = [];
+      if (draft_workflow_activate_access($node_revision)) {
+        $extra_links['activate'] = [
           'title' => t('Make current revision'),
           'href' => 'node/' . $node->nid . '/revisions/' . $vid . '/activate',
-        ],
-        'edit_revision' => [
+        ];
+      }
+      if (draft_workflow_revision_edit_access($node_revision)) {
+        $extra_links['edit_revision'] = [
           'title' => t('Edit this revision'),
           'href' => 'node/' . $node->nid . '/revisions/' . $vid . '/edit_revision',
-        ],
-        'new_revision' => [
+        ];
+        $extra_links['new_revision'] = [
           'title' => t('Copy this revision'),
           'href' => 'node/' . $node->nid . '/revisions/' . $vid . '/new_revision',
-        ],
-      ]);
+        ];
+      }
+      if (!empty($extra_links)) {
+        array_splice($build['node_revisions_table']['#rows'][$key][1]['data']['#links'], 0, 0, $extra_links);
+      }
     }
     $key++;
   }
@@ -349,6 +652,38 @@ function draft_workflow_edit_revision(Node $node) {
 }
 
 /**
+ * Implements hook_form_node_type_form_alter().
+ */
+function draft_workflow_form_node_type_form_alter(&$form, &$form_state) {
+  $node_type = $form['#node_type'];
+  $type = $node_type->type;
+  $form['revision']['draft_workflow_enabled'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Enable draft workflow'),
+    '#description' => t('Enable draft workflow features for this content type, including the ability to create, edit, and manage draft revisions separately from the published version.'),
+    '#default_value' => _draft_workflow_type_enabled($type),
+    '#weight' => -1,
+  ];
+  $form['revision']['draft_workflow_prominent_revisions'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Display revision information prominently'),
+    '#description' => t('Show revision information above the sidebar tabs, making it always visible when editing content of this type.'),
+    '#default_value' => config_get('node.type.' . $type, 'settings.draft_workflow_prominent_revisions'),
+  ];
+  $form['#submit'][] = 'draft_workflow_node_type_form_submit';
+}
+
+/**
+ * Submit handler for the node type form.
+ */
+function draft_workflow_node_type_form_submit($form, &$form_state) {
+  $config = config('node.type.' . $form_state['values']['type']);
+  $config->set('settings.draft_workflow_enabled', (bool) $form_state['values']['draft_workflow_enabled']);
+  $config->set('settings.draft_workflow_prominent_revisions', (bool) $form_state['values']['draft_workflow_prominent_revisions']);
+  $config->save();
+}
+
+/**
  * Implements hook_form_alter().
  */
 function draft_workflow_form_alter(&$form, &$form_state, $form_id) {
@@ -356,32 +691,70 @@ function draft_workflow_form_alter(&$form, &$form_state, $form_id) {
   if (substr_compare($form_id, $node_form_string, -strlen($node_form_string)) === 0) {
     $node = $form['#node'];
 
+    if (!_draft_workflow_type_enabled($node->type)) {
+      return;
+    }
+
     $form['options']['#collapsed'] = TRUE;
     $form['revision_information']['#collapsed'] = FALSE;
 
-    $form['options']['help_text'] = [
-      '#type' => 'markup',
-      '#weight' => -1,
-      '#markup' => '<strong>' . t('The publishing options will affect all revisions of this @node_type.', [
-          '@node_type' => node_type_get_name($node),
-        ]) . '</strong>',
-    ];
+    // If configured for this content type, pull revision information out of
+    // the vertical tabs so it renders as a visible fieldset above them.
+    if (config_get('node.type.' . $node->type, 'settings.draft_workflow_prominent_revisions')) {
+      unset($form['revision_information']['#group']);
+      $form['revision_information']['#weight'] = 98;
+    }
 
     $args = arg();
-    if (!empty($args[4])) {
+    if (!empty($args[4]) && in_array($args[4], ['new_revision', 'edit_revision'])) {
+      // Hide publishing options for non-current revisions.
+      $form['options']['#access'] = FALSE;
+
+      // Add "Make current revision" checkbox to revision information.
+      // Gate behind activate permission; also require publish permission if
+      // the node is currently published (activating changes public content).
+      $current_node = node_load($node->nid);
+      $can_activate = user_access('administer nodes') ||
+        (user_access('activate draft revisions') &&
+          ($current_node->status != NODE_PUBLISHED || user_access('publish draft workflow content')));
+      $form['revision_information']['make_current'] = [
+        '#type' => 'checkbox',
+        '#title' => t('Make this the current revision'),
+        '#default_value' => 0,
+        '#access' => $can_activate,
+      ];
+
       if ($args[4] == 'new_revision') {
         $form['revision_information']['revision']['#type'] = 'hidden';
         $form['revision_information']['revision']['#value'] = 1;
       }
-      else if ($args[4] == 'edit_revision') {
+      else {
         $form['revision_information']['revision']['#type'] = 'hidden';
         $form['revision_information']['revision']['#value'] = 0;
 
-        $form['options']['help_text'] = [
-          '#type' => 'markup',
-          '#weight' => -1,
-          '#markup' => '<strong>' . t('The publishing options will affect all versions of the node.') . '</strong>',
-        ];
+        // node_object_prepare() (called inside node_form()) resets $node->log
+        // to '' before our hook runs, so we cannot rely on $node->log here.
+        // Query the revision's log message directly from the database instead.
+        // Also remove the #states that hides this field when the revision
+        // checkbox is unchecked, since we have hidden that checkbox.
+        if (isset($form['revision_information']['log'])) {
+          unset($form['revision_information']['log']['#states']);
+          $log = db_query('SELECT log FROM {node_revision} WHERE vid = :vid', array(':vid' => $node->vid))->fetchField();
+          $form['revision_information']['log']['#default_value'] = $log ?: '';
+        }
+      }
+    }
+    else {
+      $form['options']['help_text'] = [
+        '#type' => 'markup',
+        '#weight' => -1,
+        '#markup' => '<strong>' . t('The publishing options will affect all revisions of this @node_type.', [
+            '@node_type' => node_type_get_name($node),
+          ]) . '</strong>',
+      ];
+      // Hide the Published status checkbox for users without publish permission.
+      if (!user_access('administer nodes') && !user_access('publish draft workflow content')) {
+        $form['options']['status']['#access'] = FALSE;
       }
     }
   }
@@ -408,7 +781,10 @@ function draft_workflow_node_submit(Node $node, $form, &$form_state) {
   $args = arg();
   if (!empty($args[4])) {
     if ($args[4] == 'new_revision') {
-      $node->is_active_revision = FALSE;
+      $node->is_active_revision = !empty($form_state['values']['make_current']);
+    }
+    elseif ($args[4] == 'edit_revision' && !empty($form_state['values']['make_current'])) {
+      $node->is_active_revision = TRUE;
     }
   }
 
@@ -418,4 +794,79 @@ function draft_workflow_node_submit(Node $node, $form, &$form_state) {
     ->condition('nid', $node->nid)
     ->execute();
 
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function draft_workflow_block_info() {
+  return array(
+    'pending_review' => array(
+      'info' => t('Pending Review'),
+      'description' => t('Displays a count of nodes that have revisions pending review, with a link to the full list.'),
+      'cache' => BACKDROP_NO_CACHE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function draft_workflow_block_view($delta = '') {
+  if ($delta == 'pending_review' && user_access('view pending draft revisions')) {
+    $count = db_query('SELECT COUNT(*) FROM {node} n WHERE EXISTS (SELECT 1 FROM {node_revision} nr WHERE nr.nid = n.nid AND nr.vid > n.vid)')->fetchField();
+
+    if ($count == 0) {
+      $content = t('No content has revisions pending review.');
+    }
+    else {
+      $content = format_plural(
+        $count,
+        '1 item has revisions pending review. !link',
+        '@count items have revisions pending review. !link',
+        array('!link' => l(t('View all'), 'admin/content/drafts'))
+      );
+    }
+
+    return array(
+      'subject' => t('Pending Review'),
+      'content' => array('#markup' => $content),
+    );
+  }
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function draft_workflow_views_api() {
+  return array(
+    'api' => '3.0',
+    'path' => backdrop_get_path('module', 'draft_workflow') . '/views',
+  );
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function draft_workflow_autoload_info() {
+  return array(
+    'draft_workflow_handler_filter_forward_revisions' => 'views/draft_workflow_handler_filter_forward_revisions.inc',
+    'draft_workflow_handler_field_latest_revision_log' => 'views/draft_workflow_handler_field_latest_revision_log.inc',
+  );
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function draft_workflow_node_view(Node $node, $view_mode, $langcode) {
+  if ($view_mode == 'full' && _draft_workflow_type_enabled($node->type) && !$node->isActiveRevision()) {
+    $message = t('You are viewing a version of this content that is not the current (public) revision.');
+    $links = array();
+    if (node_access('update', $node)) {
+      $links[] = l(t('Edit this revision'), 'node/' . $node->nid . '/revisions/' . $node->vid . '/edit_revision');
+    }
+    $links[] = l(t('View all revisions'), 'node/' . $node->nid . '/revisions');
+    $message .= ' ' . implode(' | ', $links);
+    backdrop_set_message($message, 'warning');
+  }
 }
