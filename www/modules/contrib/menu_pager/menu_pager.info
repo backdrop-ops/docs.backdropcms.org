@@ -6,3 +6,8 @@ dependencies[] = menu
 tags[] = Blocks
 tags[] = Menus
 tags[] = Site Navigation
+
+; Added by Backdrop CMS packaging script on 2023-10-30
+project = menu_pager
+version = 1.x-1.4.2
+timestamp = 1698683406

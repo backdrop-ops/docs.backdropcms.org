@@ -1,0 +1,12 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the Draft Workflow module.
+ */
+
+/**
+ * Install the Pending Review view.
+ */
+function draft_workflow_update_1000() {
+  config_install_default_config('draft_workflow', 'views.view.draft_workflow_pending_review');
+}

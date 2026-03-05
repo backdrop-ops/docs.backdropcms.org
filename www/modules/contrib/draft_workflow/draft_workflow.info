@@ -1,0 +1,11 @@
+name = Draft Workflow
+description = "Provides a UI for managing drafts and workflow for node revisions, expanding on the core revision handling."
+backdrop = 1.x
+type = module
+
+dependencies[] = node
+
+; Added by Backdrop CMS packaging script on 2026-03-05
+project = draft_workflow
+version = 1.x-1.2.1
+timestamp = 1772700566

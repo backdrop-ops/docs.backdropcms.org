@@ -61,36 +61,37 @@ function diff_menu() {
    * a parent that can be accessed by its full path, it seems to work as
    * desired. Breadcrumbs work decently, at least the node link is among the
    * crumbs. For some reason any breadcrumbs "before/above" the node is only
-   * seen at 'node/%node/revisions/%/view'.
+   * seen at 'node/%node/compare/%/%'.
    */
 
-  // Not used directly, but was created to get the other menu items to work.
-  $items['node/%node/revisions/list'] = array(
-    'title' => 'List revisions',
+  // Non-conflicting compare routes that do not override core revisions paths.
+  $items['node/%node/compare'] = array(
+    'title' => 'Compare',
     'page callback' => 'diff_diffs_overview',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'access callback' => 'diff_node_revision_access',
-    'access arguments' => array(1),
-    'file' => 'diff.pages.inc',
-  );
-  $items['node/%node/revisions/view'] = array(
-    'title' => 'Compare revisions',
-    'page callback' => 'diff_diffs_show',
-    'page arguments' => array(1, 4, 5, 6),
+    'page arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'access callback' => 'diff_node_revision_access',
     'access arguments' => array(1),
-    'tab_parent' => 'node/%/revisions/list',
+    'weight' => 3,
     'file' => 'diff.pages.inc',
   );
-
-  $items['node/%node/revisions/view/latest'] = array(
+  $items['node/%node/compare/%/%'] = array(
+    'title' => 'Compare revisions',
+    'page callback' => 'diff_diffs_show',
+    'page arguments' => array(1, 3, 4, 5),
+    'type' => MENU_LOCAL_TASK,
+    'access callback' => 'diff_node_revision_access',
+    'access arguments' => array(1),
+    'tab_parent' => 'node/%/compare',
+    'file' => 'diff.pages.inc',
+  );
+  $items['node/%node/compare/latest'] = array(
     'title' => 'Show latest difference',
     'page callback' => 'diff_latest',
     'page arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'access arguments' => array('access content'),
-    'tab_parent' => 'node/%/revisions/view',
+    'tab_parent' => 'node/%/compare',
     'file' => 'diff.pages.inc',
   );
 
@@ -155,32 +156,13 @@ function diff_menu() {
 }
 
 /**
- * Implements hook_menu_alter().
- */
-function diff_menu_alter(&$callbacks) {
-  // Overwrite the default 'Revisions' page.
-  $callbacks['node/%node/revisions']['page callback'] = 'diff_diffs_overview';
-  $callbacks['node/%node/revisions']['module'] = 'diff';
-  $callbacks['node/%node/revisions']['file'] = 'diff.pages.inc';
-
-  $callbacks['node/%node/revisions/%/view']['tab_parent'] = 'node/%/revisions/list';
-  $callbacks['node/%node/revisions/%/revert']['tab_parent'] = 'node/%/revisions/%/view';
-  $callbacks['node/%node/revisions/%/delete']['tab_parent'] = 'node/%/revisions/%/view';
-
-  $callbacks['node/%node/revisions']['access callback']
-    = $callbacks['node/%node/revisions/%/view']['access callback']
-    = $callbacks['node/%node/revisions/%/revert']['access callback']
-    = $callbacks['node/%node/revisions/%/delete']['access callback'] = 'diff_node_revision_access';
-}
-
-/**
  * Implements hook_admin_paths_alter().
  */
 function diff_admin_paths_alter(&$paths) {
-  // By default, treat all diff pages as administrative.
+  // Treat compare pages as administrative if configured.
   if (config_get('diff.settings', 'diff_admin_path.node')) {
-    $paths['node/*/revisions/view'] = TRUE;
-    $paths['node/*/revisions/view/*/*'] = TRUE;
+    $paths['node/*/compare'] = TRUE;
+    $paths['node/*/compare/*/*'] = TRUE;
   }
 }
 
@@ -545,10 +527,10 @@ function diff_inline_form($form, $form_state, $node, $revisions) {
     '#type' => 'value',
     '#value' => $node,
   );
-  $form['revision'] = array(
+  $form['compare'] = array(
     '#type' => 'select',
     '#options' => array(0 => t('- No highlighting -')),
-    '#default_value' => (arg(2) === 'revisions' && arg(3) === $node->vid) ? $node->vid : 0,
+    '#default_value' => ((arg(2) === 'revisions' && arg(3) === $node->vid) || (arg(2) === 'compare')) ? $node->vid : 0,
     '#ajax' => array(
       'callback' => 'diff_inline_ajax',
       'wrapper' => "node-{$node->nid}",
@@ -556,7 +538,7 @@ function diff_inline_form($form, $form_state, $node, $revisions) {
     ),
   );
   foreach ($revisions as $revision) {
-    $form['revision']['#options'][$revision->vid] = t('@revision by @name', array(
+    $form['compare']['#options'][$revision->vid] = t('@revision by @name', array(
       '@revision' => format_date($revision->timestamp, 'short'),
       '@name' => user_format_name($revision),
     ));
@@ -576,7 +558,7 @@ function diff_inline_form($form, $form_state, $node, $revisions) {
 function diff_inline_ajax($form, $form_state) {
   module_load_include('inc', 'diff', 'diff.pages');
   $node = $form['node']['#value'];
-  $vid = isset($form_state['values']['revision']) ? $form_state['values']['revision'] : 0;
+  $vid = isset($form_state['values']['compare']) ? $form_state['values']['compare'] : 0;
   return "<div id='node-{$node->nid}'>" . diff_inline_show($node, $vid) . "</div>";
 }
 
@@ -584,10 +566,10 @@ function diff_inline_ajax($form, $form_state) {
  * Form submission handler for diff_inline_form() for JS-disabled clients.
  */
 function diff_inline_form_submit(&$form, &$form_state) {
-  if (isset($form_state['values']['revision'], $form_state['values']['node'])) {
+  if (isset($form_state['values']['compare'], $form_state['values']['node'])) {
     $node = $form_state['values']['node'];
-    $vid = $form_state['values']['revision'];
-    $form_state['redirect'] = "node/{$node->nid}/revisions/{$vid}/view";
+    $vid = $form_state['values']['compare'];
+    $form_state['redirect'] = "node/{$node->nid}/compare/{$vid}/" . $node->vid;
   }
 }
 

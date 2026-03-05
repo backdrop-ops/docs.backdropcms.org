@@ -15,7 +15,7 @@ function diff_latest($node) {
   }
   $new = array_shift($revisions);
   $old = array_shift($revisions);
-  backdrop_goto("node/{$node->nid}/revisions/view/{$old->vid}/{$new->vid}");
+  backdrop_goto("node/{$node->nid}/compare/{$old->vid}/{$new->vid}");
 }
 
 /**
@@ -85,7 +85,7 @@ function diff_node_revisions($form, $form_state, $node) {
       );
     }
     else {
-      $diff_date = l(format_date($revision->timestamp, 'small'), "node/$node->nid/revisions/$revision->vid/view");
+      $diff_date = l(format_date($revision->timestamp, 'small'), "node/$node->nid/compare/$revision->vid/" . $node->vid);
       $form['info'][$revision->vid] = array(
         '#markup' => t('!date by !username', array(
           '!date' => $diff_date,
@@ -140,7 +140,7 @@ function diff_node_revisions_submit($form, &$form_state) {
   // The node IDs are ordered so that the old revision is always on the left.
   $old_vid = min($form_state['values']['old'], $form_state['values']['new']);
   $new_vid = max($form_state['values']['old'], $form_state['values']['new']);
-  $form_state['redirect'] = 'node/' . $form_state['values']['nid'] . '/revisions/view/' . $old_vid . '/' . $new_vid;
+  $form_state['redirect'] = 'node/' . $form_state['values']['nid'] . '/compare/' . $old_vid . '/' . $new_vid;
 }
 
 /**
@@ -190,11 +190,11 @@ function diff_diffs_show(Node $node, $old_vid, $new_vid, $state = '') {
 
   // Generate table header (date, username, log message).
   $old_header = t('!date by !username', array(
-    '!date' => l(format_date($old_node->revision_timestamp), "node/$node->nid/revisions/$old_node->vid/view", array('absolute' => 1)),
+    '!date' => l(format_date($old_node->revision_timestamp), "node/$node->nid/compare/$old_node->vid/" . $new_vid, array('absolute' => 1)),
     '!username' => theme('username', array('account' => $node_revisions[$old_vid])),
   ));
   $new_header = t('!date by !username', array(
-    '!date' => l(format_date($new_node->revision_timestamp), "node/$node->nid/revisions/$new_node->vid/view", array('absolute' => 1)),
+    '!date' => l(format_date($new_node->revision_timestamp), "node/$node->nid/compare/$old_vid/" . $new_node->vid, array('absolute' => 1)),
     '!username' => theme('username', array('account' => $node_revisions[$new_vid])),
   ));
 
@@ -205,14 +205,14 @@ function diff_diffs_show(Node $node, $old_vid, $new_vid, $state = '') {
   $nav_suffix = ($default_state != $state) ? '/' . str_replace('_', '-', $state) : '';
   $next_vid = _diff_get_next_vid($node_revisions, $new_vid);
   if ($next_vid) {
-    $next_link = l(t('Next difference >'), 'node/' . $node->nid . '/revisions/view/' . $new_vid . '/' . $next_vid . $nav_suffix, array('absolute' => 1));
+    $next_link = l(t('Next difference >'), 'node/' . $node->nid . '/compare/' . $new_vid . '/' . $next_vid . $nav_suffix, array('absolute' => 1));
   }
   else {
     $next_link = '';
   }
   $prev_vid = _diff_get_previous_vid($node_revisions, $old_vid);
   if ($prev_vid) {
-    $prev_link = l(t('< Previous difference'), 'node/' . $node->nid . '/revisions/view/' . $prev_vid . '/' . $old_vid . $nav_suffix, array('absolute' => 1));
+    $prev_link = l(t('< Previous difference'), 'node/' . $node->nid . '/compare/' . $prev_vid . '/' . $old_vid . $nav_suffix, array('absolute' => 1));
   }
   else {
     $prev_link = '';
@@ -249,7 +249,7 @@ function diff_diffs_show(Node $node, $old_vid, $new_vid, $state = '') {
   foreach (diff_available_states('node') as $alternative_state => $label) {
     $links[$alternative_state] = array(
       'title' => $label,
-      'href' => "node/{$node->nid}/revisions/view/{$old_vid}/{$new_vid}" . ($alternative_state == $default_state ? '' : '/' . str_replace('_', '-', $alternative_state)),
+      'href' => "node/{$node->nid}/compare/{$old_vid}/{$new_vid}" . ($alternative_state == $default_state ? '' : '/' . str_replace('_', '-', $alternative_state)),
     );
   }
   if (count($links) > 1) {
