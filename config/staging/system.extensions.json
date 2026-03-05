@@ -63,7 +63,9 @@
         "user": true,
         "views": true,
         "views_field_view": true,
-        "views_ui": true
+        "views_ui": true,
+        "copy_blocks": true,
+        "draft_workflow": true
     },
     "themes": {
         "api_borg": true
