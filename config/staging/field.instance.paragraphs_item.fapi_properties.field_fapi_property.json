@@ -5,14 +5,15 @@
     "bundle": "fapi_properties",
     "label": "FAPI Property",
     "widget": {
-        "weight": "0",
-        "type": "node_reference_autocomplete",
-        "module": "node_reference",
+        "weight": 0,
+        "type": "entityreference_autocomplete",
+        "module": "entityreference",
         "active": 1,
         "settings": {
-            "autocomplete_match": "contains",
+            "match_operator": "CONTAINS",
             "size": "60",
-            "autocomplete_path": "node_reference/autocomplete"
+            "hide_ids": 0,
+            "path": ""
         }
     },
     "description": "",
@@ -26,10 +27,10 @@
     "display": {
         "default": {
             "label": "hidden",
-            "type": "node_reference_plain",
+            "type": "entityreference_plain",
             "weight": "0",
             "settings": [],
-            "module": "node_reference"
+            "module": ""
         }
     }
 }
