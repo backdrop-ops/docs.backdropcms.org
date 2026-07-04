@@ -50,7 +50,11 @@
         "delete any fapi_property content",
         "view the administration theme",
         "use text format full_html",
-        "use text format markdown"
+        "use text format markdown",
+        "create draft revisions",
+        "activate draft revisions",
+        "publish draft workflow content",
+        "view pending draft revisions"
     ],
     "description": ""
 }

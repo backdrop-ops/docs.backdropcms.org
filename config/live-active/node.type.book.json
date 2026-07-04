@@ -38,7 +38,9 @@
         "language": 0,
         "diff_show_preview_changes_node": 1,
         "diff_enable_revisions_page_node": 1,
-        "diff_view_mode_preview_node": "diff_standard"
+        "diff_view_mode_preview_node": "diff_standard",
+        "draft_workflow_enabled": true,
+        "draft_workflow_prominent_revisions": false
     },
     "node_preview": "1"
 }

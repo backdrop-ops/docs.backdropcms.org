@@ -37,7 +37,9 @@
         "node_permissions": true,
         "diff_show_preview_changes_node": 1,
         "diff_enable_revisions_page_node": 1,
-        "diff_view_mode_preview_node": ""
+        "diff_view_mode_preview_node": "",
+        "draft_workflow_enabled": true,
+        "draft_workflow_prominent_revisions": false
     },
     "orig_type": "contrib_documentation"
 }

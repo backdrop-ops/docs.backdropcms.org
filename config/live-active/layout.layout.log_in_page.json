@@ -19,8 +19,7 @@
     },
     "positions": {
         "header": [
-            "67b37cf6-ba04-433c-923a-587fecf84356",
-            "3615b749-ce08-458f-8100-0eb5e6f170b9"
+            "428e3b82-b97b-4a12-b93f-63a6d4dc59dd"
         ],
         "top": [
             "6424e7b5-f994-4d03-b800-a466fdeb1981"
@@ -34,67 +33,30 @@
         ],
         "bottom": [],
         "footer": [
-            "d66bac4c-263a-4cb4-8c57-87ee07ce56e8",
-            "10823dee-c671-44f5-9d57-87d8e6394b43",
-            "576625de-5a37-4c00-8400-f07d7ced6caa",
-            "f8ac9d45-e23e-469e-963c-608ca21c32bc",
-            "fc11b9fb-14c9-4efe-8a30-487ac3b8cc4a"
+            "c508bd96-c042-40f7-b500-a068b3e63283"
         ],
         "title": []
     },
     "contexts": [],
     "relationships": [],
     "content": {
-        "67b37cf6-ba04-433c-923a-587fecf84356": {
-            "plugin": "system:header",
+        "428e3b82-b97b-4a12-b93f-63a6d4dc59dd": {
+            "plugin": "copy_blocks:region_copy",
             "data": {
                 "status": 1,
-                "module": "system",
-                "delta": "header",
+                "module": "copy_blocks",
+                "delta": "region_copy",
                 "settings": {
                     "title_display": "default",
                     "title": "",
                     "style": "default",
-                    "block_settings": {
-                        "menu": "",
-                        "logo": 1,
-                        "site_name": 1,
-                        "site_slogan": 1
-                    },
-                    "contexts": []
+                    "block_settings": [],
+                    "contexts": [],
+                    "admin_label": "",
+                    "admin_description": "",
+                    "source_region": "default:header"
                 },
-                "uuid": "67b37cf6-ba04-433c-923a-587fecf84356",
-                "style": {
-                    "plugin": "default",
-                    "data": {
-                        "settings": {
-                            "classes": "col-xs-12"
-                        }
-                    }
-                }
-            }
-        },
-        "3615b749-ce08-458f-8100-0eb5e6f170b9": {
-            "plugin": "system:user-menu",
-            "data": {
-                "status": 1,
-                "module": "system",
-                "delta": "user-menu",
-                "settings": {
-                    "title_display": "default",
-                    "title": "",
-                    "style": "default",
-                    "block_settings": {
-                        "menu_name": "user-menu",
-                        "style": "tree",
-                        "level": "1",
-                        "depth": "1",
-                        "expand_all": 0,
-                        "toggle": 0
-                    },
-                    "contexts": []
-                },
-                "uuid": "3615b749-ce08-458f-8100-0eb5e6f170b9",
+                "uuid": "428e3b82-b97b-4a12-b93f-63a6d4dc59dd",
                 "style": {
                     "plugin": "default",
                     "data": {
@@ -288,49 +250,12 @@
                 }
             }
         },
-        "d66bac4c-263a-4cb4-8c57-87ee07ce56e8": {
-            "plugin": "on_the_web:social_links",
+        "c508bd96-c042-40f7-b500-a068b3e63283": {
+            "plugin": "copy_blocks:region_copy",
             "data": {
                 "status": 1,
-                "module": "on_the_web",
-                "delta": "social_links",
-                "settings": {
-                    "title_display": "custom",
-                    "title": "Stay connected",
-                    "style": "default",
-                    "block_settings": {
-                        "services": {
-                            "display": "auto",
-                            "enabled": {
-                                "linkedin": "linkedin",
-                                "rss": "rss",
-                                "youtube": "youtube",
-                                "google": "google",
-                                "facebook": "facebook",
-                                "github": "github",
-                                "twitter": "twitter"
-                            }
-                        }
-                    },
-                    "contexts": []
-                },
-                "uuid": "d66bac4c-263a-4cb4-8c57-87ee07ce56e8",
-                "style": {
-                    "plugin": "default",
-                    "data": {
-                        "settings": {
-                            "classes": "col-sm-6"
-                        }
-                    }
-                }
-            }
-        },
-        "10823dee-c671-44f5-9d57-87d8e6394b43": {
-            "plugin": "borg_signup:newsletter",
-            "data": {
-                "status": 1,
-                "module": "borg_signup",
-                "delta": "newsletter",
+                "module": "copy_blocks",
+                "delta": "region_copy",
                 "settings": {
                     "title_display": "default",
                     "title": "",
@@ -338,98 +263,10 @@
                     "block_settings": [],
                     "contexts": [],
                     "admin_label": "",
-                    "admin_description": ""
+                    "admin_description": "",
+                    "source_region": "default:footer"
                 },
-                "uuid": "10823dee-c671-44f5-9d57-87d8e6394b43",
-                "style": {
-                    "plugin": "default",
-                    "data": {
-                        "settings": {
-                            "classes": "col-sm-6"
-                        }
-                    }
-                }
-            }
-        },
-        "576625de-5a37-4c00-8400-f07d7ced6caa": {
-            "plugin": "block:newsletter",
-            "data": {
-                "status": 0,
-                "module": "block",
-                "delta": "newsletter",
-                "settings": {
-                    "title_display": "default",
-                    "title": "",
-                    "style": "default",
-                    "block_settings": {
-                        "delta": "newsletter",
-                        "description": "",
-                        "reusable": true
-                    },
-                    "contexts": []
-                },
-                "uuid": "576625de-5a37-4c00-8400-f07d7ced6caa",
-                "style": {
-                    "plugin": "default",
-                    "data": {
-                        "settings": {
-                            "classes": "col-sm-6"
-                        }
-                    }
-                }
-            }
-        },
-        "f8ac9d45-e23e-469e-963c-608ca21c32bc": {
-            "plugin": "system:powered-by",
-            "data": {
-                "status": 1,
-                "module": "system",
-                "delta": "powered-by",
-                "settings": {
-                    "title_display": "default",
-                    "title": "",
-                    "style": "default",
-                    "block_settings": [],
-                    "contexts": []
-                },
-                "uuid": "f8ac9d45-e23e-469e-963c-608ca21c32bc",
-                "style": {
-                    "plugin": "default",
-                    "data": {
-                        "settings": {
-                            "classes": ""
-                        }
-                    }
-                }
-            }
-        },
-        "fc11b9fb-14c9-4efe-8a30-487ac3b8cc4a": {
-            "plugin": "menu:menu-footer-menu",
-            "data": {
-                "status": 1,
-                "module": "menu",
-                "delta": "menu-footer-menu",
-                "settings": {
-                    "title_display": "none",
-                    "title": "",
-                    "style": "default",
-                    "block_settings": {
-                        "menu_name": "menu-footer-menu",
-                        "style": "tree",
-                        "level": "1",
-                        "depth": "0",
-                        "expand_all": 0,
-                        "clickdown": 0,
-                        "toggle": 0,
-                        "toggle_text": "Menu",
-                        "collapse": "default",
-                        "accordion": 0
-                    },
-                    "contexts": [],
-                    "admin_label": "",
-                    "admin_description": ""
-                },
-                "uuid": "fc11b9fb-14c9-4efe-8a30-487ac3b8cc4a",
+                "uuid": "c508bd96-c042-40f7-b500-a068b3e63283",
                 "style": {
                     "plugin": "default",
                     "data": {

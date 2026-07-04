@@ -34,7 +34,9 @@
         "node_user_picture": true,
         "hidden_path": 1,
         "language": 0,
-        "node_permissions": true
+        "node_permissions": true,
+        "draft_workflow_enabled": true,
+        "draft_workflow_prominent_revisions": false
     },
     "orig_type": "fapi_property"
 }

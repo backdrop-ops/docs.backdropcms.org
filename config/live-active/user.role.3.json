@@ -139,7 +139,11 @@
         "tamper documentation",
         "use text format markdown",
         "administer google analytics",
-        "administer menu positions"
+        "administer menu positions",
+        "create draft revisions",
+        "activate draft revisions",
+        "publish draft workflow content",
+        "view pending draft revisions"
     ],
     "description": ""
 }

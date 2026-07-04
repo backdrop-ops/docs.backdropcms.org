@@ -26,6 +26,8 @@
         "menu_options": [],
         "menu_parent": "main-menu:0",
         "node_permissions": true,
-        "hidden_path": "0"
+        "hidden_path": "0",
+        "draft_workflow_enabled": true,
+        "draft_workflow_prominent_revisions": false
     }
 }

@@ -22,7 +22,9 @@
         "node_permissions": true,
         "language": 0,
         "hidden_path": "0",
-        "node_preview": "1"
+        "node_preview": "1",
+        "draft_workflow_enabled": true,
+        "draft_workflow_prominent_revisions": false
     },
     "base": "api",
     "module": "api",
