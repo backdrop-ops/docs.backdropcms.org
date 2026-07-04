@@ -107,6 +107,7 @@ function api_borg_preprocess_paragraphs_item(&$variables, $hook) {
   $content = $variables['content'];
 
   if ($variables['bundle'] == 'fapi_properties') {
+    // @todo needs reworking.
     $property = $content['field_fapi_property'][0]['#markup'];
     $id_suffix = in_array($property, backdropapi_form_api_elements()) ? '_property' : '';
 

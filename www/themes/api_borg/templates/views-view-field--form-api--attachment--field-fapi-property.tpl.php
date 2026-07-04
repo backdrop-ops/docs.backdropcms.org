@@ -23,10 +23,12 @@
 
 $default_value = '';
 if (isset($row->field_field_default_value[0])) {
+  // @todo needs reworking.
   $default_value = $row->field_field_default_value[0]['rendered']['#markup'];
 }
 $property = '';
 if (isset($row->field_field_fapi_property[0])) {
+  // @todo needs reworking.
   $property = $row->field_field_fapi_property[0]['rendered']['#markup'];
   $id_suffix = in_array($property, backdropapi_form_api_elements()) ? '_property' : '';
 }
