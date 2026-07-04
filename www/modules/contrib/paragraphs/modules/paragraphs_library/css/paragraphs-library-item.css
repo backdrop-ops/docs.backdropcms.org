@@ -1,0 +1,14 @@
+.paragraphs-library-item--properties {
+  > .entity-property {
+    display: flex;
+
+    > .entity-property-label {
+      flex: 0;
+      font-weight: bold;
+    }
+    > .entity-property-value {
+      flex: 1;
+      padding-left: 10px;
+    }
+  }
+}

@@ -464,7 +464,7 @@ function entity_plus_metadata_field_property_get($entity, array $options, $name,
       $values[$delta] = $data[$columns[0]];
       if ($info['type'] == 'boolean' || $info['type'] == 'list<boolean>') {
         // Ensure that we have a clean boolean data type.
-        $values[$delta] = (boolean) $values[$delta];
+        $values[$delta] = (bool) $values[$delta];
       }
     }
   }
@@ -487,7 +487,7 @@ function entity_plus_metadata_field_property_set($entity, $name, $value, $langco
       $items[$delta][$columns[0]] = $value;
       if ($info['type'] == 'boolean' || $info['type'] == 'list<boolean>') {
         // Convert boolean values back to an integer for writing.
-        $items[$delta][$columns[0]] = (integer) $items[$delta][$columns[0]] = $value;
+        $items[$delta][$columns[0]] = (int) $items[$delta][$columns[0]] = $value;
       }
     }
   }

@@ -2,13 +2,13 @@ html.dialog-open {
   position: inherit;
 }
 
-.field-widget-paragraphs-embed table td.paragraph-item .paragraph-bundle-header {
+.field-widget-paragraphs-embed .paragraph-bundle-header {
   display: flex;
   justify-content: space-between;
-}
 
-.field-widget-paragraphs-embed table td.paragraph-item .inner-actions {
-  display: flex;
+  .inner-actions {
+    display: flex;
+  }
 }
 
 .paragraphs-actions-more {
@@ -119,4 +119,13 @@ html.dialog-open {
       white-space: normal;
     }
   }
+}
+
+.paragraphs--preview-description {
+  font-size: .875rem;
+  color: #666;
+}
+
+.paragraphs--collapsible-preview:open .paragraphs--preview-description {
+  display: none;
 }

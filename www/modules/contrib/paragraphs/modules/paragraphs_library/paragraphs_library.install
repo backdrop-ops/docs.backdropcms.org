@@ -1,0 +1,163 @@
+<?php
+/**
+ * @file
+ * Paragraphs library install and update hooks.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function paragraphs_library_schema() {
+  $schema = [];
+
+  // This table will hold Paragraphs library item entities.
+  $schema['paragraphs_library_item'] = [
+    'description' => 'The base table for Paragraphs library item entities.',
+    'fields' => [
+      'item_id' => [
+        'description' => 'The primary identifier for the Paragraphs library item.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      // Defaults to NULL in order to avoid a brief period of potential
+      // deadlocks on the index.
+      'revision_id' => array(
+        'description' => 'The primary identifier for this version.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'type' => [
+        'description' => 'The type (bundle) of this Paragraphs library item.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'title' => [
+        'description' => 'The title of the Paragraphs library item.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'uid' => [
+        'description' => 'ID of Backdrop account that created this Paragraphs library item.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'created' => [
+        'description' => 'The Unix timestamp when the Paragraphs library item was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'changed' => [
+        'description' => 'The Unix timestamp when the Paragraphs library item was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+    ],
+    'primary key' => ['item_id'],
+  ];
+
+  $schema['paragraphs_library_item_revision'] = array(
+    'description' => 'Stores information about each saved version of a Paragraphs library item.',
+    'fields' => array(
+      'item_id' => array(
+        'description' => 'The Paragraphs library item this version belongs to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'revision_id' => array(
+        'description' => 'The primary identifier for this version.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid that created this version.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'title' => array(
+        'description' => 'The title of this version.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'log' => array(
+        'description' => 'The log entry explaining the changes in this version.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+        'default' => '',
+      ),
+      'timestamp' => array(
+        'description' => 'A Unix timestamp indicating when this version was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'Boolean indicating whether the Paragraphs library item (at the time of this revision) is published (visible to non-administrators).',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'indexes' => array(
+      'item_id' => array('item_id'),
+      'uid' => array('uid'),
+    ),
+    'primary key' => array('revision_id'),
+    'foreign keys' => array(
+      'versioned_paragraphs_library_item' => array(
+        'table' => 'paragraphs_library_item',
+        'columns' => array('item_id' => 'item_id'),
+      ),
+      'version_author' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function paragraphs_library_install() {
+  user_role_grant_permissions(BACKDROP_AUTHENTICATED_ROLE, [
+    // Grant viewing permision to authenticated users.
+    'view paragraphs_library_item entities',
+  ]);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function paragraphs_library_uninstall() {
+  // Remove the view showing Paragraphs library item entities.
+  $config = config('views.view.paragraphs_library');
+  $config->delete();
+
+  // Get all Paragraphs library types/bundles.
+  include_once backdrop_get_path('module', 'paragraphs_library') . '/paragraphs_library.module';
+  $library_types = paragraphs_library_type_load();
+  foreach ($library_types as $library_type) {
+    // Instruct field.module to remove fields attached to these library types.
+    field_attach_delete_bundle('paragraphs_library_item', $library_type);
+  }
+
+  menu_rebuild();
+}

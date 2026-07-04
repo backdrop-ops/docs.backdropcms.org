@@ -1,0 +1,61 @@
+{
+    "_config_name": "field.instance.paragraphs_library_item.default.field_paragraphs_library_item",
+    "field_name": "field_paragraphs_library_item",
+    "module": "paragraphs_library",
+    "entity_type": "paragraphs_library_item",
+    "bundle": "default",
+    "label": "Library item",
+    "widget": {
+        "weight": "1",
+        "type": "paragraphs_embed",
+        "module": "paragraphs",
+        "active": 0,
+        "settings": []
+    },
+    "description": "",
+    "required": 0,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "title": "Library item",
+        "title_multiple": "Library item",
+        "default_edit_mode": "open",
+        "default_edit_mode_override": "1",
+        "add_mode": "button",
+        "modal_admin": 0,
+        "allowed_bundles": {
+            "from_library": -1
+        },
+        "bundle_weights": {
+            "from_library": "-2"
+        },
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "paragraphs_view",
+            "weight": "0",
+            "settings": {
+                "view_mode": "full"
+            },
+            "module": "paragraphs"
+        },
+        "paragraphs_library_item": {
+            "label": "hidden",
+            "type": "paragraphs_view",
+            "weight": "0",
+            "settings": {
+                "view_mode": "paragraphs_editor_preview",
+                "field_wrappers": {
+                    "field_wrapper": "-",
+                    "label_wrapper": "-",
+                    "item_wrapper": "-",
+                    "field_wrapper_class": ""
+                }
+            },
+            "module": "paragraphs"
+        }
+    }
+}

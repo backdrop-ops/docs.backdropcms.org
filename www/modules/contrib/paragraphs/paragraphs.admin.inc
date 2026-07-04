@@ -38,25 +38,25 @@ function paragraphs_admin_bundle_overview() {
       // Manage fields.
       $operations['manage_fields'] = array(
         'title' => t('Manage fields'),
-        'href' => 'admin/structure/paragraphs/' . $type_url_str . '/fields',
+        'href' => 'admin/structure/paragraphs/types/' . $type_url_str . '/fields',
       );
 
       // Display fields.
       $operations['manage_display'] = array(
         'title' => t('Manage display'),
-        'href' => 'admin/structure/paragraphs/' . $type_url_str . '/display',
+        'href' => 'admin/structure/paragraphs/types/' . $type_url_str . '/display',
       );
     }
 
     // Manage bundle.
     $operations['edit_type'] = array(
       'title' => t('Configure'),
-      'href' => 'admin/structure/paragraphs/' . $type_url_str . '/edit',
+      'href' => 'admin/structure/paragraphs/types/' . $type_url_str . '/edit',
     );
     // Clone bundle.
     $operations['clone_type'] = array(
-      'title' => t('clone'),
-      'href' => 'admin/structure/paragraphs/' . $type_url_str . '/clone',
+      'title' => t('Clone'),
+      'href' => 'admin/structure/paragraphs/types/' . $type_url_str . '/clone',
     );
 
     // Manage permissions if module enabled.
@@ -72,7 +72,7 @@ function paragraphs_admin_bundle_overview() {
     // Delete bundle.
     $operations['delete_type'] = array(
       'title' => t('Delete'),
-      'href' => 'admin/structure/paragraphs/' . $type_url_str . '/delete',
+      'href' => 'admin/structure/paragraphs/types/' . $type_url_str . '/delete',
     );
 
     $row['operations'] = array(
@@ -208,7 +208,9 @@ function paragraphs_admin_bundle_form_validate(array $form, array &$form_state) 
     // 'theme' conflicts with theme_node_form().
     // '0' is invalid, since elsewhere we check it using empty().
     if (in_array($bundle->bundle, array('0', 'theme'))) {
-      form_set_error('type', t("Invalid machine-readable name. Enter a name other than %invalid.", array('%invalid' => $bundle->bundle)));
+      form_set_error('type', t("Invalid machine-readable name. Enter a name other than %invalid.", array(
+        '%invalid' => $bundle->bundle,
+      )));
     }
   }
 
@@ -309,10 +311,10 @@ function paragraphs_admin_bundle_form_submit(array $form, array &$form_state) {
   }
   elseif ($status == SAVED_NEW) {
     backdrop_set_message(t('The Paragraph type %name has been added.', $t_args));
-    watchdog('paragraphs', 'Added Paragraph type %name.', $t_args, WATCHDOG_NOTICE, l(t('view'), 'admin/structure/paragraphs'));
+    watchdog('paragraphs', 'Added Paragraph type %name.', $t_args, WATCHDOG_NOTICE, l(t('view'), 'admin/structure/paragraphs/types/'));
   }
 
-  $form_state['redirect'] = 'admin/structure/paragraphs';
+  $form_state['redirect'] = 'admin/structure/paragraphs/types';
 }
 
 /**
@@ -330,7 +332,7 @@ function paragraphs_admin_bundle_form_submit(array $form, array &$form_state) {
 function paragraphs_admin_bundle_delete_form(array $form, array &$form_state, $bundle) {
   if (!$bundle) {
     backdrop_set_message(t('Could not load Paragraph type'), 'error');
-    backdrop_goto('admin/structure/paragraphs');
+    backdrop_goto('admin/structure/paragraphs/types');
   }
 
   $form['type'] = array(
@@ -345,7 +347,7 @@ function paragraphs_admin_bundle_delete_form(array $form, array &$form_state, $b
   $message = t('Are you sure you want to delete the Paragraph type %bundle?', array('%bundle' => $bundle->name));
   $caption = '<p>' . t('This action cannot be undone. Content using this Paragraph type will be broken.') . '</p>';
 
-  return confirm_form($form, filter_xss_admin($message), 'admin/structure/paragraphs', filter_xss_admin($caption), t('Delete'));
+  return confirm_form($form, filter_xss_admin($message), 'admin/structure/paragraphs/types', filter_xss_admin($caption), t('Delete'));
 }
 
 /**
@@ -365,7 +367,7 @@ function paragraphs_admin_bundle_delete_form_submit(array $form, array &$form_st
   backdrop_set_message(t('The Paragraph type %name has been deleted.', $t_args));
   watchdog('paragraphs', 'Deleted Paragraph type %name.', $t_args, WATCHDOG_NOTICE);
 
-  $form_state['redirect'] = 'admin/structure/paragraphs';
+  $form_state['redirect'] = 'admin/structure/paragraphs/types';
 }
 
 /**
@@ -550,9 +552,11 @@ function paragraphs_modal_admin_sort_form($form, &$form_state, $paragraphs_item)
       $item['entity'] = paragraphs_item_load($item['value']);
       $item_render_array = $item['entity']->view('paragraphs_editor_preview', $langcode);
       $item_markup = backdrop_render($item_render_array);
+      $has_markup = TRUE;
+      $bundle = paragraphs_bundle_load($item['entity']->bundle);
       if (empty($item_markup) || empty(trim(strip_tags($item_markup, '<img><a>')))) {
-        $bundle = paragraphs_bundle_load($item['entity']->bundle);
         $item_markup = $bundle->name;
+        $has_markup = FALSE;
       }
       $form['paragraphs_items'][$item['value']] = array(
         'preview' => array(
@@ -570,6 +574,20 @@ function paragraphs_modal_admin_sort_form($form, &$form_state, $paragraphs_item)
           '#title_display' => 'invisible',
         ),
       );
+
+      if ($has_markup) {
+        // Display collapsed if there is something to preview.
+        $summary_preview = trim(filter_xss(truncate_utf8(strip_tags($item_markup), 140, TRUE, TRUE, 150)));
+        $summary = t('Preview') . ($summary_preview ? '<span class="paragraphs--preview-description">: ' . $summary_preview . '</span>' : '');
+        $form['paragraphs_items'][$item['value']]['preview'] = array(
+          '#type' => 'details',
+          '#summary' => $summary,
+          '#details' => $item_markup,
+          '#attributes' => array(
+            'class' => array('paragraphs--collapsible-preview'),
+          ),
+        );
+      }
     }
     $form['actions'] = array(
       '#type' => 'actions',
@@ -855,6 +873,7 @@ function paragraphs_modal_admin_add_form($form, &$form_state, $mode, $paragraphs
     'bundle' => $paragraphs_bundle->bundle,
     'field_name' => $field_name,
   ));
+  /** @var ParagraphsItemEntity $new_paragraph */
   $new_paragraph->setHostEntity($host_entity_type, $host_entity, $host_entity->langcode, FALSE);
   $new_paragraph->position = $new_paragraph_position;
 

@@ -1,0 +1,76 @@
+{
+    "_config_name": "field.instance.paragraphs_item.from_library.field_reusable_paragraph",
+    "field_name": "field_reusable_paragraph",
+    "module": "paragraphs_library",
+    "entity_type": "paragraphs_item",
+    "bundle": "from_library",
+    "label": "Reusable paragraph",
+    "widget": {
+        "weight": "1",
+        "type": "entityreference_autocomplete",
+        "module": "entityreference",
+        "active": 1,
+        "settings": {
+            "match_operator": "CONTAINS",
+            "size": "60",
+            "hide_ids": 0,
+            "path": ""
+        }
+    },
+    "description": "",
+    "required": 1,
+    "deleted": 0,
+    "default_value": null,
+    "default_value_function": null,
+    "settings": {
+        "entityconnect": {
+            "button": {
+                "unload_add_button": "0",
+                "unload_edit_button": "0"
+            },
+            "icon": {
+                "show_add_icon": "2",
+                "show_edit_icon": "2"
+            }
+        },
+        "user_register_form": false
+    },
+    "display": {
+        "default": {
+            "label": "hidden",
+            "type": "entityreference_entity_view",
+            "weight": "0",
+            "settings": {
+                "view_mode": "default",
+                "links": 1,
+                "use_content_language": 1,
+                "hide_title": 1,
+                "field_wrappers": {
+                    "field_wrapper": "-",
+                    "label_wrapper": "-",
+                    "item_wrapper": "-",
+                    "field_wrapper_class": ""
+                }
+            },
+            "module": "entityreference"
+        },
+        "paragraphs_editor_preview": {
+            "label": "hidden",
+            "type": "entityreference_entity_view",
+            "weight": "0",
+            "settings": {
+                "view_mode": "paragraphs_library_item",
+                "links": 0,
+                "use_content_language": 0,
+                "hide_title": 1,
+                "field_wrappers": {
+                    "field_wrapper": "-",
+                    "label_wrapper": "-",
+                    "item_wrapper": "-",
+                    "field_wrapper_class": ""
+                }
+            },
+            "module": "entityreference"
+        }
+    }
+}

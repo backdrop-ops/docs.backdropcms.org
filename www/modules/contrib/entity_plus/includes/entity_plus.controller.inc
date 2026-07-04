@@ -359,7 +359,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
   /**
    * Overrides BackdropDefaultEntityController::resetCache().
    */
-  public function resetCache(array $ids = NULL) {
+  public function resetCache(?array $ids = NULL) {
     $this->cacheComplete = FALSE;
     parent::resetCache($ids);
   }
@@ -414,7 +414,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
    *   Optionally a DatabaseTransaction object to use. Allows overrides to pass
    *   in their transaction object.
    */
-  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+  public function delete($ids, ?DatabaseTransaction $transaction = NULL) {
     $entities = $ids ? $this->load($ids) : FALSE;
     if (!$entities) {
       // Do nothing, in case invalid or no ids have been passed.
@@ -486,7 +486,7 @@ class EntityPlusController extends DefaultEntityController implements EntityPlus
    *   Optionally a DatabaseTransaction object to use. Allows overrides to pass
    *   in their transaction object.
    */
-  public function save($entity, DatabaseTransaction $transaction = NULL) {
+  public function save($entity, ?DatabaseTransaction $transaction = NULL) {
     $transaction = isset($transaction) ? $transaction : db_transaction();
     try {
       // Load the stored entity, if any.
@@ -931,7 +931,7 @@ class EntityPlusControllerExportable extends EntityPlusController {
   /**
    * Resets the cache.
    */
-  public function resetCache(array $ids = NULL) {
+  public function resetCache(?array $ids = NULL) {
     $this->cacheComplete = FALSE;
     if (isset($ids)) {
       foreach (array_intersect_key($this->entityCache, array_flip($ids)) as $id => $entity) {
@@ -948,7 +948,7 @@ class EntityPlusControllerExportable extends EntityPlusController {
   /**
    * Overridden to care about reverted entities.
    */
-  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+  public function delete($ids, ?DatabaseTransaction $transaction = NULL) {
     $entities = $ids ? $this->load($ids) : FALSE;
     if ($entities) {
       parent::delete($ids, $transaction);
@@ -1007,7 +1007,7 @@ class EntityPlusControllerExportable extends EntityPlusController {
   /**
    * Overridden to care exportables that are overridden.
    */
-  public function save($entity, DatabaseTransaction $transaction = NULL) {
+  public function save($entity, ?DatabaseTransaction $transaction = NULL) {
     // Preload $entity->original by name key if necessary.
     if (!empty($entity->{$this->nameKey}) && empty($entity->{$this->idKey}) && !isset($entity->original)) {
       $entity->original = entity_load_unchanged($this->entityType, $entity->{$this->nameKey});

@@ -1,0 +1,1220 @@
+<?php
+/**
+ * @file
+ * Paragraphs library hook implementations and other functions.
+ */
+
+ define('PARAGRAPHS_LIBRARY_REVISIONS', TRUE);
+
+/**
+ * Implements hook_config_info().
+ */
+function paragraphs_library_config_info() {
+  $prefixes['paragraphs_library.type'] = [
+    'name_key' => 'type',
+    'label_key' => 'label',
+    'group' => t('Paragraphs library types'),
+  ];
+  return $prefixes;
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function paragraphs_library_entity_info() {
+  $entity_info = [
+    'paragraphs_library_item' => [
+      'label' => t('Paragraphs library item'),
+      'plural label' => t('Paragraphs library items'),
+      'entity class' => 'ParagraphsLibraryItem',
+      'controller class' => 'ParagraphsLibraryItemController',
+      'base table' => 'paragraphs_library_item',
+      'fieldable' => TRUE,
+      'entity keys' => [
+        'id' => 'item_id',
+        'bundle' => 'type',
+        'label' => 'title',
+        'revision' => 'revision_id',
+      ],
+      'revision table' => 'paragraphs_library_item_revision',
+      'bundle keys' => [
+        'bundle' => 'type',
+      ],
+      'bundles' => [],
+      'view modes' => [
+        'paragraphs_library_item' => [
+          'label' => 'Paragraphs library item preview',
+          'custom settings' => FALSE,
+        ],
+        'full' => [
+          'label' => 'Full',
+          'custom settings' => TRUE,
+        ],
+      ],
+      'module' => 'paragraphs_library',
+
+      // While this key is not defined in hook_entity_info(), we use it for
+      // convenience, providing an easier way to check access outside the class.
+      'access callback' => 'paragraphs_library_access',
+
+      // This controller is used to display non Field API extra fields.
+      'extra fields controller class' => 'EntityDefaultExtraFieldsController',
+
+      // By including 'admin ui' we are telling Entity UI to create menu items
+      // for viewing, adding, editing and deleting paragraphs_library_item entities.
+      'admin ui' => [
+        'path' => 'admin/content/paragraphs/library',
+        'controller class' => 'EntityBundleableUIController',
+        'file' => 'paragraphs_library.admin.inc',
+        'menu wildcard' => '%paragraphs_library_item',
+      ],
+
+      // This tells Entity Plus to make the text entered in the entity
+      // properties (e.g. title) available to i18n_string for translations.
+      'i18n controller class' => 'EntityDefaultI18nStringController',
+    ],
+  ];
+
+  // Bundles must provide a human readable name so we can create help and error
+  // messages, and the path to attach Field admin pages to.
+  // node_type_cache_reset();
+  foreach (paragraphs_library_type_load() as $type) {
+    $entity_info['paragraphs_library_item']['bundles'][$type->type] = [
+      'label' => $type->label,
+      'admin' => [
+        'path' => 'admin/structure/paragraphs/library/types/%paragraphs_library_type',
+        'real path' => 'admin/structure/paragraphs/library/types/' . str_replace('_', '-', $type->type),
+        'bundle argument' => 5,
+        'access arguments' => ['administer paragraphs_library types'],
+      ],
+    ];
+  }
+
+  return $entity_info;
+}
+
+/**
+ * Implements hook.autoload_info().
+ */
+function paragraphs_library_autoload_info() {
+  return [
+    'ParagraphsLibraryItem' => 'paragraphs_library.class.inc',
+    'ParagraphsLibraryItemController' => 'paragraphs_library.controller.inc',
+    'views_handler_field_paragraphs_library_link_edit' => 'views/views_handler_field_paragraphs_library_link_edit.inc',
+    'views_handler_field_paragraphs_library_link' => 'views/views_handler_field_paragraphs_library_link.inc',
+    'views_handler_field_paragraphs_library_link_delete' => 'views/views_handler_field_paragraphs_library_link_delete.inc',
+  ];
+}
+
+/**
+ * Implements hook_menu().
+ *
+ */
+function paragraphs_library_menu() {
+  $items = [];
+
+  $items['admin/content/paragraphs/library/add'] = [
+    'title' => t('Add library item'),
+    'description' => t('Create a new item for reuse in the Paragraphs library.'),
+    'page callback' => 'paragraphs_library_type_choice',
+    'access callback' => 'paragraphs_library_access',
+    'access arguments' => array('create'),
+    'type' => MENU_LOCAL_ACTION,
+  ];
+
+  // Create paths to create Paragraphs library entities for each type.
+  foreach (paragraphs_library_type_load() as $type_name => $info) {
+    $items['admin/content/paragraphs/library/add/' . $type_name] = [
+      'title' => t('Add a %type Paragraphs library item', ['%type' => $info->label]),
+      'page callback' => 'paragraphs_library_item_add',
+      'page arguments' => [$type_name],
+      'access callback' => 'paragraphs_library_access',
+      'access arguments' => array('create'),
+      'type' => MENU_CALLBACK,
+    ];
+  }
+
+  $items['admin/content/paragraphs/library/%paragraphs_library_item'] = [
+    'title callback' => 'paragraphs_library_item_page_title',
+    'title arguments' => [4],
+    'description' => t('View a saved Paragraphs library item.'),
+    'page callback' => 'paragraphs_library_item_view',
+    'page arguments' => [4],
+    'access arguments' => ['view paragraphs_library_item entities'],
+  ];
+  $items['admin/content/paragraphs/library/%paragraphs_library_item/view'] = [
+    'title' => t('View'),
+    'page callback' => 'paragraphs_library_item_view',
+    'page arguments' => [4],
+    'access arguments' => ['view paragraphs_library_item entities'],
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  ];
+  $items['admin/content/paragraphs/library/%paragraphs_library_item/edit'] = [
+    'title' => t('Edit'),
+    'description' => t('Edit a saved Paragraphs library item.'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => ['paragraphs_library_item_form', 4],
+    'access callback' => 'paragraphs_library_access',
+    'access arguments' => array('update', 4),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
+  ];
+  $items['admin/content/paragraphs/library/%paragraphs_library_item/delete'] = [
+    'title' => t('Delete'),
+    'description' => t('Delete a Paragraphs library item.'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => ['paragraphs_library_item_delete_form', 4],
+    'access callback' => 'paragraphs_library_access',
+    'access arguments' => array('delete', 4),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 20,
+  ];
+  $items['admin/content/paragraphs/library/%paragraphs_library_item/usage'] = array(
+    'title' => t('Usage'),
+    'description' => t('View usage details for a Paragraphs library item.'),
+    'page callback' => 'paragraphs_library_item_usage_listing',
+    'page arguments' => [4],
+    'access callback' => 'paragraphs_library_access',
+    'access arguments' => array('update', 4),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 25,
+  );
+  $items['admin/content/paragraphs/library/%paragraphs_library_item/revisions'] = array(
+    'title' => 'Revisions',
+    'page callback' => 'paragraphs_library_item_revision_overview',
+    'page arguments' => array(4),
+    'access callback' => '_paragraphs_library_revision_access',
+    'access arguments' => array(4),
+    'weight' => 30,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/content/paragraphs/library/%paragraphs_library_item/revisions/%/view'] = array(
+    'title' => 'Revisions',
+    'load arguments' => array(6),
+    'page callback' => 'paragraphs_library_show',
+    'page arguments' => array(4, TRUE),
+    'access callback' => '_paragraphs_library_revision_access',
+    'access arguments' => array(4),
+  );
+  $items['admin/content/paragraphs/library/%paragraphs_library_item/revisions/%/revert'] = array(
+    'title' => 'Revert to earlier revision',
+    'load arguments' => array(6),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('paragraphs_library_revision_revert_confirm', 4),
+    'access callback' => '_paragraphs_library_revision_access',
+    'access arguments' => array(4, 'update'),
+  );
+  $items['admin/content/paragraphs/library/%paragraphs_library_item/revisions/%/delete'] = array(
+    'title' => 'Delete earlier revision',
+    'load arguments' => array(6),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('paragraphs_library_revision_delete_confirm', 4),
+    'access callback' => '_paragraphs_library_revision_access',
+    'access arguments' => array(4, 'delete'),
+  );
+
+  $items['admin/structure/paragraphs/library/types'] = [
+    'title' => t('Paragraphs library types'),
+    'description' => t('List all types of Paragraphs library items.'),
+    'page callback' => 'paragraphs_library_type_view',
+    'access arguments' => ['administer paragraphs_library types'],
+    'file' => 'paragraphs_library.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  ];
+
+  $items['admin/structure/paragraphs/library/types/add'] = [
+    'title' => t('Add a Paragraphs library type'),
+    'description' => t('Form to create a Paragraphs library type.'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => ['paragraphs_library_type_form', NULL],
+    'access arguments' => ['administer paragraphs_library types'],
+    'file' => 'paragraphs_library.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+  ];
+
+  $items['admin/structure/paragraphs/library/types/%paragraphs_library_type'] = [
+    'title' => t('Paragraphs library type'),
+    'title callback' => 'paragraphs_library_type_page_title',
+    'title arguments' => [5],
+    'description' => t('Provides an edit form for a Paragraphs library item type. This is where you will also find the Manage field and Manage display tabs.'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => ['paragraphs_library_type_form', 5],
+    'file' => 'paragraphs_library.admin.inc',
+    'access arguments' => ['administer paragraphs_library types'],
+    'type' => MENU_NORMAL_ITEM,
+  ];
+
+  // This item is here to create the "Info" tab.
+  $items['admin/structure/paragraphs/library/types/%paragraphs_library_type/configure'] = [
+    'title' => t('Configure'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'paragraphs_library.admin.inc',
+  ];
+
+  $items['admin/structure/paragraphs/library/types/%paragraphs_library_type/delete'] = [
+    'title' => t('Delete library type'),
+    'title callback' => 'paragraphs_library_type_page_title',
+    'title arguments' => [5],
+    'description' => t('Provides a delete form for a Paragraphs library item type.'),
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => ['paragraphs_library_type_delete_form', 5],
+    'file' => 'paragraphs_library.admin.inc',
+    'access arguments' => ['administer paragraphs_library types'],
+    'type' => MENU_NORMAL_ITEM,
+  ];
+
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function paragraphs_library_theme($existing, $type, $theme, $path) {
+  $items = [];
+
+  $items['paragraphs_library_item'] = [
+    'render element' => 'element',
+    'template' => 'paragraphs-library-item',
+    'path' => $path . '/theme',
+    'file' => 'paragraphs_library.theme.inc',
+    'attached' => [
+      'css' => [
+        $path . '/css/paragraphs-library-item.css',
+      ],
+    ],
+  ];
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function paragraphs_library_permission() {
+  $permissions = [
+    'administer paragraphs_library types' => [
+      'title' => t('Administer Paragraphs Library types'),
+      'description' => t('Allows users to configure Paragraphs Library types and their fields.'),
+      'restrict access' => TRUE,
+    ],
+    'administer paragraphs_library_item entities' => [
+      'title' => t('Administer Paragraphs library items'),
+      'description' => t('Allows users to administer Paragraphs library items.'),
+      'restrict access' => TRUE,
+    ],
+    'create paragraphs_library_item entities' => [
+      'title' => t('Create Paragraphs library items'),
+      'description' => t('Allows users to create Paragraphs library items.'),
+      'restrict access' => TRUE,
+    ],
+    'view own paragraphs_library_item entities' => [
+      'title' => t('View own Paragraphs library items'),
+      'description' => t('Allows users to view own Paragraphs library items.'),
+    ],
+    'view paragraphs_library_item entities' => [
+      'title' => t('View Paragraphs library items'),
+      'description' => t('Allows users to view Paragraphs library items.'),
+    ],
+    'edit any paragraphs_library_item entities' => [
+      'title' => t('Edit any Paragraphs library items'),
+      'description' => t('Allows users to edit any Paragraphs library items.'),
+      'restrict access' => TRUE,
+    ],
+    'edit own paragraphs_library_item entities' => [
+      'title' => t('Edit own Paragraphs library items'),
+      'description' => t('Allows users to edit own Paragraphs library items.'),
+      'restrict access' => TRUE,
+    ],
+  ];
+
+  return $permissions;
+}
+
+/**
+ * Displays a list of bundles to choose from, to create a new
+ * paragraphs_library_item.
+ */
+function paragraphs_library_type_choice() {
+  $library_types = paragraphs_library_type_load();
+  if (count($library_types) == 1) {
+    backdrop_goto('admin/content/paragraphs/library/add/' . reset($library_types)->type);
+  }
+  $items = [];
+  backdrop_set_title(t('Select Paragraphs library type'), PASS_THROUGH);
+  foreach ($library_types as $library_type_info) {
+    $items[] = l($library_type_info->label, 'admin/content/paragraphs/library/add/' . $library_type_info->type);
+  }
+  return theme('item_list', ['items' => $items]);
+}
+
+/**
+ * Form builder to edit paragraphs_library_items.
+ */
+function paragraphs_library_item_form($form, &$form_state, ?ParagraphsLibraryItem $library_item = NULL) {
+  // Cache the object in $form_state for later retrieval.
+  $form_state['paragraphs_library_item'] = $library_item;
+
+  $form['title'] = [
+    '#type' => 'textfield',
+    '#title' => t('Admin label'),
+    '#description' => t('By default this will only show in the administrative interfaces as an identifier for this library item.'),
+    '#required' => TRUE,
+    '#default_value' => (!$library_item->is_new) ? $library_item->label() : '',
+  ];
+
+  // Attaches Field API field widgets in this bundle to the form.
+  field_attach_form('paragraphs_library_item', $library_item, $form, $form_state);
+
+  if (PARAGRAPHS_LIBRARY_REVISIONS) {
+    $form['additional_settings'] = array(
+      '#type' => 'vertical_tabs',
+      '#weight' => 99,
+    );
+
+    // Add a log field if the "Create new revision" option is checked, or if the
+    // current user has the ability to check that option.
+    $form['revision_information'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Revision information'),
+      '#collapsible' => TRUE,
+      // @todo: Collapsed by default when "Create new revision" is unchecked.
+      '#collapsed' => FALSE,
+      '#group' => 'additional_settings',
+      '#attributes' => array(
+        'class' => array('paragraphs-library-item-form-revision-information'),
+      ),
+      '#weight' => 20,
+      '#access' => (!empty($library_item) && $library_item->id()) && (user_access('administer paragraphs_library_item entities')),
+    );
+    $form['revision_information']['revision'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Create new revision'),
+      '#default_value' => FALSE,
+      '#access' => user_access('administer paragraphs_library_item entities'),
+    );
+    // Check the revision log checkbox when the log textarea is filled in.
+    // This must not happen if "Create new revision" is enabled by default,
+    // since the state would auto-disable the checkbox otherwise.
+    // @todo: Implement the "Create new revision" checkbox as a field. Disabling
+    // the logic below for now.
+    if (FALSE && !$library_item->revision) {
+      $form['revision_information']['revision']['#states'] = array(
+        'checked' => array(
+          'textarea[name="log"]' => array('empty' => FALSE),
+        ),
+      );
+    }
+    $form['revision_information']['log'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Revision log message'),
+      '#rows' => 4,
+      '#default_value' => '',
+      '#description' => t('Briefly describe the changes you have made.'),
+    );
+  }
+
+  $form['actions'] = [
+    '#type' => 'actions',
+    'submit' => [
+      '#type' => 'submit',
+      '#value' => t('Save'),
+    ],
+  ];
+
+  return $form;
+}
+
+/**
+ * Submit handler for the paragraphs_library_item form.
+ *
+ * Saves the paragraphs_library_item and its fields.
+ */
+function paragraphs_library_item_form_submit($form, &$form_state) {
+  // Retrieve the cached paragraphs_library_item.
+  $library_item = $form_state['paragraphs_library_item'];
+  $library_item->title = $form_state['values']['title'];
+  if (empty($library_item->created)) {
+    // If this this is a new paragraphs_library_item, assign a created date.
+    $library_item->created = REQUEST_TIME;
+  }
+
+  // Call this to attach the submitted field values to the
+  // paragraphs_library_item entity.
+  field_attach_submit('paragraphs_library_item', $library_item, $form, $form_state);
+
+  if (!empty($form_state['values']['revision'])) {
+    // If the "Create new revision" checkbox is checked, set the revision
+    // information.
+    $library_item->is_new_revision = TRUE;
+    $library_item->log = $form_state['values']['log'] ?? '';
+  }
+
+  $library_item->save();
+
+  backdrop_set_message(t('The Paragraphs library item has been saved.'));
+  $form_state['redirect'] = 'admin/content/paragraphs/library/' . $library_item->id();
+}
+
+/**
+ * Page callback: Provides the Paragraphs library item submission form.
+ *
+ * @param string $type
+ *   The Paragraphs library item type for the submission.
+ *
+ * @return array
+ *   Returns a Paragraphs library item submission form.
+ *
+ * @see paragraphs_library_menu()
+ */
+function paragraphs_library_item_add(string $type) {
+  global $user;
+
+  $types = paragraphs_library_type_load();
+  $library_item = entity_create('paragraphs_library_item', [
+    'uid' => $user->uid,
+    'title' => (isset($user->name) ? $user->name : ''),
+    'type' => $type,
+    'langcode' => LANGUAGE_NONE,
+  ]);
+  backdrop_set_title(t('Add a %type library item', ['%type' => t($types[$type]->label)]), PASS_THROUGH);
+  $output = backdrop_get_form('paragraphs_library_item_form', $library_item);
+
+  return $output;
+}
+
+/**
+ * Confirm form to delete a paragraphs_library_item.
+ */
+function paragraphs_library_item_delete_form($form, &$form_state, ParagraphsLibraryItem $library_item) {
+  // Send the paragraphs_library_item ID as a value field to the form.
+  $form['library_item_id'] = [
+    '#type' => 'value',
+    '#value' => $library_item->id(),
+  ];
+  return confirm_form(
+    $form,
+    t('Are you sure you want to delete library item %title?', ['%title' => check_plain($library_item->label())]),
+    'admin/content/paragraphs/library',
+    t('This action cannot be undone and will affect all potential uses of this shared item throughout the site.'),
+    t('Delete'),
+    t('Cancel')
+  );
+}
+
+/**
+ * Submit handler for the paragraphs_library_item delete form.
+ *
+ * Deletes the paragraphs_library_item and displays a message.
+ */
+function paragraphs_library_item_delete_form_submit($form, &$form_state) {
+  $library_item_id = $form_state['values']['library_item_id'];
+  $library_item = entity_load('paragraphs_library_item', $library_item_id);
+  entity_delete_multiple('paragraphs_library_item', [$library_item_id]);
+  backdrop_set_message(t('Paragraphs library item %title has been deleted.', ['%title' => check_plain($library_item->label())]));
+}
+
+/**
+ * Page callback for listing the usage of a Paragraphs library item.
+ */
+function paragraphs_library_item_usage_listing($paragraphs_library_item) {
+  $items = [];
+  $field_name = 'field_reusable_paragraph';
+  $target_id = $paragraphs_library_item->id();
+  $field_info = field_info_field($field_name);
+  foreach ($field_info['bundles'] as $entity_type => $bundles) {
+    foreach ($bundles as $bundle) {
+      $query = db_select('field_revision_' . $field_name, 'f')
+        ->fields('f', ['entity_id', 'revision_id'])
+        ->condition('f.' . $field_name . '_target_id', $target_id)
+        ->condition('f.bundle', $bundle)
+        ->condition('f.entity_type', $entity_type);
+      $result = $query->execute();
+      if ($result->rowCount() > 0) {
+        foreach ($result as $row) {
+          $items[$entity_type . ':' . $row->entity_id][] = [
+            'entity_type' => $entity_type,
+            'bundle' => $bundle,
+            'entity_id' => $row->entity_id,
+            'revision_id' => $row->revision_id,
+          ];
+        }
+      }
+    }
+  }
+  $headers = [
+    t('Used in'),
+    t('Entity ID'),
+    t('Entity type'),
+    t('Bundle'),
+    t('Number of revisions/uses'),
+    t('Status'),
+  ];
+  foreach ($items as $key => $item) {
+    $status = '';
+    $first = reset($item);
+    $entity_type = $first['entity_type'];
+    $entity_id = $first['entity_id'];
+    $entity_label = entity_get_info($entity_type)['label'];
+    $entity = entity_load($entity_type, $entity_id);
+    $uri = $entity->uri();
+
+    if ($entity_type == 'paragraphs_item') {
+      $host_entity = $entity->hostEntity();
+      if ($host_entity) {
+        $label = $host_entity->label();
+        $entity_type = $host_entity->entityType();
+        $entity_bundle = $host_entity->bundle();
+        $entity_label = entity_get_info($entity_type)['label'];
+        $entity_id = $host_entity->id();
+        $uri = $host_entity->uri();
+        $status = 'Paragraph item: ' . _paragraphs_library_get_status_label($entity->status) . '<br>' . $entity_label . ': ' . _paragraphs_library_get_status_label($host_entity->status);
+      }
+    }
+    else {
+      $status .= $entity_label . ': ' . _paragraphs_library_get_status_label($entity->status);
+    }
+    if ($entity) {
+      $rows[] = [
+        'data' => [
+          l($label, $uri['path']),
+          $entity_id,
+          $entity_label,
+          $entity_bundle,
+          count($item),
+          $status,
+        ],
+      ];
+    }
+  }
+  $pause = 1;
+  return [
+    '#theme' => 'table',
+    '#header' => $headers,
+    '#rows' => $rows ?? [],
+    '#empty' => t('No usage found for this Paragraphs library item.'),
+    '#attached' => [
+      'library' => ['paragraphs_library/paragraphs_library_usage'],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_entity_property_info_alter().
+ *
+ * This hook provides property definitions for metadata wrappers and views.
+ */
+function paragraphs_library_entity_property_info_alter(&$info) {
+  $properties = &$info['paragraphs_library_info']['properties'];
+
+  $properties['title'] = [
+    'label' => t('Title'),
+    'type' => 'text',
+    'description' => t('The title of the paragraphs_library.'),
+    'setter callback' => 'entity_plus_property_verbatim_set',
+    'schema field' => 'title',
+    // Tell i18n_string that this property is translatable.
+    'translatable' => TRUE,
+    'i18n string' => TRUE,
+  ];
+
+  $properties['created'] = [
+    'label' => t("Date created"),
+    'type' => 'date',
+    'description' => t("The date the paragraphs_library was posted."),
+    'setter callback' => 'entity_plus_property_verbatim_set',
+    'setter permission' => 'administer paragraphs_library_item entities',
+    'schema field' => 'created',
+  ];
+
+  $properties['changed'] = [
+    'label' => t("Date changed"),
+    'type' => 'date',
+    'schema field' => 'changed',
+    'setter callback' => 'entity_plus_property_verbatim_set',
+    'description' => t("The date the paragraphs_library was most recently updated."),
+  ];
+
+  $properties['uid'] = [
+    'label' => t("Author"),
+    'type' => 'user',
+    'description' => t("The author of the paragraphs_library."),
+    'setter callback' => 'entity_plus_property_verbatim_set',
+    'setter permission' => 'administer paragraphs_library_item entities',
+    'required' => TRUE,
+    'schema field' => 'uid',
+  ];
+}
+
+/*******************************************************************************
+ ********************************* ParagraphsLibraryItem API's *****************
+ ******************************************************************************/
+
+/**
+ * Access callback for paragraphs_library.
+ */
+function paragraphs_library_access($op, ?ParagraphsLibraryItem $library_item = NULL, $account = NULL, $entity_type = NULL) {
+  global $user;
+  if (!isset($account)) {
+    $account = $user;
+  }
+  $access = FALSE;
+  switch ($op) {
+    case 'create':
+      $access = user_access('administer paragraphs_library_item entities', $account)
+          || user_access('create paragraphs_library_item entities', $account);
+      break;
+    case 'view':
+      $access = user_access('administer paragraphs_library_item entities', $account)
+          || user_access('view paragraphs_library_item entities', $account)
+          || (user_access('view own paragraphs_library_item entities', $account) && ($library_item->uid == $account->uid));
+      break;
+
+    case 'update':
+    case 'edit':
+    case 'delete':
+      $access = user_access('administer paragraphs_library_item entities')
+          || user_access('edit any paragraphs_library_item entities')
+          || (user_access('edit own paragraphs_library_item entities') && ($library_item->uid == $account->uid));
+      break;
+  }
+  return $access;
+}
+
+/**
+ * Access callback: Checks library item revision access.
+ *
+ * @param ParagraphsLibraryItem $library_item
+ *   The library item to check.
+ * @param string $op
+ *   (optional) The specific operation being checked. Defaults to 'view'.
+ * @param User $account
+ *   (optional) A user object representing the user for whom the operation is
+ *   to be performed. Determines access for a user other than the current user.
+ *
+ * @return bool
+ *   TRUE if the operation may be performed, FALSE otherwise.
+ *
+ * @see paragraphs_library_menu()
+ */
+function _paragraphs_library_revision_access(ParagraphsLibraryItem $library_item, string $op = 'view', User $account = NULL) {
+  $access = &backdrop_static(__FUNCTION__, array());
+
+  $map = array(
+    'view' => 'view revisions',
+    'update' => 'revert revisions',
+    'delete' => 'delete revisions',
+  );
+
+  if (!$library_item || !isset($map[$op])) {
+    // If there was no library item to check against, or the $op was not one of
+    // the supported ones, we return access denied.
+    return FALSE;
+  }
+
+  if (!isset($account)) {
+    $account = $GLOBALS['user'];
+  }
+
+  // Statically cache access by revision ID, user account ID, and operation.
+  $cid = $library_item->revision_id . ':' . $account->uid . ':' . $op;
+
+  if (!isset($access[$cid])) {
+    // Perform basic permission checks first.
+    if (!user_access($map[$op], $account) && !user_access('administer paragraph_library items', $account)) {
+      return $access[$cid] = FALSE;
+    }
+
+    $library_item_current_revision = paragraphs_library_item_load($library_item->id());
+    $is_current_revision = $library_item->isActiveRevision();
+
+    // There should be at least two revisions. If the revision_id of the given
+    // library item and the revision_id of the active revision differ, then we
+    // already have two different revisions so there is no need for a separate
+    // database check. Also, if you try to revert to or delete the active
+    // revision, that's not good.
+    if ($is_current_revision && (db_query('SELECT COUNT(revision_id) FROM {paragraphs_library_item_revision} WHERE item_id = :id', array(':id' => $library_item->id()))->fetchField() == 1 || $op == 'update' || $op == 'delete')) {
+      $access[$cid] = FALSE;
+    }
+    elseif (user_access('administer paragraphs_library_item entities', $account)) {
+      $access[$cid] = TRUE;
+    }
+    else {
+      // First check the access to the active revision and finally, if the
+      // library item passed in is not the active revision then access to that,
+      // too.
+      $access[$cid] = paragraphs_library_access($op, $library_item_current_revision, $account) && ($is_current_revision || paragraphs_library_access($op, $library_item, $account));
+    }
+  }
+
+  return $access[$cid];
+}
+
+/**
+ * Asks for confirmation of the reversion to prevent against CSRF attacks.
+ *
+ * @param int $library_item
+ *   The library item revision ID.
+ *
+ * @return array
+ *   An array as expected by backdrop_render().
+ *
+ * @see paragraphs_library_menu()
+ * @see paragraphs_library_revision_revert_confirm_submit()
+ *
+ * @ingroup forms
+ */
+function paragraphs_library_revision_revert_confirm($form, $form_state, $library_item) {
+  $form['#library_item'] = $library_item;
+  return confirm_form($form, t('Are you sure you want to revert to the revision from %revision-date?', array('%revision-date' => format_date($library_item->timestamp))), 'admin/content/paragraphs/library/' . $library_item->id() . '/revisions', '', t('Revert'), t('Cancel'));
+}
+
+/**
+ * Form submission handler for paragraphs_library_revision_revert_confirm().
+ */
+function paragraphs_library_revision_revert_confirm_submit($form, &$form_state) {
+  $library_item = $form['#library_item'];
+  $library_item->revision = 1;
+  // Make this the new active revision for the library item.
+  $library_item->setIsActiveRevision();
+  $library_item->default_revision = TRUE;
+
+  // The revision timestamp will be updated when the revision is saved. Keep the
+  // original one for the confirmation message.
+  $original_revision_timestamp = $library_item->timestamp;
+
+  $library_item->log = t('Copy of the revision from %date.', array('%date' => format_date($original_revision_timestamp)));
+
+  $library_item->save();
+
+  watchdog('content', '@type: reverted %title revision %revision.', array(
+    '@type' => $library_item->type,
+    '%title' => $library_item->title,
+    '%revision' => $library_item->vid,
+  ));
+  backdrop_set_message(t('Library item %title has been reverted back to the revision from %revision-date.', array(
+    '%title' => $library_item->title,
+    '%revision-date' => format_date($original_revision_timestamp),
+  )));
+  $form_state['redirect'] = 'admin/content/paragraphs/library/' . $library_item->id() . '/revisions';
+}
+
+/**
+ * Form constructor for the revision deletion confirmation form.
+ *
+ * This form prevents against CSRF attacks.
+ *
+ * @param ParagraphsLibraryItem $library_item
+ *   The library item revision object.
+ *
+ * @return array
+ *   An array as expected by backdrop_render().
+ *
+ * @see paragraphs_library_menu()
+ * @see paragraphs_library_revision_delete_confirm_submit()
+ *
+ * @ingroup forms
+ */
+function paragraphs_library_revision_delete_confirm($form, $form_state, ParagraphsLibraryItem $library_item) {
+  $form['#library_item'] = $library_item;
+  return confirm_form($form, t('Are you sure you want to delete the revision from %revision-date?', array(
+    '%revision-date' => format_date($library_item->revision_timestamp),
+  )), 'admin/content/paragraphs/library/' . $library_item->id() . '/revisions', t('This action cannot be undone.'), t('Delete'), t('Cancel'));
+}
+
+/**
+ * Form submission handler for paragraphs_library_revision_delete_confirm().
+ */
+function paragraphs_library_revision_delete_confirm_submit($form, &$form_state) {
+  $library_item = $form['#library_item'];
+  paragraphs_library_revision_delete($library_item->vid);
+
+  watchdog('content', '@type: deleted %title revision %revision.', array(
+    '@type' => $library_item->type,
+    '%title' => $library_item->title,
+    '%revision' => $library_item->vid,
+  ));
+  backdrop_set_message(t('Revision from %revision-date %title has been deleted.', array(
+    '%revision-date' => format_date($library_item->revision_timestamp),
+    '%title' => $library_item->title,
+  )));
+  $form_state['redirect'] = 'admin/content/paragraphs/library/' . $library_item->id();
+  if (db_query('SELECT COUNT(revision_id) FROM {paragraphs_library_item_revision} WHERE item_id = :item_id', array(':item_id' => $library_item->id()))->fetchField() > 1) {
+    $form_state['redirect'] .= '/revisions';
+  }
+}
+
+/**
+ * Load a paragraphs library item.
+ *
+ * @param int $library_item_id
+ *   (optional) The ID of the library item to load.
+ * @param int $revision_id
+ *   (optional) The revision ID to load. If NULL, the active revision is loaded.
+ * @param bool $reset
+ *   If TRUE, the static cache is reset and the library item is reloaded from
+ *   configuration.
+ *
+ * @return ParagraphsLibraryItem|FALSE
+ *   Returns a ParagraphsLibraryItem object if the library item exists, or FALSE
+ *   if it does not exist or if the revision ID is invalid.
+ *
+ */
+function paragraphs_library_item_load(?int $library_item_id = NULL, ?int $revision_id = NULL, bool $reset = FALSE) {
+  $item_ids = $library_item_id ? [$library_item_id] : [];
+  $conditions = $revision_id ? ['revision_id' => $revision_id] : [];
+  $library_item = paragraphs_library_item_load_multiple($item_ids, $conditions, $reset);
+  return $library_item ? reset($library_item) : FALSE;
+}
+
+/**
+ * Load multiple paragraphs_library_item entities based on certain conditions.
+ */
+function paragraphs_library_item_load_multiple($library_item_ids = [], $conditions = [], $reset = FALSE) {
+  return entity_load_multiple('paragraphs_library_item', $library_item_ids, $conditions, $reset);
+}
+
+/**
+ * Save paragraphs_library.
+ */
+function paragraphs_library_item_save($library_item) {
+  return entity_plus_save('paragraphs_library_item', $library_item);
+}
+
+/**
+ * Delete single paragraphs_library.
+ */
+function paragraphs_library_item_delete($library_item) {
+  entity_delete_multiple('paragraphs_library_item', [entity_plus_id('paragraphs_library_item', $library_item)]);
+}
+
+/**
+ * Delete multiple paragraphs_library_item entities.
+ */
+function paragraphs_library_item_delete_multiple($library_item_ids) {
+  entity_delete_multiple('paragraphs_library_item', $library_item_ids);
+}
+
+/**
+ * Deletes a library item revision.
+ *
+ * @param int $revision_id
+ *   The revision ID to delete.
+ *
+ * @return bool
+ *   TRUE if the revision deletion was successful, FALSE otherwise.
+ */
+function paragraphs_library_revision_delete(int $revision_id) {
+  if ($revision = paragraphs_library_item_load(NULL, $revision_id)) {
+    // Prevent deleting the active revision.
+    if ($revision->isActiveRevision()) {
+      return FALSE;
+    }
+
+    db_delete('paragraphs_library_item_revision')
+      ->condition('item_id', $revision->id())
+      ->condition('revision_id', $revision->revision_id)
+      ->execute();
+    module_invoke_all('paragraphs_library_revision_delete', $revision);
+    field_attach_delete_revision('paragraphs_library_item', $revision);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Displays a Paragraphs library item.
+ */
+function paragraphs_library_item_view($library_item) {
+  backdrop_set_title(check_plain($library_item->label()));
+  $library_item_view = entity_view($library_item);
+  return $library_item_view;
+}
+
+/**
+ * Page callback: Generates an array which displays a library item detail page.
+ *
+ * @param ParagraphsLibraryItem $library_item
+ *   The Paragraphs library item to display.
+ * @param bool $message
+ *   (optional) A flag which sets a page title relevant to the revision being
+ *   viewed.
+ *
+ * @return array
+ *   A $page element suitable for use by backdrop_render().
+ *
+ * @see paragraphs_library_menu()
+ */
+function paragraphs_library_show(ParagraphsLibraryItem $library_item, bool $message = FALSE) {
+  if ($message) {
+    backdrop_set_title(t('Revision of %title from %date', array(
+      '%title' => $library_item->title,
+      '%date' => format_date($library_item->timestamp),
+    )), PASS_THROUGH);
+  }
+
+  // For markup consistency with other pages, use entity_view_multiple() rather
+  // than entity_view().
+  $library_items = entity_view_multiple('paragraphs_library_item', array(
+    $library_item->id() => $library_item,
+  ), 'full');
+
+  return $library_items;
+}
+
+/**
+ * Implements hook_views_api().
+ *
+ * This hook helps Backdrop discover the custom handlers in the /views folder.
+ */
+function paragraphs_library_views_api() {
+  return [
+    'api' => '3.0',
+    'path' => backdrop_get_path('module', 'paragraphs_library') . '/views',
+  ];
+}
+
+/**
+ * Implements hook_field_extra_fields().
+ *
+ * This exposes the "extra fields" (usually properties that can be configured
+ * as if they were fields) of the entity as pseudo-fields
+ * so that they get handled by the Entity and Field core functionality.
+ */
+function paragraphs_library_field_extra_fields() {
+  $extra_fields = [];
+
+  $display['title'] = [
+    'weight' => -10,
+    'label' => t('Title'),
+    'description' => t('The title of the Paragraphs library item.'),
+  ];
+
+  $form['title'] = [
+    'weight' => -10,
+    'label' => t('Title'),
+    'description' => t('The title of the Paragraphs library item.'),
+  ];
+
+  $display['uid'] = [
+    'label' => t("Author"),
+    'weight' => -11,
+    'description' => t("The author of the Paragraphs library item."),
+  ];
+
+  $display['created'] = [
+    'label' => t("Date created"),
+    'weight' => 0,
+    'description' => t("The date the Paragraphs library item was posted."),
+  ];
+
+  $display['changed'] = [
+    'label' => t("Date changed"),
+    'weight' => 1,
+    'description' => t("The date the Paragraphs library item was changed."),
+  ];
+
+  return $extra_fields;
+}
+
+/**
+ * Implements template_proprocess_entity_plus_property().
+ *
+ * This is used to convert the Date created and Date changed properties into
+ * a proper date format. Ideally this would be done via UI, but Entity Plus
+ * or Backdrop do not provide a way to do this for properties through the
+ * Manage fields tab.
+ */
+function paragraphs_library_preprocess_entity_plus_property(&$variables) {
+  if ($variables['property_name'] == 'created' || $variables['property_name'] == 'changed') {
+    $variables['content'] = format_date($variables['content']);
+  }
+}
+
+/**
+ * Loads and returns type/bundle information for Paragraphs library items.
+ *
+ * @param string $type
+ *   This is the machine name of the bundle as defined in the entity_info. By
+ *   default 'default'. If empty, returns an array of all bundles.
+ *
+ * @param bool $reset
+ *   If TRUE, the static cache is reset and the bundles are reloaded from
+ *   configuration.
+ *
+ * @return object|array|FALSE
+ *   Either a stdClass object with bundle info (machine name and label) or an
+ *   array of such objects if $type is not specified. If $type is specified
+ *   and does not exist, FALSE is returned.
+ */
+function paragraphs_library_type_load(string $type = '', bool $reset = FALSE) {
+  // Since this function is called very often, use a static cache.
+  $all_types = &backdrop_static(__FUNCTION__, []);
+  if (empty($all_types) || $reset) {
+    $all_types = [];
+    $configs = config_get_names_with_prefix('paragraphs_library.type.');
+    foreach ($configs as $config_name) {
+      $config = config($config_name);
+      $type_str = strtr($config->get('type'), array('_' => '-'));
+      $all_types[$type_str] = (object) $config->get();
+    }
+  }
+  return empty($type) ? $all_types : $all_types[$type] ?? FALSE;
+}
+
+/**
+ * Title callback for Paragraphs library item administration pages.
+ */
+function paragraphs_library_item_page_title($library_item) {
+  return $library_item->title ? $library_item->title : t('Paragraphs library item @id', ['@id' => $library_item->id()]);
+}
+
+/**
+ * Title callback for Paragraphs library type administration pages.
+ */
+function paragraphs_library_type_page_title($paragraphs_library_type) {
+  return $paragraphs_library_type->label;
+}
+
+/**
+ * Page callback: Generates an overview table of older revisions of a library
+ * item.
+ *
+ * @param ParagraphsLibraryItem $library_item
+ *   The Paragraphs library item object for which to display the revisions.
+ *
+ * @return array
+ *   An array as expected by backdrop_render().
+ *
+ * @see paragraphs_library_menu()
+ */
+function paragraphs_library_item_revision_overview(ParagraphsLibraryItem $library_item) {
+  backdrop_set_title(t('Revisions for %title', array('%title' => $library_item->title)), PASS_THROUGH);
+
+  $header = array(t('Revision'), t('Log message'), t('Operations'));
+
+  $revisions = paragraphs_library_revision_list($library_item);
+
+  $rows = array();
+  $revert_permission = FALSE;
+  if ((user_access('revert revisions') || user_access('administer paragraphs_library_item entities')) && paragraphs_library_access('update', $library_item)) {
+    $revert_permission = TRUE;
+  }
+  $delete_permission = FALSE;
+  if ((user_access('delete revisions') || user_access('administer paragraphs_library_item entities')) && paragraphs_library_access('delete', $library_item)) {
+    $delete_permission = TRUE;
+  }
+  foreach ($revisions as $revision) {
+    $row = array();
+    if ($revision->current_revision_id > 0) {
+      $row[] = array(
+        'data' => t('!date !title by !username', array(
+          '!date' => l(format_date($revision->timestamp, 'short'), "admin/content/paragraphs/library/" . $library_item->id()),
+          '!title' => check_plain($revision->title ? $revision->title : ''),
+          '!username' => theme('username', array('account' => $revision)),
+        )),
+        'class' => array('revision-current'));
+      $row[] = array(
+        'data' => (($revision->log != '') ? '<p class="revision-log">' . filter_xss($revision->log) . '</p>' : ''),
+        'class' => array('revision-current'),
+      );
+      $row[] = array(
+        'data' => backdrop_placeholder(t('current revision')),
+        'class' => array('revision-current'),
+      );
+    }
+    else {
+      $row[] = array(
+        'data' => t('!date !title by !username', array(
+          '!date' => l(format_date($revision->timestamp, 'short'), "admin/content/paragraphs/library/" . $library_item->id()),
+          '!title' => check_plain($revision->title ? $revision->title : ''),
+          '!username' => theme('username', array('account' => $revision)),
+        )),
+      );
+      $row[] = array(
+        'data' => (($revision->log != '') ? '<p class="revision-log">' . filter_xss($revision->log) . '</p>' : ''),
+      );
+      $links = array();
+      if ($revert_permission) {
+        $links['revert'] = array(
+          'title' => t('Revert'),
+          'href' => "admin/content/paragraphs/library/" . $library_item->id() . "/revisions/$revision->revision_id/revert",
+        );
+      }
+      if ($delete_permission) {
+        $links['delete'] = array(
+          'title' => t('Delete'),
+          'href' => "admin/content/paragraphs/library/" . $library_item->id() . "/revisions/$revision->revision_id/delete",
+        );
+      }
+      $row[] = array(
+        'data' => array(
+          '#type' => 'operations',
+          '#links' => $links,
+        ),
+      );
+    }
+    $rows[] = $row;
+  }
+
+  $build['paragraphs_library_item_revisions_table'] = array(
+    '#caption' => 'Revisions allow you to track differences between multiple versions of your content, and revert to older versions.',
+    '#theme' => 'table',
+    '#rows' => $rows,
+    '#header' => $header,
+    '#attached' => array (
+      'css' => array(backdrop_get_path('module', 'node') . '/css/node.admin.css'),
+    ),
+  );
+
+  return $build;
+}
+
+/**
+ * Returns a list of all the existing revision numbers for the library item
+ * passed in.
+ *
+ * @param ParagraphsLibraryItem $library_item
+ *   The library item entity.
+ *
+ * @return array
+ *   An associative array keyed by library item revision number.
+ */
+function paragraphs_library_revision_list(ParagraphsLibraryItem $library_item) {
+  $revisions = array();
+  $result = db_query('SELECT r.revision_id, r.title, r.log, r.uid, li.revision_id AS current_revision_id, r.timestamp, u.name FROM {paragraphs_library_item_revision} r LEFT JOIN {paragraphs_library_item} li ON li.revision_id = r.revision_id INNER JOIN {users} u ON u.uid = r.uid WHERE r.item_id = :item_id ORDER BY r.revision_id DESC', array(':item_id' => $library_item->id()));
+  foreach ($result as $revision) {
+    $revisions[$revision->revision_id] = $revision;
+  }
+
+  return $revisions;
+}
+
+/**
+ * Implements hook_gin_content_form_paths().
+ */
+function paragraphs_library_gin_content_form_paths() {
+  $paths = [
+    'admin/content/paragraphs/library/*/edit',
+  ];
+
+  return $paths;
+}
+
+/**
+ * Helper function to return a label for a given status code.
+ *
+ * @param int $status
+ *   The status code to get the label for.
+ *
+ * @return string
+ *   The label corresponding to the status code.
+ */
+function _paragraphs_library_get_status_label(int $status) {
+  $status_labels = [
+    1 => t('Published'),
+    0 => t('Unpublished'),
+  ];
+
+  return isset($status_labels[$status]) ? $status_labels[$status] : t('Unknown');
+}

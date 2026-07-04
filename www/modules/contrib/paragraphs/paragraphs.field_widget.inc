@@ -220,7 +220,7 @@ function _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_
         'weight' => $weight,
       );
 
-      /* @var $entity_shell ParagraphsItemEntity */
+      /** @var ParagraphsItemEntity $entity_shell */
       $entity_shell = entity_create('paragraphs_item', array('bundle' => $machine_name, 'field_name' => $field_name));
       $entity_shell->setHostEntity($original_element['#entity_type'], $original_element['#entity'], $langcode, FALSE);
 
@@ -265,7 +265,7 @@ function _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_
         if ($add_mode == 'button') {
           foreach ($select_bundles as $machine_name => $bundle) {
 
-            /* @var $entity_shell ParagraphsItemEntity */
+            /** @var ParagraphsItemEntity $entity_shell */
             $entity_shell = entity_create('paragraphs_item', array('bundle' => $machine_name, 'field_name' => $field_name));
             $entity_shell->setHostEntity($original_element['#entity_type'], $original_element['#entity'], $langcode, FALSE);
             $field_elements['add_more']['add_more_bundle_' . $machine_name] = array(
@@ -274,7 +274,10 @@ function _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_
               '#value' => t('Add !title', array('!title' => $bundle['name'])),
               '#access' => entity_access('create', 'paragraphs_item', $entity_shell),
               '#attributes' => array(
-                'class' => array('field-add-more-submit', 'paragraphs-add-more-submit'),
+                'class' => array(
+                  'field-add-more-submit',
+                  'paragraphs-add-more-submit',
+                ),
               ),
               '#limit_validation_errors' => array(),
               '#submit' => array('paragraphs_add_more_submit'),
@@ -330,7 +333,10 @@ function _paragraphs_add_more_buttons($instance, $langcode, $form_state, $field_
             '#name' => strtr($id_prefix, '-', '_') . '_add_more_add_more',
             '#value' => $text,
             '#attributes' => array(
-              'class' => array('field-add-more-submit', 'paragraphs-add-more-submit'),
+              'class' => array(
+                'field-add-more-submit',
+                'paragraphs-add-more-submit',
+              ),
             ),
             '#limit_validation_errors' => array(),
             '#submit' => array('paragraphs_add_more_submit'),
@@ -438,6 +444,7 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
   $default_edit_mode = isset($instance['settings']['default_edit_mode']) ? $instance['settings']['default_edit_mode'] : PARAGRAPHS_DEFAULT_EDIT_MODE;
   $default_edit_mode_override = isset($instance['settings']['default_edit_mode_override']) ? $instance['settings']['default_edit_mode_override'] : PARAGRAPHS_DEFAULT_EDIT_MODE_OVERRIDE;
   $force_open = (!empty($instance['widget']['paragraphs_edit_mode_open']) || count($items) < $default_edit_mode_override);
+  $preview_collapsed = isset($instance['settings']['preview_collapsed']) ? $instance['settings']['preview_collapsed'] : PARAGRAPHS_PREVIEW_MODE_COLLAPSED;
 
   $being_edited_paragraph = ($default_edit_mode === 'open');
 
@@ -455,7 +462,7 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
       $being_edited_paragraph = FALSE;
     }
 
-    /* @var $paragraphs_item ParagraphsItemEntity */
+    /** @var ParagraphsItemEntity $paragraphs_item */
     $paragraphs_item = $field_state['entity'][$delta];
     $paragraphs_item->setHostEntity($element['#host_entity_type'], $element['#host_entity'], $langcode, FALSE);
   }
@@ -466,14 +473,13 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
 
     // Show an empty collection if we have no existing one or it does not load.
     if (empty($paragraphs_item) && $bundle) {
-      /* @var $paragraphs_item ParagraphsItemEntity */
+      /** @var ParagraphsItemEntity $paragraphs_item */
       $paragraphs_item = entity_create('paragraphs_item', array('bundle' => $bundle, 'field_name' => $field_name));
       $paragraphs_item->being_edited = TRUE;
       $being_edited_paragraph = TRUE;
       $is_new_paragraph = TRUE;
     }
     if (!empty($paragraphs_item)) {
-      /* @var $paragraphs_item ParagraphsItemEntity */
       $paragraphs_item->setHostEntity($element['#host_entity_type'], $element['#host_entity'], $langcode, FALSE);
 
       if ($force_open) {
@@ -590,6 +596,21 @@ function paragraphs_field_widget_form_build(array &$form, array &$form_state, ar
           );
           $preview = $paragraphs_item->view('paragraphs_editor_preview', $langcode);
           $element['paragraph_bundle_preview']['preview'] = $preview;
+
+          if ($preview_collapsed) {
+            $rendered_preview = backdrop_render($preview);
+            $summary_preview = trim(filter_xss(truncate_utf8(strip_tags($rendered_preview), 140, TRUE, TRUE, 150)));
+            $summary = t('Preview') . ($summary_preview ? '<span class="paragraphs--preview-description">: ' . $summary_preview . '</span>' : '');
+
+            $element['paragraph_bundle_preview']['preview'] = array(
+              '#type' => 'details',
+              '#summary' => $summary,
+              '#details' => $rendered_preview,
+              '#attributes' => array(
+                'class' => array('paragraphs--collapsible-preview'),
+              ),
+            );
+          }
         }
 
         foreach (element_children($element) as $key) {
@@ -1034,7 +1055,7 @@ function _paragraphs_multiple_field_validate($elements, &$form_state) {
       }
 
       // Get non-empty items.
-      $field_values = _field_filter_items($field_info, $field_values);
+      $field_values = _field_filter_items($field_info, $field_values, $field_state['instance']);
     }
 
     if (count($field_values) < 1) {

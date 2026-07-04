@@ -17,7 +17,7 @@
 function paragraphs_admin_bundle_clone_create_form(array $form, array &$form_state, $bundle) {
 
   // Load the paragraph type from machine name.
-  $paragraph_type = $bundle;
+  $paragraph_type = paragraphs_bundle_load($bundle);
   // Prepare the new paragraph type machine name prefix.
   $paragraph_type_prefix = $paragraph_type->bundle . '_clone';
   // Get the next occurrence count to use in the names.
@@ -213,7 +213,7 @@ function paragraphs_admin_bundle_clone_create_form_submit(array $form, array &$f
         )
       );
       // Redirect to the paragraph types list.
-      $form_state['redirect'] = 'admin/structure/paragraphs';
+      $form_state['redirect'] = 'admin/structure/paragraphs/types';
     }
     else {
       batch_set($batch);
@@ -436,5 +436,5 @@ function paragraphs_type_clone_finished($success, array $results, array $operati
   }
 
   // Redirect to the paragraph types list.
-  backdrop_goto('admin/structure/paragraphs');
+  backdrop_goto('admin/structure/paragraphs/types');
 }

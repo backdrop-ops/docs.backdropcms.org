@@ -71,7 +71,6 @@ function template_preprocess_paragraphs_item(&$variables, $hook) {
   $variables['classes_array'][] = backdrop_html_class('paragraphs-item-' . $paragraphs_item_id);
 
   // Add suggestions.
-  $variables['theme_hook_suggestions'][] = $paragraphs_item_type;
   $variables['theme_hook_suggestions'][] = $paragraphs_item_type . '__' . $bundle;
   $variables['theme_hook_suggestions'][] = $paragraphs_item_type . '__' . $bundle . '__' . $variables['view_mode'];
   $variables['theme_hook_suggestions'][] = $paragraphs_item_type . '__' . $paragraphs_item_id;

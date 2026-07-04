@@ -1,0 +1,15 @@
+{
+    "_config_name": "field.bundle.paragraphs_library_item.default",
+    "bundle": "default",
+    "module": "paragraphs_library",
+    "entity_type": "paragraphs_library_item",
+    "view_modes": {
+        "paragraphs_library_item": {
+            "custom_settings": true
+        }
+    },
+    "extra_fields": {
+        "form": [],
+        "display": []
+    }
+}

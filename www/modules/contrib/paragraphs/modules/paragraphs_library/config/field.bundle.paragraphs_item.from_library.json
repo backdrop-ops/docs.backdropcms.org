@@ -1,0 +1,11 @@
+{
+    "_config_name": "field.bundle.paragraphs_item.from_library",
+    "bundle": "from_library",
+    "module": "paragraphs_library",
+    "entity_type": "paragraphs_item",
+    "view_modes": [],
+    "extra_fields": {
+        "form": [],
+        "display": []
+    }
+}

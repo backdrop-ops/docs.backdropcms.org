@@ -12,6 +12,7 @@ define('PARAGRAPHS_DEFAULT_TITLE', 'Paragraph');
 define('PARAGRAPHS_DEFAULT_TITLE_MULTIPLE', 'Paragraphs');
 define('PARAGRAPHS_DEFAULT_EDIT_MODE', 'open');
 define('PARAGRAPHS_DEFAULT_EDIT_MODE_OVERRIDE', 1);
+define('PARAGRAPHS_PREVIEW_MODE_COLLAPSED', FALSE);
 define('PARAGRAPHS_DEFAULT_ADD_MODE', 'select');
 define('PARAGRAPHS_DEFAULT_MODAL_ADMIN', FALSE);
 
@@ -143,9 +144,9 @@ function paragraphs_entity_info() {
     $return['paragraphs_item']['bundles'][$bundle->bundle] = array(
       'label' => $bundle->name,
       'admin' => array(
-        'path' => 'admin/structure/paragraphs/%paragraphs_bundle',
-        'real path' => 'admin/structure/paragraphs/' . strtr($machine_name, array('_' => '-')),
-        'bundle argument' => 3,
+        'path' => 'admin/structure/paragraphs/types/%paragraphs_bundle',
+        'real path' => 'admin/structure/paragraphs/types/' . strtr($machine_name, array('_' => '-')),
+        'bundle argument' => 4,
         'access arguments' => array('administer paragraphs bundles'),
       ),
     );
@@ -344,20 +345,26 @@ function paragraphs_permission() {
 function paragraphs_menu() {
   $items = array();
   $items['admin/structure/paragraphs'] = array(
-    'title' => 'Paragraphs types',
+    'title' => 'Paragraphs',
+    'description' => 'Configure Paragraphs',
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('administer paragraphs bundles'),
     'description' => 'Manage Paragraph types',
+    'file path' => 'core/modules/system',
+    'file' => 'system.admin.inc',
+  );
+
+  $items['admin/structure/paragraphs/types'] = array(
+    'title' => 'Paragraph types',
     'page callback' => 'paragraphs_admin_bundle_overview',
     'access arguments' => array('administer paragraphs bundles'),
+    'description' => 'Manage Paragraph types',
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => -10,
     'file' => 'paragraphs.admin.inc',
   );
 
-  $items['admin/structure/paragraphs/list'] = array(
-    'title' => 'List Paragraphs types',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-  );
-
-  $items['admin/structure/paragraphs/add'] = array(
+  $items['admin/structure/paragraphs/types/add'] = array(
     'title' => 'Add Paragraphs type',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('paragraphs_admin_bundle_form'),
@@ -366,34 +373,34 @@ function paragraphs_menu() {
     'file' => 'paragraphs.admin.inc',
   );
 
-  $items['admin/structure/paragraphs/%paragraphs_bundle'] = array(
+  $items['admin/structure/paragraphs/types/%paragraphs_bundle'] = array(
     'title' => 'Edit Paragraphs type',
     'title callback' => 'paragraphs_bundle_title_callback',
-    'title arguments' => array(3),
+    'title arguments' => array(4),
     'page callback' => 'backdrop_get_form',
-    'page arguments' => array('paragraphs_admin_bundle_form', 3),
+    'page arguments' => array('paragraphs_admin_bundle_form', 4),
     'access arguments' => array('administer paragraphs bundles'),
     'file' => 'paragraphs.admin.inc',
   );
 
-  $items['admin/structure/paragraphs/%paragraphs_bundle/configure'] = array(
+  $items['admin/structure/paragraphs/types/%paragraphs_bundle/configure'] = array(
     'title' => 'Configure',
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 
-  $items['admin/structure/paragraphs/%paragraphs_bundle/clone'] = array(
+  $items['admin/structure/paragraphs/types/%paragraphs_bundle/clone'] = array(
     'title' => 'Clone Paragraphs type',
     'access arguments' => array('administer paragraphs bundles'),
     'page callback' => 'backdrop_get_form',
-    'page arguments' => array('paragraphs_admin_bundle_clone_create_form', 3),
+    'page arguments' => array('paragraphs_admin_bundle_clone_create_form', 4),
     'file' => 'paragraphs.type_clone.inc',
     'type' => MENU_VISIBLE_IN_BREADCRUMB,
   );
 
-  $items['admin/structure/paragraphs/%paragraphs_bundle/delete'] = array(
+  $items['admin/structure/paragraphs/types/%paragraphs_bundle/delete'] = array(
     'title' => 'Delete Paragraphs type',
     'page callback' => 'backdrop_get_form',
-    'page arguments' => array('paragraphs_admin_bundle_delete_form', 3),
+    'page arguments' => array('paragraphs_admin_bundle_delete_form', 4),
     'access arguments' => array('administer paragraphs bundles'),
     'type' => MENU_VISIBLE_IN_BREADCRUMB,
     'file' => 'paragraphs.admin.inc',
@@ -474,14 +481,14 @@ function paragraphs_admin_bar_map() {
     $type_keys[] = str_replace('_', '-', $key);
   }
   $map = array(
-    'admin/structure/paragraphs/%paragraphs_bundle' => array(
-      'parent' => 'admin/structure/paragraphs',
+    'admin/structure/paragraphs/types/%paragraphs_bundle' => array(
+      'parent' => 'admin/structure/paragraphs/types',
       'arguments' => array(
         array('%paragraphs_bundle' => $type_keys),
       ),
     ),
-    'admin/structure/paragraphs/%paragraphs_bundle/edit' => array(
-      'parent' => 'admin/structure/paragraphs/%paragraphs_bundle',
+    'admin/structure/paragraphs/types/%paragraphs_bundle/edit' => array(
+      'parent' => 'admin/structure/paragraphs/types/%paragraphs_bundle',
       'arguments' => array(
         array('%paragraphs_bundle' => $type_keys),
       ),
@@ -583,7 +590,7 @@ function paragraphs_form_field_ui_field_edit_form_alter(&$form, $form_state) {
 function paragraphs_field_edit_form_submit($form, &$form_state) {
   $instance = $form['#instance'];
   $destination = backdrop_get_destination();
-  $form_state['redirect'] = array('admin/structure/paragraphs/' . $instance['bundle'] . '/fields/' . $instance['field_name'] . '/delete', array('query' => $destination));
+  $form_state['redirect'] = array('admin/structure/paragraphs/types/' . $instance['bundle'] . '/fields/' . $instance['field_name'] . '/delete', array('query' => $destination));
 }
 
 /**
@@ -715,6 +722,18 @@ function paragraphs_field_instance_settings_form($field, $instance) {
     '#max' => 99,
   );
 
+  $element['preview_collapsed'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display previews collapsed by default'),
+    '#description' => t('The previews can be clicked to view the content.'),
+    '#default_value' => isset($settings['preview_collapsed']) ? $settings['preview_collapsed'] : PARAGRAPHS_PREVIEW_MODE_COLLAPSED,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="instance[settings][default_edit_mode]"]' => array('value' => 'preview'),
+      ),
+    ),
+  );
+
   $element['add_mode'] = array(
     '#type' => 'select',
     '#title' => t('Add mode'),
@@ -735,7 +754,7 @@ function paragraphs_field_instance_settings_form($field, $instance) {
   );
 
   if (!count($bundles)) {
-    $link = l(t('click here to add one'), 'admin/structure/paragraphs/add', array('query' => backdrop_get_destination()));
+    $link = l(t('click here to add one'), 'admin/structure/paragraphs/types/add', array('query' => backdrop_get_destination()));
     $element['allowed_bundles_explain'] = array(
       '#type' => 'markup',
       '#markup' => t('You did not add any Paragraph types yet, !clickhere.', array('!clickhere' => $link)),
@@ -758,7 +777,7 @@ function paragraphs_field_instance_settings_form($field, $instance) {
   );
   $element['fieldset']['content'] = array(
     '#pre' => '<p>',
-    '#markup' => t('To specify a default value, configure it via the regular default value setting of each field that is part of the Paragraph type. To do so, go to the <a href="!url">Manage fields</a> screen of the Paragraph type.', array('!url' => url('admin/structure/paragraphs'))),
+    '#markup' => t('To specify a default value, configure it via the regular default value setting of each field that is part of the Paragraph type. To do so, go to the <a href="!url">Manage fields</a> screen of the Paragraph type.', array('!url' => url('admin/structure/paragraphs/types'))),
     '#suffix' => '</p>',
   );
   return $element;
@@ -1075,7 +1094,7 @@ function paragraphs_item_is_empty(ParagraphsItemEntity $item) {
         // If at least one paragraph is not empty; the
         // paragraph item is not empty.
         foreach ($item->{$field_name}[$langcode] as $field_item) {
-          if (!module_invoke($field['module'], 'field_is_empty', $field_item, $field)) {
+          if (!module_invoke($field['module'], 'field_is_empty', $field_item, $field, $instance)) {
             $is_empty = FALSE;
           }
         }
@@ -1248,7 +1267,7 @@ function paragraphs_entity_metadata_property_callback(&$info, $entity_type, $fie
  */
 function paragraphs_field_property_get($entity, array $options, $name, $entity_type, $info) {
   $field = field_info_field($name);
-  $langcode = field_language($entity_type, $entity, $name, isset($options['language']) ? $options['language']->language : NULL);
+  $langcode = field_language($entity_type, $entity, $name, isset($options['language']) ? $options['language']->langcode : NULL);
   $values = array();
   if (isset($entity->{$name}[$langcode])) {
     foreach ($entity->{$name}[$langcode] as $delta => $data) {
@@ -1482,7 +1501,7 @@ function theme_paragraphs_field_multiple_value_form(array $variables) {
 /**
  * Implements hook_theme().
  */
-function paragraphs_theme() {
+function paragraphs_theme($existing, $type, $theme, $path) {
   return array(
     'paragraphs_field_multiple_value_form' => array(
       'render element' => 'element',
@@ -1496,13 +1515,13 @@ function paragraphs_theme() {
     'paragraphs_items' => array(
       'render element' => 'element',
       'template' => 'paragraphs-items',
-      'path' => backdrop_get_path('module', 'paragraphs') . '/theme',
+      'path' => $path . '/theme',
       'file' => 'paragraphs.theme.inc',
     ),
     'paragraphs_item' => array(
       'render element' => 'elements',
       'template' => 'paragraphs-item',
-      'path' => backdrop_get_path('module', 'paragraphs') . '/theme',
+      'path' => $path . '/theme',
       'file' => 'paragraphs.theme.inc',
     ),
   );
@@ -1634,11 +1653,11 @@ function paragraphs_bundle_copy_info() {
       'bundle_export_callback' => 'paragraphs_bundle_load',
       'bundle_save_callback' => 'paragraphs_bundle_save',
       'export_menu' => array(
-        'path' => 'admin/structure/paragraphs/export',
+        'path' => 'admin/structure/paragraphs/types/export',
         'access arguments' => 'administer content types',
       ),
       'import_menu' => array(
-        'path' => 'admin/structure/paragraphs/import',
+        'path' => 'admin/structure/paragraphs/types/import',
         'access arguments' => 'administer content types',
       ),
     ),
@@ -1686,9 +1705,12 @@ function paragraphs_modules_uninstalled($modules) {
 /**
  * Access callback for separate edit/sort/delete form.
  *
- * @var ParagraphsItemEntity $paragraphs_item
+ * @param ParagraphsItemEntity $paragraphs_item
+ *  The paragraphs item entity to check access for.
+ *
+ * @return bool
  */
-function paragraphs_modal_admin_access($paragraphs_item) {
+function paragraphs_modal_admin_access(ParagraphsItemEntity $paragraphs_item) {
   $paragraphs_item->hostEntity();
   $host_entity_type = $paragraphs_item->hostEntityType();
   $instance = $paragraphs_item->instanceInfo();
@@ -1861,7 +1883,7 @@ function paragraphs_modal_admin_links($paragraphs_item) {
         'weight' => $weight,
       );
 
-      /* @var $entity_shell ParagraphsItemEntity */
+      /** @var ParagraphsItemEntity $entity_shell */
       $entity_shell = entity_create('paragraphs_item', array('bundle' => $machine_name, 'field_name' => $field_name));
       $entity_shell->setHostEntity($host_entity_type, $host_entity, $langcode, FALSE);
 
@@ -2011,7 +2033,8 @@ function paragraphs_autoload_info() {
 }
 
 /**
- * Retrieves the default theme's Paragraphs stylesheets defined in the .info file.
+ * Retrieves the default theme's Paragraphs stylesheets defined in the .info
+ * file.
  *
  * Themes may specify CSS files for use with Paragraphs by
  * including a "paragraphs_stylesheets" key in the theme .info file.

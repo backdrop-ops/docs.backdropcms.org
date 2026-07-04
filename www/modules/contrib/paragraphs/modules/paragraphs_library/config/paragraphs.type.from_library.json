@@ -1,0 +1,10 @@
+{
+    "_config_name": "paragraphs.type.from_library",
+    "bundle": "from_library",
+    "name": "From library",
+    "label": "Paragraphs library item",
+    "description": "Add an item from the reusable Paragraphs library.",
+    "module": "paragraphs_library",
+    "locked": 1,
+    "allow_unpublish": 0
+}
